@@ -475,21 +475,6 @@ export default function WorkerDashboardPage() {
         })
       }
 
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-        if (session?.access_token) {
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-          await fetch(`${apiUrl}/api/worker/dashboard/invalidate`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${session.access_token}` },
-          })
-        }
-      } catch (err) {
-        console.error("Cache invalidation failed:", err)
-      }
-
       if (task.assignedWorkerId === workerId) {
         await supabase
           .from("worker_profiles")
@@ -497,9 +482,9 @@ export default function WorkerDashboardPage() {
           .eq("worker_id", workerId)
       }
 
-      fetchDashboardData()
+      await invalidateAndFetch()
     },
-    [emitSupervisedSampleEvent, fetchDashboardData, notifyComplaintEmail, tasks, workerId],
+    [emitSupervisedSampleEvent, invalidateAndFetch, notifyComplaintEmail, tasks, workerId],
   )
 
   const updateTaskStatus = useCallback(
@@ -541,19 +526,6 @@ export default function WorkerDashboardPage() {
         workerIdOverride: workerId,
       })
 
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session?.access_token) {
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-          await fetch(`${apiUrl}/api/worker/dashboard/invalidate`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${session.access_token}` },
-          })
-        }
-      } catch (err) {
-        console.error("Cache invalidation failed:", err)
-      }
-
       if (nextStatus === "in_progress") {
         await supabase
           .from("worker_profiles")
@@ -586,9 +558,9 @@ export default function WorkerDashboardPage() {
           .eq("worker_id", workerId)
       }
 
-      fetchDashboardData()
+      await invalidateAndFetch()
     },
-    [emitSupervisedSampleEvent, fetchDashboardData, notifyComplaintEmail, tasks, workerId],
+    [emitSupervisedSampleEvent, invalidateAndFetch, notifyComplaintEmail, tasks, workerId],
   )
 
   const handleCompleteTask = useCallback(
@@ -636,9 +608,9 @@ export default function WorkerDashboardPage() {
         return
       }
 
-      fetchDashboardData()
+      await invalidateAndFetch()
     },
-    [fetchDashboardData, tasks, workerId],
+    [invalidateAndFetch, tasks, workerId],
   )
 
   const mapTasks = useMemo(
@@ -851,7 +823,7 @@ export default function WorkerDashboardPage() {
       setIsCompletionModalOpen(false)
       setCompletionNote('')
       setProofPhoto(null)
-      fetchDashboardData()
+      await invalidateAndFetch()
     } catch (err) {
       console.error('[WORKER] handleConfirmComplete error:', err)
       setError('Unexpected error. Please try again.')
