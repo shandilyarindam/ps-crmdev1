@@ -140,7 +140,7 @@
 
 .docNav {
   position: sticky;
-  top: 72px;
+  top: 88px;
   z-index: 38;
   border-bottom: 1px solid var(--border);
   background: color-mix(in srgb, var(--page-bg) 90%, transparent);
@@ -223,7 +223,7 @@
 .container {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 2.25rem 1.5rem 4.5rem;
+  padding: 2.25rem 1.5rem;
 }
 
 .cover {
@@ -981,7 +981,7 @@
   }
 
   .docNav {
-    top: 62px;
+    top: 80px;
   }
 
   .docNavInner {
@@ -992,6 +992,7 @@
 
   .container {
     padding-top: 1.55rem;
+    padding-bottom: 1.55rem;
   }
 
   .coverTitle {
