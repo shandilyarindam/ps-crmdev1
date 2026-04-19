@@ -39,6 +39,17 @@ const quotationHeaderTheme: HeaderTheme = {
   },
 };
 
+const PRINT_ANIMATED_SELECTORS = [
+  "[data-hero-kicker]",
+  "[data-hero-title]",
+  "[data-hero-sub]",
+  "[data-hero-chip]",
+  "[data-hero-status]",
+  "[data-metric]",
+  "[data-reveal]",
+  "[data-scale-card]",
+].join(", ");
+
 function cx(...classes: Array<string | false | null | undefined>): string {
   return classes.filter(Boolean).join(" ");
 }
@@ -57,6 +68,8 @@ export default function QuotationClient() {
   const { theme } = useTheme();
   const isDark = theme === "dark";
   const rootRef = useRef<HTMLElement>(null);
+  const printPreparedRef = useRef(false);
+  const printSnapshotsRef = useRef<Array<{ element: HTMLElement; style: string | null }>>([]);
   const [wardCount, setWardCount] = useState(1);
   const handleWardCountChange = useCallback((value: number) => {
     setWardCount(value);
@@ -84,12 +97,103 @@ export default function QuotationClient() {
 
   const [activeSection, setActiveSection] = useState(sections[0]?.id ?? "basics");
 
-  const handlePrint = () => {
+  const primePrintState = useCallback(() => {
     if (typeof window === "undefined") return;
+
+    const root = rootRef.current;
+    if (!root || printPreparedRef.current) return;
+
+    const elements = Array.from(new Set(root.querySelectorAll<HTMLElement>(PRINT_ANIMATED_SELECTORS)));
+
+    printPreparedRef.current = true;
+    printSnapshotsRef.current = elements.map((element) => ({
+      element,
+      style: element.getAttribute("style"),
+    }));
+
+    root.classList.add(styles.printExport);
+
+    if (elements.length === 0) return;
+
+    gsap.killTweensOf(elements);
+    gsap.set(elements, {
+      opacity: 1,
+      x: 0,
+      y: 0,
+      scale: 1,
+      rotate: 0,
+      rotateX: 0,
+      rotateY: 0,
+      filter: "none",
+      visibility: "visible",
+    });
+  }, []);
+
+  const restorePrintState = useCallback(() => {
+    const root = rootRef.current;
+    if (root) {
+      root.classList.remove(styles.printExport);
+    }
+
+    if (!printPreparedRef.current) return;
+
+    for (const snapshot of printSnapshotsRef.current) {
+      if (snapshot.style === null) {
+        snapshot.element.removeAttribute("style");
+      } else {
+        snapshot.element.setAttribute("style", snapshot.style);
+      }
+    }
+
+    printSnapshotsRef.current = [];
+    printPreparedRef.current = false;
+
+    if (typeof window !== "undefined") {
+      window.requestAnimationFrame(() => ScrollTrigger.refresh());
+    }
+  }, []);
+
+  const prepareForPrint = useCallback(async () => {
+    if (typeof window === "undefined") return;
+
+    primePrintState();
+
+    await new Promise<void>((resolve) => {
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => resolve());
+      });
+    });
+  }, [primePrintState]);
+
+  const handlePrint = useCallback(async () => {
+    if (typeof window === "undefined") return;
+
+    await prepareForPrint();
     window.requestAnimationFrame(() => {
       window.print();
     });
-  };
+  }, [prepareForPrint]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleBeforePrint = () => {
+      primePrintState();
+    };
+
+    const handleAfterPrint = () => {
+      restorePrintState();
+    };
+
+    window.addEventListener("beforeprint", handleBeforePrint);
+    window.addEventListener("afterprint", handleAfterPrint);
+
+    return () => {
+      window.removeEventListener("beforeprint", handleBeforePrint);
+      window.removeEventListener("afterprint", handleAfterPrint);
+      restorePrintState();
+    };
+  }, [primePrintState, restorePrintState]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -284,7 +388,13 @@ export default function QuotationClient() {
               ))}
             </nav>
             <div className={styles.sidebarActions}>
-              <button type="button" className={styles.printButton} onClick={handlePrint}>
+              <button
+                type="button"
+                className={styles.printButton}
+                onClick={() => {
+                  void handlePrint();
+                }}
+              >
                 Print or save PDF
               </button>
             </div>
