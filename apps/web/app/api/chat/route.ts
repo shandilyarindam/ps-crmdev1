@@ -180,7 +180,18 @@ export async function POST(req: NextRequest): Promise<NextResponse<GeminiRespons
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents,
-            generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
+            generationConfig: { 
+              temperature: 0.2, 
+              maxOutputTokens: 2048,
+              topK: 40,
+              topP: 0.95
+            },
+            safetySettings: [
+              { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+              { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+              { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+              { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+            ],
           }),
         },
       );
@@ -230,26 +241,46 @@ export async function POST(req: NextRequest): Promise<NextResponse<GeminiRespons
     }
 
     // Try to parse extracted complaint JSON from code block
-    const jsonMatch = rawText.match(/```json\s*([\s\S]*?)```/);
+    const jsonMatch = rawText.match(/```json\s*([\s\S]*?)```/) || rawText.match(/(\{[\s\S]*\})/);
+    
     if (jsonMatch) {
+      let jsonStr = jsonMatch[1].trim();
+      
+      // Attempt to repair truncated JSON (count open/close braces)
+      const openBraces = (jsonStr.match(/\{/g) || []).length;
+      const closeBraces = (jsonStr.match(/\}/g) || []).length;
+      if (openBraces > closeBraces) {
+        jsonStr += "}".repeat(openBraces - closeBraces);
+      }
+
       try {
-        const parsed = JSON.parse(jsonMatch[1]) as { extracted?: unknown; reply?: unknown };
+        const parsed = JSON.parse(jsonStr) as { extracted?: unknown; reply?: unknown };
         const extracted = sanitizeExtracted(parsed.extracted);
         const reply = typeof parsed.reply === "string" && parsed.reply.trim()
           ? parsed.reply
-          : "Please review the complaint summary and type YES to submit.";
+          : "I've noted the details of your complaint. Please review the summary and type YES to submit.";
 
         return NextResponse.json({
           reply,
           extracted,
         }, withCors(req));
-      } catch {
-        // Malformed JSON — fall through to plain text
+      } catch (parseError) {
+        console.error("[Gemini] JSON Parse Error:", parseError, "Raw context:", jsonStr.slice(0, 100));
+        // If it looks like JSON but failed parsing, don't show the raw code to the user.
+        // Return a conversational fallback.
+        return NextResponse.json({ 
+          reply: "I've summarized your issue! Please look at the summary above and type YES if everything is correct.",
+          extracted: null 
+        }, withCors(req));
       }
     }
 
-    // Plain conversational reply
-    return NextResponse.json({ reply: rawText.trim(), extracted: null }, withCors(req));
+    // Plain conversational reply (ensure we don't return raw JSON blocks here either)
+    const cleanReply = rawText.replace(/```json[\s\S]*?```/g, "").replace(/\{[\s\S]*\}/g, "").trim();
+    return NextResponse.json({ 
+      reply: cleanReply || "I'm here to help. Could you tell me more about the civic issue you're facing?", 
+      extracted: null 
+    }, withCors(req));
   } catch (err) {
     const message = err instanceof Error ? err.message : "Gemini request failed";
     return NextResponse.json({ error: message }, withCors(req, { status: 502 }));

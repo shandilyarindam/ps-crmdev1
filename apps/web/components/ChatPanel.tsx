@@ -947,12 +947,28 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
             return;
           }
 
-          const { lat, lng, accuracy, timestamp } = await getLocation();
+          // Inherit location if already confirmed, otherwise fetch fresh
+          let lat: number, lng: number, accuracy: number, timestamp: string;
+          if (locationConfirmed && pendingLocation) {
+            lat = pendingLocation.lat;
+            lng = pendingLocation.lng;
+            accuracy = pendingLocation.accuracy;
+            timestamp = pendingLocation.timestamp;
+          } else {
+            const loc = await getLocation();
+            lat = loc.lat;
+            lng = loc.lng;
+            accuracy = loc.accuracy;
+            timestamp = loc.timestamp;
+          }
 
           // Build FormData for FastAPI /analyze
           const formData = new FormData();
           formData.append("image", file);
-          formData.append("user_text", input.trim() || "Please analyze this civic issue");
+          
+          // Use previous text-extracted description as context if available
+          const contextText = pendingComplaint?.description || input.trim() || "Please analyze this civic issue";
+          formData.append("user_text", contextText);
           formData.append("latitude", lat.toString());
           formData.append("longitude", lng.toString());
           formData.append("accuracy", accuracy.toString());
@@ -985,17 +1001,25 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
           // Store for confirmation
           setPendingImagePreview(preview);
           setPendingImageFile(file);
-          setPendingComplaint(null); // clear any text-based pending
+          setPendingComplaint(null); // transition to image-based flow
           setDuplicateContext(null);
-          setPendingLocation({
-            lat: preview.latitude,
-            lng: preview.longitude,
-            accuracy: preview.accuracy,
-            timestamp: preview.timestamp,
-          });
-          setLocationConfirmed(false);
+          
+          if (!locationConfirmed) {
+            setPendingLocation({
+              lat: preview.latitude,
+              lng: preview.longitude,
+              accuracy: preview.accuracy,
+              timestamp: preview.timestamp,
+            });
+            setLocationConfirmed(false);
+          }
 
-          addBotMessage(preview.confirm_prompt, { imagePreview: preview });
+          // If location is already confirmed, we can offer immediate YES
+          const prompt = locationConfirmed 
+            ? "Photo added! I've updated the report with this image. Everything looks consistent—type **YES** to submit."
+            : preview.confirm_prompt;
+            
+          addBotMessage(prompt, { imagePreview: preview });
         } catch (err) {
           const msg = toUserFacingError(err);
           addBotMessage(`⚠️ ${msg}`);
@@ -1145,9 +1169,15 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
         setPendingImagePreview(null);
         setPendingImageDataUrl(null);
         setDuplicateContext(null);
+
+        // Fetch location to show on map, but we'll prioritize the photo request in the message
         const currentLocation = await getLocation();
         setPendingLocation(currentLocation);
-        setLocationConfirmed(false);
+        
+        // Only set confirmed=false if not already confirmed (parity with image flow)
+        if (!locationConfirmed) {
+          setLocationConfirmed(false);
+        }
 
         let geoDetails: GeoDetails | null = null;
         try {
