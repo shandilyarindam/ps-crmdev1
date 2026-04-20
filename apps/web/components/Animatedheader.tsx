@@ -145,13 +145,13 @@ export default function Header({
   return (
     <header
       ref={headerRef}
-      className="fixed top-0 left-0 w-full z-50 transition-colors duration-300 shadow-sm"
+      className="fixed top-0 left-0 w-full z-50 overflow-x-clip transition-colors duration-300 shadow-sm"
       style={{ opacity: 0 }}
     >
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
 
         {/* Left Side: theme toggle, Avatar, Logo & Socials */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3 sm:gap-6">
           <div className="scale-65">
             <ThemeToggle />
           </div>

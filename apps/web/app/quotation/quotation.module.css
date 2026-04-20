@@ -15,6 +15,9 @@
   --ok-text: #1f8f63;
 
   min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   background:
     radial-gradient(circle at 0% 0%, rgba(31, 106, 120, 0.11), transparent 35%),
     radial-gradient(circle at 100% 10%, rgba(86, 63, 31, 0.1), transparent 42%),
@@ -48,9 +51,9 @@
 }
 
 .skipLink {
-  position: absolute;
-  left: -9999px;
-  top: 0;
+  position: fixed;
+  left: 0.75rem;
+  top: 0.75rem;
   z-index: 999;
   padding: 10px 14px;
   border-radius: 8px;
@@ -58,11 +61,12 @@
   color: #fff;
   text-decoration: none;
   font-size: 14px;
+  transform: translateY(-160%);
+  transition: transform 0.2s ease;
 }
 
 .skipLink:focus {
-  left: 16px;
-  top: 16px;
+  transform: translateY(0);
 }
 
 .container {
@@ -184,27 +188,35 @@
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   backdrop-filter: blur(8px);
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
 }
 
 .mobileTocInner {
   min-height: 42px;
-  padding: 0.3rem 0.38rem;
+  padding: 0.38rem 0.46rem;
   display: flex;
   align-items: center;
-  gap: 0.28rem;
+  gap: 0.34rem;
+  scroll-snap-type: x proximity;
 }
 
 .mobileTocLink {
+  display: inline-flex;
+  align-items: center;
   text-decoration: none;
   white-space: nowrap;
   border: 1px solid transparent;
   border-radius: 999px;
-  padding: 0.34rem 0.62rem;
-  font-size: 0.71rem;
+  min-height: 2.2rem;
+  padding: 0.45rem 0.78rem;
+  font-size: 0.74rem;
   font-family: var(--font-geist-mono), monospace;
   letter-spacing: 0.04em;
   color: var(--text-faint);
   transition: all 0.2s ease;
+  scroll-snap-align: start;
 }
 
 .mobileTocLink:hover {
@@ -218,6 +230,15 @@
   background: var(--accent-soft);
 }
 
+.mobileToc::-webkit-scrollbar {
+  height: 4px;
+}
+
+.mobileToc::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+
 .contentLayout {
   margin-top: 1.2rem;
   display: grid;
@@ -229,12 +250,23 @@
 .sidebar {
   position: sticky;
   top: 96px;
+  max-height: calc(100vh - 108px);
+  overflow-y: auto;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   backdrop-filter: blur(8px);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
   padding: 0.74rem;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
 }
 
 .dark .sidebar {
@@ -264,7 +296,8 @@
   text-decoration: none;
   border: 1px solid transparent;
   border-radius: 10px;
-  padding: 0.4rem 0.48rem;
+  min-height: 2.35rem;
+  padding: 0.5rem 0.58rem;
   color: var(--text-faint);
   transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
 }
@@ -293,6 +326,8 @@
   font-family: var(--font-geist-mono), monospace;
   font-size: 0.64rem;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sidebarActions {
@@ -303,7 +338,8 @@
   width: 100%;
   border: 1px solid var(--border-strong);
   border-radius: 999px;
-  min-height: 32px;
+  min-height: 44px;
+  padding: 0.48rem 0.92rem;
   background: var(--surface-elevated);
   color: var(--text-soft);
   font-family: var(--font-geist-mono), monospace;
@@ -322,6 +358,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.05rem;
+  min-width: 0;
   padding-bottom: 3rem;
 }
 
@@ -330,6 +367,7 @@
   border-radius: 16px;
   background: color-mix(in srgb, var(--surface-elevated) 94%, transparent);
   padding: 1.18rem;
+  min-width: 0;
 }
 
 .sectionHead {
@@ -363,6 +401,7 @@
 
 .sectionBody {
   padding-top: 0.95rem;
+  min-width: 0;
 }
 
 .twoCol {
@@ -400,6 +439,7 @@
   vertical-align: top;
   font-size: 0.9rem;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .simpleTable tr:last-child th,
@@ -652,16 +692,30 @@
 }
 
 .tableWrap {
+  position: relative;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
   border: 1px solid var(--border);
   border-radius: 12px;
   margin-bottom: 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.tableWrap::-webkit-scrollbar {
+  height: 5px;
+}
+
+.tableWrap::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 660px;
+  min-width: 640px;
 }
 
 .table th {
@@ -674,6 +728,7 @@
   background: var(--surface-elevated);
   border-bottom: 1px solid var(--border);
   padding: 0.62rem 0.72rem;
+  overflow-wrap: anywhere;
 }
 
 .table td {
@@ -682,6 +737,7 @@
   font-size: 0.84rem;
   line-height: 1.5;
   color: var(--text-soft);
+  overflow-wrap: anywhere;
 }
 
 .table tr:last-child td {
@@ -777,6 +833,7 @@
   color: var(--text-faint);
   font-family: var(--font-geist-mono), monospace;
   font-size: 0.82rem;
+  white-space: nowrap;
 }
 
 .sliderInner {
@@ -808,6 +865,7 @@
   font-size: 0.72rem;
   font-family: var(--font-geist-mono), monospace;
   padding: 0.24rem 0.58rem;
+  white-space: nowrap;
 }
 
 .scaleGrid {
@@ -963,6 +1021,7 @@
 @media (max-width: 980px) {
   .contentLayout {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
   .sidebar {
@@ -990,6 +1049,7 @@
   }
 
   .heroTitle {
+    font-size: clamp(2.2rem, 9vw, 3rem);
     max-width: none;
   }
 
@@ -1014,7 +1074,160 @@
   }
 
   .table {
-    min-width: 600px;
+    min-width: 560px;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.56rem 0.62rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    width: min(1180px, 100% - 1.2rem);
+  }
+
+  .hero {
+    padding-top: 6.9rem;
+    padding-bottom: 1.9rem;
+  }
+
+  .heroTitle {
+    font-size: clamp(2rem, 10vw, 2.6rem);
+  }
+
+  .heroLead {
+    font-size: 0.92rem;
+    line-height: 1.62;
+  }
+
+  .mobileTocInner {
+    padding: 0.34rem 0.36rem;
+  }
+
+  .mobileTocLink {
+    min-height: 2.05rem;
+    padding: 0.38rem 0.62rem;
+    font-size: 0.68rem;
+  }
+
+  .docSection {
+    padding: 0.88rem;
+  }
+
+  .sectionTitle {
+    font-size: clamp(1.1rem, 6.4vw, 1.34rem);
+  }
+
+  .sectionSummary {
+    font-size: 0.88rem;
+  }
+
+  .simpleTable th,
+  .simpleTable td {
+    font-size: 0.82rem;
+    line-height: 1.42;
+  }
+
+  .simpleTable th {
+    width: 45%;
+  }
+
+  .table {
+    min-width: 500px;
+  }
+
+  .table th {
+    font-size: 0.6rem;
+  }
+
+  .table td {
+    font-size: 0.79rem;
+    line-height: 1.42;
+  }
+
+  .sliderRow {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.55rem;
+    padding: 0.72rem;
+  }
+
+  .sliderLabel {
+    grid-column: 1;
+    font-size: 0.72rem;
+    align-self: center;
+  }
+
+  .sliderContext {
+    grid-column: 2;
+    justify-self: end;
+    font-size: 0.64rem;
+    padding: 0.18rem 0.46rem;
+  }
+
+  .sliderInner {
+    grid-column: 1 / -1;
+    min-width: 0;
+    gap: 0.5rem;
+  }
+
+  .sliderValue {
+    min-width: 1.5rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 374px) {
+  .container {
+    width: min(1180px, 100% - 1rem);
+  }
+
+  .hero {
+    padding-top: 6.6rem;
+  }
+
+  .heroTitle {
+    font-size: clamp(1.9rem, 11vw, 2.35rem);
+  }
+
+  .heroLead {
+    font-size: 0.88rem;
+    line-height: 1.58;
+  }
+
+  .mobileTocLink {
+    min-height: 1.95rem;
+    padding: 0.34rem 0.56rem;
+    font-size: 0.64rem;
+  }
+
+  .docSection {
+    padding: 0.82rem;
+  }
+
+  .table {
+    min-width: 460px;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.46rem 0.5rem;
+  }
+
+  .table td {
+    font-size: 0.75rem;
+  }
+
+  .sliderRow {
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+  }
+
+  .sliderContext {
+    grid-column: 1;
+    justify-self: start;
   }
 }
 

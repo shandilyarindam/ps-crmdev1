@@ -4,6 +4,13 @@
 /* existing styles below */
 @import "tailwindcss";
 
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 /* Use the `dark` class on <html> as the source of truth for theme switching. */
 @custom-variant dark (&:where(.dark, .dark *));
 

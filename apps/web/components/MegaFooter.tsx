@@ -301,14 +301,14 @@ export function MegaFooter({
                 {newsletterTitle}
               </h3>
               <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder={newsletterPlaceholder}
                     required
-                    className="flex-1 px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white transition-shadow mega-input"
+                    className="min-w-0 flex-1 px-4 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white transition-shadow mega-input"
                     style={{ color: `var(--input-text-color, ${inputTextColor})` }}
                   />
                   <button
@@ -339,7 +339,7 @@ export function MegaFooter({
           >
             {copyrightText}
           </p>
-          <div className="flex gap-6">
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
             <a
               href="/documentation"
               className="text-sm transition-colors mega-bottom-link"
