@@ -186,6 +186,9 @@ class TicketPreview(BaseModel):
     confidence: float
     user_text: str
     confirm_prompt: str    # Instruction shown below ticket preview in chat
+    # Phase 2: Policy-driven decision fields
+    decision: str = "valid_issue"  # valid_issue | explicit_blocked | non_civic_rejected | low_confidence
+    decision_reason: Optional[str] = None
 
 
 class TicketCreated(BaseModel):
@@ -646,8 +649,17 @@ async def delete_chat_history(
 
 
 # =========================================================
-# 6. GEMINI ANALYSIS FUNCTION
+# 6. GEMINI ANALYSIS FUNCTION (with safety gates)
 # =========================================================
+
+# Decision outcomes for the analysis pipeline
+DECISION_VALID = "valid_issue"
+DECISION_EXPLICIT_BLOCKED = "explicit_blocked"
+DECISION_NON_CIVIC_REJECTED = "non_civic_rejected"
+DECISION_LOW_CONFIDENCE = "low_confidence"
+
+CONFIDENCE_THRESHOLD = 0.6  # Below this → low_confidence decision
+
 
 def analyze_issue_with_gemini(
     image: Image.Image,
@@ -719,24 +731,30 @@ def analyze_issue_with_gemini(
                 detail=f"Gemini returned non-JSON response: {raw[:300]}"
             )
 
-    prompt = f"""
-You are a strict civic issue analyst for a Delhi government complaint platform.
+    # ── UNIFIED PROMPT with built-in safety/moderation gates ──
+    prompt = f"""You are a strict civic issue analyst for a Delhi government complaint platform.
 
 Analyze the provided image step by step and return a single JSON object.
 No explanation, no markdown, no code fences — ONLY raw JSON.
 
-=== STEP 1: IMAGE ANALYSIS ===
+=== STEP 1: SAFETY CHECK ===
+First, check for safety/content issues:
+- If the image contains explicit, adult, or sexually suggestive content → return {{"decision": "explicit_blocked", "reason": "Image contains explicit or adult content."}}
+- If the image is primarily a person/selfie, private indoor scene, meme, screenshot, text-only, or has NO visible civic infrastructure issue → return {{"decision": "non_civic_rejected", "reason": "<brief reason why this is not a civic issue>"}}
+- A person appearing IN-FRAME is acceptable ONLY if a civic issue (pothole, garbage, broken infrastructure, etc.) is clearly the main subject of the image.
+
+=== STEP 2: IMAGE ANALYSIS (only if civic issue is visible) ===
 Carefully examine the image. Identify:
 - What physical object or infrastructure is visible?
 - What is wrong with it? (damaged, broken, missing, overflowing, dirty, etc.)
 - How severe does the damage appear visually?
 
-=== STEP 2: USER DESCRIPTION ===
+=== STEP 3: USER DESCRIPTION ===
 User description (supporting context only, image is primary):
 {text}
 
-=== STEP 3: CLASSIFICATION ===
-Using STEPS 1 + 2 together, select the single best Child ID:
+=== STEP 4: CLASSIFICATION ===
+Using STEPS 2 + 3 together, select the single best Child ID:
 
 1=Metro Station Issue | 2=Metro Track/Safety | 3=Escalator/Lift | 4=Metro Parking
 5=Metro Station Hygiene | 6=Metro Property Damage | 7=National Highway Damage
@@ -753,58 +771,53 @@ Using STEPS 1 + 2 together, select the single best Child ID:
 39=Illegal Tree Cutting | 40=Air Pollution/Burning | 41=Noise Pollution
 42=Industrial Waste Dumping
 
-=== STEP 4: SEVERITY ===
+=== STEP 5: SEVERITY ===
 Based on visual damage and safety risk:
 - Low      = Minor issue, no immediate risk (dim light, small pothole)
 - Medium   = Inconvenient but not dangerous (garbage pile, broken footpath)
 - High     = Potential safety risk (exposed wire, large pothole, sewage overflow)
 - Critical = Immediate danger to life or property (live wire on ground, collapsed structure)
 
-=== OUTPUT ===
+=== OUTPUT (for valid civic issues) ===
 Return ONLY this exact JSON:
 {{
+  "decision": "valid_issue",
   "child_id": <integer 1-42>,
-        "title": "<5-10 word title describing issue>",
-        "description": "<2-3 sentences: what is visible and what is wrong>",
-        "severity": "<Low | Medium | High | Critical>",
-        "confidence": <float between 0 and 1>
+  "title": "<5-10 word title describing issue>",
+  "description": "<2-3 sentences: what is visible and what is wrong>",
+  "severity": "<Low | Medium | High | Critical>",
+  "confidence": <float between 0 and 1>
 }}
-
-If image is NOT a civic infrastructure issue return exactly: {{"error": "INVALID"}}
 """
 
     result = _call_gemini_json(prompt)
 
-    if result.get("error") == "INVALID":
-        # Fallback pass: force a best-effort civic classification instead of rejecting outright.
-        fallback_prompt = f"""
-You are a Delhi civic issue classifier.
+    # ── Handle policy-driven decisions ──
+    decision = result.get("decision", "valid_issue")
 
-The previous classifier marked the image as INVALID, but for this workflow you MUST return
-the closest civic infrastructure category with a best-effort assessment.
-Never return INVALID.
+    if decision == "explicit_blocked":
+        return {
+            "decision": DECISION_EXPLICIT_BLOCKED,
+            "decision_reason": result.get("reason", "Image contains explicit or inappropriate content."),
+            "child_id": 16,  # placeholder
+            "title": "Content Blocked",
+            "description": "This image was blocked by our content safety filter.",
+            "severity": "Low",
+            "confidence": 0.0,
+        }
 
-Device coordinates:
-Latitude : {latitude}
-Longitude: {longitude}
+    if decision == "non_civic_rejected":
+        return {
+            "decision": DECISION_NON_CIVIC_REJECTED,
+            "decision_reason": result.get("reason", "Image does not appear to show a civic infrastructure issue."),
+            "child_id": 16,  # placeholder  
+            "title": "Not a Civic Issue",
+            "description": "This image does not appear to depict a civic infrastructure problem.",
+            "severity": "Low",
+            "confidence": 0.0,
+        }
 
-User description:
-{text}
-
-Choose one child_id from 1-42. If the issue appears to involve lighting/poles/wires,
-prefer 22, 25, 33, or 34.
-
-Return ONLY JSON in this exact shape:
-{{
-  "child_id": <integer 1-42>,
-  "title": "<5-10 word title>",
-  "description": "<2-3 sentence best-effort assessment>",
-        "severity": "<Low | Medium | High | Critical>",
-        "confidence": <float between 0 and 1>
-}}
-"""
-        result = _call_gemini_json(fallback_prompt)
-
+    # ── Validate required fields for valid_issue ──
     child_id = result.get("child_id")
     if not isinstance(child_id, int) or child_id not in CHILD_CATEGORIES:
         raise HTTPException(status_code=500, detail=f"Gemini returned invalid child_id: {child_id}")
@@ -821,6 +834,10 @@ Return ONLY JSON in this exact shape:
     for field in ["title", "description"]:
         if not result.get(field):
             raise HTTPException(status_code=500, detail=f"Gemini did not return required field: {field}")
+
+    # Tag as valid issue (or low confidence — decided by the /analyze endpoint)
+    result["decision"] = DECISION_VALID
+    result["decision_reason"] = None
 
     return result
 
@@ -872,6 +889,71 @@ async def analyze(
         asyncio.to_thread(reverse_geocode_from_coordinates, latitude, longitude),
     )
 
+    decision = result.get("decision", DECISION_VALID)
+    decision_reason = result.get("decision_reason")
+
+    # ── Handle safety rejections ──
+    if decision == DECISION_EXPLICIT_BLOCKED:
+        return TicketPreview(
+            child_id=result["child_id"],
+            issue_name="Blocked",
+            parent_id=0,
+            authority="N/A",
+            title=result["title"],
+            description=result["description"],
+            severity=result["severity"],
+            severity_db="L1",
+            status="rejected",
+            ward_name="N/A",
+            pincode="000000",
+            digipin="",
+            locality="",
+            city="",
+            district="",
+            state="",
+            formatted_address="",
+            latitude=latitude,
+            longitude=longitude,
+            accuracy=accuracy,
+            timestamp=timestamp,
+            confidence=0.0,
+            user_text=user_text,
+            confirm_prompt="⛔ This image has been blocked by our content safety filter. Please upload a photo of a civic infrastructure issue.",
+            decision=DECISION_EXPLICIT_BLOCKED,
+            decision_reason=decision_reason,
+        )
+
+    if decision == DECISION_NON_CIVIC_REJECTED:
+        return TicketPreview(
+            child_id=result["child_id"],
+            issue_name="Not a Civic Issue",
+            parent_id=0,
+            authority="N/A",
+            title=result["title"],
+            description=result["description"],
+            severity=result["severity"],
+            severity_db="L1",
+            status="rejected",
+            ward_name="N/A",
+            pincode="000000",
+            digipin="",
+            locality="",
+            city="",
+            district="",
+            state="",
+            formatted_address="",
+            latitude=latitude,
+            longitude=longitude,
+            accuracy=accuracy,
+            timestamp=timestamp,
+            confidence=0.0,
+            user_text=user_text,
+            confirm_prompt=f"❌ This image doesn't appear to show a civic issue. {decision_reason or ''} Please upload a clear photo of the problem.",
+            decision=DECISION_NON_CIVIC_REJECTED,
+            decision_reason=decision_reason,
+        )
+
+    # ── Build valid preview ──
     child_id = result["child_id"]
     category = CHILD_CATEGORIES[child_id]
     severity_db = SEVERITY_MAP[result["severity"]]
@@ -883,6 +965,38 @@ async def analyze(
         location=location,
         default_authority=category["authority"],
     )
+
+    # ── Server-side confidence gating ──
+    confidence = result["confidence"]
+    if confidence < CONFIDENCE_THRESHOLD:
+        return TicketPreview(
+            child_id=child_id,
+            issue_name=category["name"],
+            parent_id=category["parent"],
+            authority=routed_authority,
+            title=result["title"],
+            description=result["description"],
+            severity=result["severity"],
+            severity_db=severity_db,
+            status="low_confidence",
+            ward_name=ward_name,
+            pincode=location["pincode"],
+            digipin=location["digipin"],
+            locality=location["locality"],
+            city=location["city"],
+            district=location["district"],
+            state=location["state"],
+            formatted_address=location["formatted_address"],
+            latitude=latitude,
+            longitude=longitude,
+            accuracy=accuracy,
+            timestamp=timestamp,
+            confidence=confidence,
+            user_text=user_text,
+            confirm_prompt="⚠️ We're not confident enough about this classification. Please take a clearer photo or describe the issue in more detail.",
+            decision=DECISION_LOW_CONFIDENCE,
+            decision_reason=f"Confidence {confidence:.2f} is below threshold {CONFIDENCE_THRESHOLD}.",
+        )
 
     return TicketPreview(
         child_id=child_id,
@@ -906,9 +1020,10 @@ async def analyze(
         longitude=longitude,
         accuracy=accuracy,
         timestamp=timestamp,
-        confidence=result["confidence"],
+        confidence=confidence,
         user_text=user_text,
         confirm_prompt="✅ Ticket preview ready. Type \"confirm\" or \"submit\" to raise this ticket, or describe the issue differently to re-analyse.",
+        decision=DECISION_VALID,
     )
 
 

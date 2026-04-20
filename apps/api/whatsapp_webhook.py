@@ -376,6 +376,36 @@ async def handle_image(phone: str, image_id: str):
         await send_text(phone, f"❌ AI analysis failed: {e}")
         return
 
+    # 3b. Handle safety gate decisions
+    decision = result.get("decision", "valid_issue")
+
+    if decision == "explicit_blocked":
+        await send_text(phone,
+            "⛔ *Content Blocked*\n\n"
+            "This image has been flagged by our content safety filter.\n"
+            "Please only submit photos of civic infrastructure issues.\n\n"
+            "Send *hi* to start again."
+        )
+        SESSIONS.pop(phone, None)
+        return
+
+    if decision == "non_civic_rejected":
+        reason = result.get("decision_reason", "This image doesn't appear to show a civic issue.")
+        await send_text(phone,
+            f"❌ *Not a Civic Issue*\n\n"
+            f"{reason}\n\n"
+            f"Please send a clear photo of a civic problem (pothole, garbage, broken street light, etc.).\n\n"
+            f"Send *hi* to start again."
+        )
+        SESSIONS.pop(phone, None)
+        return
+
+    # 3c. Check confidence threshold
+    confidence = result.get("confidence", 0.8)
+    confidence_warning = ""
+    if confidence < 0.6:
+        confidence_warning = "\n⚠️ _We're not very confident about this classification. Consider taking a clearer photo._\n"
+
     # 4. Store image + result in session; ask for location
     SESSIONS[phone] = {
         "image_bytes": image_bytes,
@@ -386,7 +416,8 @@ async def handle_image(phone: str, image_id: str):
     await send_location_request(phone,
         f"✅ *Issue detected:* {result['issue_name']}\n"
         f"📋 *{result['title']}*\n"
-        f"🔴 Severity: {result['severity']}\n\n"
+        f"🔴 Severity: {result['severity']}"
+        f"{confidence_warning}\n\n"
         "📍 Please tap *Send Location* below to complete your ticket.\n"
         "(Or reply *No* to cancel report)"
     )
@@ -675,15 +706,23 @@ async def classify_image_with_gemini(pil_image: Image.Image) -> dict:
         for cid, cat in CHILD_CATEGORIES.items()
     )
 
+    # Unified prompt with safety gates (mirrors main.py)
     prompt = f"""You are a civic-issue classifier for an Indian city grievance system.
 
 Analyse the image and respond ONLY with a valid JSON object — no markdown, no extra text.
 
+=== SAFETY CHECK (do this FIRST) ===
+- If the image contains explicit, adult, or sexually suggestive content → return {{"decision": "explicit_blocked", "reason": "Image contains explicit or adult content."}}
+- If the image is primarily a person/selfie, private indoor scene, meme, screenshot, text-only, or has NO visible civic infrastructure issue → return {{"decision": "non_civic_rejected", "reason": "<brief reason>"}}
+- A person appearing IN-FRAME is acceptable ONLY if a civic issue is clearly the main subject.
+
+=== CLASSIFICATION (only if civic issue is visible) ===
 Available issue categories (id: name):
 {child_list}
 
 Return exactly:
 {{
+  "decision": "valid_issue",
   "child_id": <integer from the list above>,
   "title": "<short 8-word title>",
   "description": "<2-3 sentence description>",
@@ -721,6 +760,21 @@ Return exactly:
     if not result:
         raise ValueError("Gemini could not classify the image.")
 
+    # Handle safety decisions
+    decision = result.get("decision", "valid_issue")
+
+    if decision == "explicit_blocked":
+        return {
+            "decision": "explicit_blocked",
+            "decision_reason": result.get("reason", "Image contains explicit or inappropriate content."),
+        }
+
+    if decision == "non_civic_rejected":
+        return {
+            "decision": "non_civic_rejected",
+            "decision_reason": result.get("reason", "Image does not show a civic issue."),
+        }
+
     child_id = int(result["child_id"])
     if child_id not in CHILD_CATEGORIES:
         child_id = 16   # default: Garbage Collection
@@ -730,6 +784,7 @@ Return exactly:
     severity_db  = {"Low": "L1", "Medium": "L2", "High": "L3", "Critical": "L4"}.get(severity_lbl, "L2")
 
     return {
+        "decision": "valid_issue",
         "child_id":    child_id,
         "issue_name":  category["name"],
         "authority":   category["authority"],
