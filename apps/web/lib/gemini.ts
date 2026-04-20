@@ -21,6 +21,8 @@ export interface GeminiResponse {
   extracted: ExtractedComplaint | null;
 }
 
+const GEMINI_REQUEST_TIMEOUT_MS = 20000;
+
 const SYSTEM_PROMPT = `You are JanSamadhan AI, a helpful civic complaint assistant for Delhi municipal services.
 Your job: have a short, friendly conversation with the citizen to collect ALL required fields for their complaint summary, then output structured JSON.
 
@@ -56,18 +58,31 @@ RULES:
  * Calls the Next.js API route to keep the API key server-side.
  */
 export async function sendToGemini(messages: ChatMessage[], language?: string): Promise<GeminiResponse> {
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages, language }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), GEMINI_REQUEST_TIMEOUT_MS);
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Unknown error" }));
-    throw new Error(err.error ?? "Failed to contact AI assistant");
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages, language }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Unknown error" }));
+      throw new Error(err.error ?? "Failed to contact AI assistant");
+    }
+
+    return res.json() as Promise<GeminiResponse>;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("AI assistant timed out. Please try again.");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  return res.json() as Promise<GeminiResponse>;
 }
 
 /** Export system prompt for server-side use */

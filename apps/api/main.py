@@ -2,8 +2,10 @@ import os
 import json
 import uuid
 import base64
+import hmac
 import hashlib
 import re
+import time
 import asyncio
 import urllib.parse
 import urllib.request
@@ -402,26 +404,83 @@ class ClosureConfirmationRequest(BaseModel):
 # 5. HELPERS
 # =========================================================
 
+def _decode_base64url(value: str) -> bytes:
+    padded = value + "=" * (-len(value) % 4)
+    return base64.urlsafe_b64decode(padded.encode("utf-8"))
+
+
+def _verify_token_with_supabase_auth(token: str) -> str:
+    if not SERVICE_BASE_URL or not SERVICE_API_KEY:
+        raise HTTPException(status_code=500, detail="Supabase auth verification is not configured.")
+
+    req = urllib.request.Request(
+        f"{SERVICE_BASE_URL.rstrip('/')}/auth/v1/user",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "apikey": SERVICE_API_KEY,
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=8) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired token.")
+
+    citizen_id = payload.get("id") or payload.get("sub")
+    if not citizen_id:
+        raise HTTPException(status_code=401, detail="Invalid token payload.")
+    return citizen_id
+
+
 def get_citizen_id_from_token(authorization: Optional[str]) -> str:
     """
-    Decode the Supabase JWT passed as 'Bearer <token>' and extract the user uuid.
-    We do NOT verify signature here — Supabase service key insert already trusts the caller.
-    For production, verify the JWT using Supabase JWT secret.
+    Verify the Supabase JWT passed as 'Bearer <token>' and extract the user UUID.
+    Uses local HS256 verification when SUPABASE_JWT_SECRET is configured,
+    otherwise falls back to Supabase Auth /user verification.
     """
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header.")
 
-    token = authorization.split(" ", 1)[1]
+    token = authorization.split(" ", 1)[1].strip()
+    if not token:
+        raise HTTPException(status_code=401, detail="Missing bearer token.")
+
+    jwt_secret = os.getenv("SUPABASE_JWT_SECRET", "").strip()
+    if not jwt_secret:
+        return _verify_token_with_supabase_auth(token)
+
     try:
-        # JWT payload is the middle segment, base64url encoded
-        payload_b64 = token.split(".")[1]
-        # Add padding
-        payload_b64 += "=" * (4 - len(payload_b64) % 4)
-        payload = json.loads(base64.urlsafe_b64decode(payload_b64))
+        header_b64, payload_b64, signature_b64 = token.split(".")
+        header = json.loads(_decode_base64url(header_b64))
+        if header.get("alg") != "HS256":
+            raise HTTPException(status_code=401, detail="Unsupported JWT algorithm.")
+
+        signing_input = f"{header_b64}.{payload_b64}".encode("utf-8")
+        expected_signature = hmac.new(jwt_secret.encode("utf-8"), signing_input, hashlib.sha256).digest()
+        provided_signature = _decode_base64url(signature_b64)
+
+        if not hmac.compare_digest(expected_signature, provided_signature):
+            raise HTTPException(status_code=401, detail="Invalid token signature.")
+
+        payload = json.loads(_decode_base64url(payload_b64))
+        now = int(time.time())
+
+        exp = payload.get("exp")
+        if exp is not None and now >= int(exp):
+            raise HTTPException(status_code=401, detail="Token expired.")
+
+        nbf = payload.get("nbf")
+        if nbf is not None and now < int(nbf):
+            raise HTTPException(status_code=401, detail="Token not valid yet.")
+
         citizen_id = payload.get("sub")
+        if not citizen_id:
+            raise HTTPException(status_code=401, detail="Token missing subject.")
         return citizen_id
-    except Exception as e:
-        raise HTTPException(status_code=401, detail=f"Failed to decode JWT: {str(e)}")
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or malformed token.")
 
 
 async def require_admin(authorization: Optional[str]) -> str:

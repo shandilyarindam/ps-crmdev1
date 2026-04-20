@@ -149,7 +149,6 @@ export async function POST(req: NextRequest): Promise<NextResponse<GeminiRespons
       );
 
       data = (await geminiRes.json()) as GeminiApiResponse;
-      console.error(`[Gemini ${model}] raw:`, JSON.stringify(data));  // ← ADD THIS
 
       if (!data.error) {
         quotaFailure = false;

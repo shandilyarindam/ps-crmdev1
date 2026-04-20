@@ -6,7 +6,7 @@ import gsap from "gsap";
 import { sendToGemini } from "@/lib/gemini";
 import type { ChatMessage, ExtractedComplaint, GeminiResponse } from "@/lib/gemini";
 import { supabase } from "@/src/lib/supabase";
-import type { PostgrestError } from "@supabase/supabase-js";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { saveSharedState, getSharedState, clearSharedState } from "../lib/db";
 import dynamic from "next/dynamic";
 
@@ -725,7 +725,7 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
 
   // Clear chat history from Redis & localStorage on logout
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, _session: Session | null) => {
       if (event === "SIGNED_OUT") {
         // Clear Redis-cached history
         if (sessionIdRef.current) {
@@ -957,6 +957,7 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
             setPendingLocation(null);
             setLocationConfirmed(false);
             setDuplicateContext(null);
+            if (userIdRef.current) clearSharedState(`jansamadhan_pending_state_${userIdRef.current}`).catch(console.error);
             addBotMessage(t(selectedLanguage, "low_confidence"));
             return;
           }
@@ -1061,7 +1062,7 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
 
     setIsLoading(true);
     try {
-      const res: GeminiResponse = await sendToGemini(historyRef.current);
+        const res: GeminiResponse = await sendToGemini(historyRef.current, selectedLanguage ?? undefined);
       historyRef.current.push({ role: "model", text: res.reply });
 
       if (res.extracted) {
@@ -1072,6 +1073,7 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
           setPendingLocation(null);
           setLocationConfirmed(false);
           setDuplicateContext(null);
+          if (userIdRef.current) clearSharedState(`jansamadhan_pending_state_${userIdRef.current}`).catch(console.error);
           addBotMessage(t(selectedLanguage, "low_confidence"));
           return;
         }
@@ -1115,13 +1117,14 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
         return;
       }
 
+      if (!pendingLocation || !locationConfirmed) {
+        addBotMessage(t(selectedLanguage, "confirm_location_first"));
+        setSubmitting(false);
+        return;
+      }
+
       const formData = new FormData();
-      const submitLocation = pendingLocation ?? {
-        lat: pendingImagePreview.latitude,
-        lng: pendingImagePreview.longitude,
-        accuracy: pendingImagePreview.accuracy,
-        timestamp: pendingImagePreview.timestamp,
-      };
+      const submitLocation = pendingLocation;
       formData.append("image", pendingImageFile);
       formData.append("user_text", "Confirmed by user");
       formData.append("latitude", submitLocation.lat.toString());
@@ -1208,7 +1211,13 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
         return;
       }
 
-      const submitLocation = pendingLocation ?? (await getLocation());
+      if (!pendingLocation || !locationConfirmed) {
+        addBotMessage(t(selectedLanguage, "confirm_location_first"));
+        setSubmitting(false);
+        return;
+      }
+
+      const submitLocation = pendingLocation;
       const categoryId = categoryFromIssueType(pendingComplaint.issue_type);
       const severityLevel = severityToLevel(pendingComplaint.severity);
 
@@ -1219,7 +1228,6 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
           ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         },
         body: JSON.stringify({
-          citizen_id: user.id,
           category_id: categoryId,
           issue_type: pendingComplaint.issue_type,
           title: pendingComplaint.title,
@@ -1285,9 +1293,19 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
     if (!duplicateContext?.duplicate?.id) return;
     setSubmitting(true);
     try {
+      const token = await getAuthToken();
+      if (!token) {
+        addBotMessage(t(selectedLanguage, "login_required"));
+        setSubmitting(false);
+        return;
+      }
+
       const res = await fetch("/api/complaints", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ complaint_id: duplicateContext.duplicate.id }),
       });
       const data = await res.json();
@@ -1392,7 +1410,7 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
             setInput("");
             setIsLoading(true);
 
-            sendToGemini(historyRef.current)
+            sendToGemini(historyRef.current, selectedLanguage ?? undefined)
               .then((geminiRes) => {
                 historyRef.current.push({ role: "model", text: geminiRes.reply });
                 if (geminiRes.extracted) {
@@ -1403,6 +1421,7 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
                     setPendingLocation(null);
                     setLocationConfirmed(false);
                     setDuplicateContext(null);
+                    if (userIdRef.current) clearSharedState(`jansamadhan_pending_state_${userIdRef.current}`).catch(console.error);
                     addBotMessage(t(selectedLanguage, "low_confidence"));
                     return;
                   }
@@ -1460,7 +1479,6 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
           mediaRecorderRef.current.stop();
         }
       }, 30000);
-      addBotMessage(t(selectedLanguage, "mic_denied"));
     } catch (err) {
       console.error("Microphone access error:", err);
       addBotMessage(t(selectedLanguage, "mic_denied"));

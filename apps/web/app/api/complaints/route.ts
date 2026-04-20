@@ -88,7 +88,7 @@ async function notifyPythonComplaintEmail(input: {
 }
 
 interface ComplaintPayload {
-  citizen_id: string;
+  citizen_id?: string;
   category_id: number;
   issue_type?: string;
   title: string;
@@ -152,6 +152,11 @@ interface DuplicateMatch {
   status: string;
   created_at: string;
   distance_m: number;
+}
+
+interface CitizenStatusUpdateResult {
+  success?: boolean;
+  error?: string;
 }
 
 function canTransitionStatus(current: string, next: string): boolean {
@@ -414,8 +419,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
+  const authorization = req.headers.get("authorization") ?? "";
+  const token = authorization.startsWith("Bearer ") ? authorization.slice(7).trim() : "";
+  if (!token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { data: { user }, error: authError } = await getAuthClient().auth.getUser(token);
+  const authenticatedCitizenId = user?.id ?? null;
+  if (authError || !authenticatedCitizenId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const {
-    citizen_id,
     category_id,
     issue_type,
     title,
@@ -436,7 +452,6 @@ export async function POST(req: NextRequest) {
 
   // Validate required fields
   if (
-    !citizen_id ||
     !category_id ||
     !title ||
     !description ||
@@ -446,7 +461,7 @@ export async function POST(req: NextRequest) {
     !timestamp
   ) {
     return NextResponse.json(
-      { error: "Missing required fields: citizen_id, category_id, title, description, latitude, longitude, accuracy, timestamp" },
+      { error: "Missing required fields: category_id, title, description, latitude, longitude, accuracy, timestamp" },
       { status: 400 },
     );
   }
@@ -459,7 +474,7 @@ export async function POST(req: NextRequest) {
   const resolvedCity = (city?.trim() || resolved.city || "Delhi").trim();
   const addressWithMeta = `${resolvedAddress} | gps_lat=${latitude.toFixed(6)} | gps_lng=${longitude.toFixed(6)} | gps_accuracy_m=${accuracy.toFixed(1)} | gps_timestamp=${timestamp}`;
   const canonicalComplaint = buildCanonicalComplaintRecord({
-    userId: citizen_id,
+    userId: authenticatedCitizenId,
     issueType: (issue_type?.trim() || title.trim()),
     severity: severity,
     description,
@@ -536,7 +551,6 @@ export async function POST(req: NextRequest) {
 
   // --- Centralized backend email notification ---
   try {
-    const authorization = req.headers.get("authorization") ?? "";
     await notifyPythonComplaintEmail({
       complaintId: data.id,
       eventType: "complaint_created",
@@ -549,7 +563,7 @@ export async function POST(req: NextRequest) {
 
   // Award points for ticket creation
   try {
-    await gamificationService.awardPoints(citizen_id, GAMIFICATION_CONFIG.POINTS_TICKET_CREATION, 'ticket_creation');
+    await gamificationService.awardPoints(authenticatedCitizenId, GAMIFICATION_CONFIG.POINTS_TICKET_CREATION, 'ticket_creation');
   } catch (err) {
     console.error("[API/Complaints] Failed to award points for ticket creation:", err);
   }
@@ -570,11 +584,14 @@ export async function PATCH(req: NextRequest) {
 
   const authorization = req.headers.get("authorization") ?? "";
   const token = authorization.startsWith("Bearer ") ? authorization.slice(7).trim() : "";
+  if (!token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  let voterCitizenId: string | null = null;
-  if (token) {
-    const { data: { user } } = await getAuthClient()!.auth.getUser(token);
-    voterCitizenId = user?.id ?? null;
+  const { data: { user }, error: authError } = await getAuthClient().auth.getUser(token);
+  const voterCitizenId = user?.id ?? null;
+  if (authError || !voterCitizenId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { data: current, error: fetchError } = await supabase
@@ -587,31 +604,26 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Complaint not found" }, { status: 404 });
   }
 
-  if (voterCitizenId) {
-    const { data: existingVote } = await supabase
-      .from("upvotes")
-      .select("id")
-      .eq("citizen_id", voterCitizenId)
-      .eq("complaint_id", body.complaint_id)
-      .maybeSingle();
+  const { data: existingVote } = await supabase
+    .from("upvotes")
+    .select("id")
+    .eq("citizen_id", voterCitizenId)
+    .eq("complaint_id", body.complaint_id)
+    .maybeSingle();
 
-    if (existingVote) {
-      if (body.action === 'upvote') {
-        return NextResponse.json({ success: true, complaint: current, duplicate: true });
-      }
-      // Remove upvote
-      await supabase.from("upvotes").delete().eq("id", existingVote.id);
-      await supabase.rpc('decrement_upvote_count', { p_complaint_id: body.complaint_id });
-    } else {
-      if (body.action === 'downvote') {
-        return NextResponse.json({ success: true, complaint: current });
-      }
-      // Add upvote
-      await supabase.from("upvotes").insert({ citizen_id: voterCitizenId, complaint_id: body.complaint_id });
-      await supabase.rpc('increment_upvote_count', { p_complaint_id: body.complaint_id });
+  if (existingVote) {
+    if (body.action === 'upvote') {
+      return NextResponse.json({ success: true, complaint: current, duplicate: true });
     }
+    // Remove upvote
+    await supabase.from("upvotes").delete().eq("id", existingVote.id);
+    await supabase.rpc('decrement_upvote_count', { p_complaint_id: body.complaint_id });
   } else {
-    // Anonymous upvote (if allowed)
+    if (body.action === 'downvote') {
+      return NextResponse.json({ success: true, complaint: current });
+    }
+    // Add upvote
+    await supabase.from("upvotes").insert({ citizen_id: voterCitizenId, complaint_id: body.complaint_id });
     await supabase.rpc('increment_upvote_count', { p_complaint_id: body.complaint_id });
   }
 
@@ -696,8 +708,9 @@ export async function PUT(req: NextRequest) {
   }
 
   // The RPC returns {success: boolean, error: string}
-  if (updated && (updated as any).success === false) {
-    return NextResponse.json({ error: (updated as any).error }, { status: 403 });
+  const statusUpdateResult = (updated as CitizenStatusUpdateResult | null) ?? null;
+  if (statusUpdateResult?.success === false) {
+    return NextResponse.json({ error: statusUpdateResult.error ?? "Status update was rejected" }, { status: 403 });
   }
 
   // Need to fetch the updated record to match previous return format
