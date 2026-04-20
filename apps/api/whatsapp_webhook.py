@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 from io import BytesIO
 from typing import Optional
 import asyncio
-
+import base64
 import httpx
 
 from fastapi import APIRouter, Request, Response, HTTPException
@@ -43,6 +43,7 @@ from shared import (
     build_complaint_record,
     send_resend_email,
     build_ticket_details_url,
+    redis_client,
 )
 
 
@@ -57,9 +58,47 @@ def get_graph_api_url():
     id_val = os.getenv("WHATSAPP_PHONE_NUMBER_ID", "").strip()
     return f"https://graph.facebook.com/v22.0/{id_val}/messages"
 
-# In-memory session store  { phone_number: { ...session data } }
-# For production, replace with Redis or Supabase table
-SESSIONS: dict = {}
+# Redis Keys
+SESSION_PREFIX = "whatsapp:session:"
+SESSION_TTL = 3600  # 1 hour
+
+async def get_session(phone: str) -> dict:
+    if not redis_client:
+        return {}
+    try:
+        data = redis_client.get(f"{SESSION_PREFIX}{phone}")
+        if not data:
+            return {}
+        session = json.loads(data)
+        # Decode image_bytes if present (stored as base64 string)
+        if "image_bytes" in session and session["image_bytes"]:
+            session["image_bytes"] = base64.b64decode(session["image_bytes"])
+        return session
+    except Exception as e:
+        print(f"[Redis Get Error] {e}")
+        return {}
+
+async def save_session(phone: str, session: dict):
+    if not redis_client:
+        return
+    try:
+        # Clone to avoid mutating original
+        data_to_store = session.copy()
+        # Encode image_bytes if present
+        if "image_bytes" in data_to_store and isinstance(data_to_store["image_bytes"], bytes):
+            data_to_store["image_bytes"] = base64.b64encode(data_to_store["image_bytes"]).decode("utf-8")
+        
+        redis_client.setex(
+            f"{SESSION_PREFIX}{phone}",
+            SESSION_TTL,
+            json.dumps(data_to_store)
+        )
+    except Exception as e:
+        print(f"[Redis Save Error] {e}")
+
+async def delete_session(phone: str):
+    if redis_client:
+        redis_client.delete(f"{SESSION_PREFIX}{phone}")
 
 router = APIRouter(prefix="/whatsapp", tags=["WhatsApp"])
 
@@ -147,11 +186,11 @@ async def receive_message(request: Request):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 async def handle_text(phone: str, text: str):
-    session = SESSIONS.get(phone, {})
+    session = await get_session(phone)
 
     # ── greeting ──────────────────────────────────────────────────────────────
     if text in ("hi", "hello", "hey", "start", "namaste", "menu", "help"):
-        SESSIONS[phone] = {}
+        await delete_session(phone)
         await send_list_message(
             phone=phone,
             body_text=(
@@ -194,6 +233,21 @@ async def handle_text(phone: str, text: str):
         await confirm_ticket(phone, session)
         return
 
+    # ── edit / change intent ──────────────────────────────────────────────────
+    if (text in ("edit", "change", "wrong", "galat") or "change category" in text) and session.get("state") == "awaiting_location":
+        await send_text(phone, "No problem! Please tell me what the correct category should be, or describe the issue again.")
+        session["state"] = "editing_details"
+        session["fallback_count"] = 0
+        await save_session(phone, session)
+        return
+
+    if session.get("state") == "editing_details":
+        # Here we could run Gemini again with the new text, 
+        # but for simplicity let's just ask them to send a new photo or reset.
+        await send_text(phone, "Got it. Please send a new photo and I will re-analyze it for you.")
+        await delete_session(phone)
+        return
+
     # ── upvote existing duplicate ──────────────────────────────────────────────
     if text in ("upvote", "support", "same") and session.get("duplicate"):
         await upvote_duplicate(phone, session)
@@ -202,13 +256,13 @@ async def handle_text(phone: str, text: str):
     # ── force submit despite duplicate ─────────────────────────────────────────
     if text in ("force", "submit anyway", "yes again") and session.get("preview") and session.get("duplicate"):
         session["force_submit"] = True
-        SESSIONS[phone] = session
+        await save_session(phone, session)
         await confirm_ticket(phone, session)
         return
 
     # ── cancel ────────────────────────────────────────────────────────────────
     if text in ("cancel", "no", "nahi", "reset"):
-        SESSIONS.pop(phone, None)
+        await delete_session(phone)
         await send_text(phone, "❌ Cancelled. Send *hi* to start again.")
         return
 
@@ -225,7 +279,19 @@ async def handle_text(phone: str, text: str):
         await link_whatsapp_account(phone, code)
         return
 
-    # ── fallback ──────────────────────────────────────────────────────────────
+    # ── fallback loop guard ────────────────────────────────────────────────────
+    count = session.get("fallback_count", 0) + 1
+    if count >= 3:
+        await delete_session(phone)
+        await send_text(phone, 
+            "⚠️ It seems I'm having trouble understanding. I've reset our conversation.\n\n"
+            "Please send *Hi* to see the menu or send a clear *photo* of a civic issue."
+        )
+        return
+
+    session["fallback_count"] = count
+    await save_session(phone, session)
+    
     await send_text(phone,
         "I didn't understand that. Please use the Menu by sending *Hi* or send a *photo* to report an issue."
     )
@@ -386,7 +452,7 @@ async def handle_image(phone: str, image_id: str):
             "Please only submit photos of civic infrastructure issues.\n\n"
             "Send *hi* to start again."
         )
-        SESSIONS.pop(phone, None)
+        await delete_session(phone)
         return
 
     if decision == "non_civic_rejected":
@@ -397,7 +463,7 @@ async def handle_image(phone: str, image_id: str):
             f"Please send a clear photo of a civic problem (pothole, garbage, broken street light, etc.).\n\n"
             f"Send *hi* to start again."
         )
-        SESSIONS.pop(phone, None)
+        await delete_session(phone)
         return
 
     # 3c. Check confidence threshold
@@ -407,11 +473,14 @@ async def handle_image(phone: str, image_id: str):
         confidence_warning = "\n⚠️ _We're not very confident about this classification. Consider taking a clearer photo._\n"
 
     # 4. Store image + result in session; ask for location
-    SESSIONS[phone] = {
+    session = await get_session(phone)
+    session.update({
         "image_bytes": image_bytes,
         "gemini_result": result,
         "state": "awaiting_location",
-    }
+        "fallback_count": 0
+    })
+    await save_session(phone, session)
 
     await send_location_request(phone,
         f"✅ *Issue detected:* {result['issue_name']}\n"
@@ -428,7 +497,7 @@ async def handle_image(phone: str, image_id: str):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 async def handle_location(phone: str, lat: float, lng: float):
-    session = SESSIONS.get(phone, {})
+    session = await get_session(phone)
 
     if session.get("state") != "awaiting_location":
         await send_text(phone, "Please send a *photo* of the issue first, then share your location.")
@@ -472,7 +541,8 @@ async def handle_location(phone: str, lat: float, lng: float):
         "image_bytes": image_bytes,
     }
 
-    SESSIONS[phone] = {**session, "preview": preview, "state": "awaiting_confirm"}
+    session.update({"preview": preview, "state": "awaiting_confirm"})
+    await save_session(phone, session)
 
     address_short = location.get("locality") or location.get("formatted_address", "")[:60]
     await send_button_message(phone,
@@ -512,7 +582,8 @@ async def confirm_ticket(phone: str, session: dict):
     duplicate = _find_active_spatial_duplicate(category_id=child_id, latitude=lat, longitude=lng)
     if duplicate and not force_submit:
         # Store duplicate info in session for upvote/force flow
-        SESSIONS[phone] = {**session, "duplicate": duplicate, "state": "awaiting_duplicate_action"}
+        session.update({"duplicate": duplicate, "state": "awaiting_duplicate_action"})
+        await save_session(phone, session)
         dup_ticket_id = duplicate.get("ticket_id", "Unknown")
         dup_distance = duplicate.get("distance_m", "?")
         dup_status = str(duplicate.get("status", "active")).replace("_", " ").title()
@@ -590,7 +661,7 @@ async def confirm_ticket(phone: str, session: dict):
     ticket_id = inserted.get("ticket_id") or inserted.get("id", "PENDING")
     ticket_details_url = build_ticket_details_url(inserted.get("id"))
 
-    SESSIONS.pop(phone, None)   # clear session
+    await delete_session(phone)   # clear session
 
     await send_text(phone,
         f"✅ *Complaint Submitted Successfully!*\n\n"
@@ -629,7 +700,8 @@ async def upvote_duplicate(phone: str, session: dict):
     duplicate = session.get("duplicate")
     if not duplicate or not duplicate.get("id"):
         await send_text(phone, "❌ No duplicate to upvote. Send *hi* to start again.")
-        SESSIONS.pop(phone, None)
+        await delete_session(phone)
+        return
         return
 
     complaint_id = duplicate["id"]
@@ -639,7 +711,7 @@ async def upvote_duplicate(phone: str, session: dict):
         ticket_id = duplicate.get("ticket_id", complaint_id)
         status = str(duplicate.get("status", "active")).replace("_", " ").title()
 
-        SESSIONS.pop(phone, None)  # clear session
+        await delete_session(phone)  # clear session
         await send_text(phone,
             f"✅ *Upvoted!*\n\n"
             f"🎫 Ticket: *{ticket_id}*\n"
@@ -654,7 +726,7 @@ async def upvote_duplicate(phone: str, session: dict):
             current = supabase.table("complaints").select("upvote_count").eq("id", complaint_id).single().execute()
             current_count = (current.data or {}).get("upvote_count", 0)
             supabase.table("complaints").update({"upvote_count": current_count + 1}).eq("id", complaint_id).execute()
-            SESSIONS.pop(phone, None)
+            await delete_session(phone)
             await send_text(phone, f"✅ Upvoted ticket *{duplicate.get('ticket_id', complaint_id)}*. Thank you! 🙏")
         except Exception as e2:
             print(f"[WhatsApp upvote fallback error] {e2}")

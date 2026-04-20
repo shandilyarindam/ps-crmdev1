@@ -658,7 +658,13 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
       // 3. Fetch history from Redis via backend if we don't have messages yet
       if (messages.length === 0) {
         try {
-          const res = await fetch(`${API_URL}/api/chat/history/${sid}`);
+          const token = await getAuthToken();
+          const headers: Record<string, string> = {};
+          if (token) headers["Authorization"] = `Bearer ${token}`;
+
+          const res = await fetch(`${API_URL}/api/chat/history/${sid}`, {
+            headers
+          });
           if (res.ok) {
             const data = await res.json();
             if (data.messages && data.messages.length > 0) {
@@ -720,8 +726,13 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
         // Clear Redis-cached history
         if (sessionIdRef.current) {
           try {
+            const token = await getAuthToken();
+            const headers: Record<string, string> = {};
+            if (token) headers["Authorization"] = `Bearer ${token}`;
+
             await fetch(`${API_URL}/api/chat/history/${sessionIdRef.current}`, {
               method: "DELETE",
+              headers
             });
           } catch { /* best-effort cleanup */ }
         }
@@ -748,9 +759,13 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
       if (!sessionIdRef.current || !isHistoryInitialized || messages.length === 0) return;
       
       try {
+        const token = await getAuthToken();
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
         await fetch(`${API_URL}/api/chat/history/${sessionIdRef.current}`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({ messages }),
         });
       } catch (err) {
