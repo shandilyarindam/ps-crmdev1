@@ -720,3 +720,19 @@ def route_authority(
 
     return routed
 
+
+def is_within_india(lat: float, lng: float) -> bool:
+    """Enforce India-only bounds (approx: Lat 6-38, Lng 68-98)."""
+    return (6.0 <= lat <= 38.0) and (68.0 <= lng <= 98.0)
+
+
+def validate_text_quality(text: Optional[str]) -> tuple[bool, str]:
+    """Check if the provided description meets quality standards (min 20 chars)."""
+    if not text or not text.strip():
+        return False, "Description is empty. Please provide more details."
+    
+    clean_text = text.strip()
+    if len(clean_text) < 20:
+        return False, f"Description is too short ({len(clean_text)} chars). Please provide at least 20 characters."
+    
+    return True, ""

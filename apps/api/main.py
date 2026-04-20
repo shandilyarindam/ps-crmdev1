@@ -48,6 +48,8 @@ from shared import (
     send_resend_email,
     build_ticket_details_url,
     AI_SERVICE_URL,
+    is_within_india,
+    validate_text_quality,
 )
 
 # Global constants for direct Supabase REST API calls (bypassing supabase-py bugs)
@@ -880,6 +882,15 @@ async def analyze(
     # Auth check — must be logged in
     get_citizen_id_from_token(authorization)
 
+    # Coordinate validation (India only)
+    if not is_within_india(latitude, longitude):
+        raise HTTPException(status_code=400, detail="Service is only available in India.")
+
+    # Text quality validation (min 20 chars)
+    is_valid_text, text_err = validate_text_quality(user_text)
+    if not is_valid_text:
+        raise HTTPException(status_code=400, detail=text_err)
+
     image_data = await image.read()
     img = Image.open(BytesIO(image_data))
 
@@ -1069,6 +1080,10 @@ async def confirm(
 
     # 1. Extract citizen_id from JWT
     citizen_id = get_citizen_id_from_token(authorization)
+
+    # Coordinate validation (India only)
+    if not is_within_india(latitude, longitude):
+        raise HTTPException(status_code=400, detail="Service is only available in India.")
 
     if child_id not in CHILD_CATEGORIES:
         raise HTTPException(status_code=400, detail=f"Invalid child_id: {child_id}")

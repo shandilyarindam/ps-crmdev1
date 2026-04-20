@@ -1587,7 +1587,18 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
           {t(selectedLanguage, "transcribing")}
         </div>
       )}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-2">
+        {input.trim().length > 0 && input.trim().length < 20 && !hasPending && !duplicateContext && (
+          <p className="px-1 text-[10px] font-medium text-amber-600 dark:text-amber-400 animate-pulse">
+            Please provide a bit more detail (min 20 chars: {input.trim().length}/20)
+          </p>
+        )}
+        {input.trim().length >= 20 && !hasPending && !duplicateContext && (
+          <p className="px-1 text-[10px] font-medium text-green-600 dark:text-green-400">
+            Great! Description is long enough.
+          </p>
+        )}
+        <div className="flex items-center gap-2">
         <button onClick={() => fileInputRef.current?.click()} disabled={isLoading || submitting || isRecording || isTranscribing} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-gray-50 text-gray-500 transition-all duration-200 hover:bg-[#b4725a] hover:text-white hover:border-[#b4725a] hover:shadow-md disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-[#b4725a] focus:ring-offset-2 dark:border-[#2a2a2a] dark:bg-[#1e1e1e] dark:text-gray-400 dark:hover:bg-[#C9A84C] dark:hover:text-black dark:hover:border-[#C9A84C] dark:focus:ring-[#C9A84C] dark:focus:ring-offset-[#161616]" aria-label="Upload photo" title="Upload a photo of the issue">
           <Plus size={18} />
         </button>
@@ -1596,7 +1607,11 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
           {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
         </button>
         <input ref={inputRef} type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder={duplicateContext ? t(selectedLanguage, "type_upvote") : hasPending ? t(selectedLanguage, "confirm_location_prompt") : t(selectedLanguage, "describe_issue")} disabled={submitting} className="flex-1 rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-800 outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#b4725a] focus:ring-2 focus:ring-[#b4725a]/20 focus:bg-white dark:border-[#2a2a2a] dark:bg-[#1e1e1e] dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:border-[#C9A84C] dark:focus:ring-[#C9A84C]/20 dark:focus:bg-[#252525]" />
-        <button onClick={handleSend} disabled={isLoading || submitting || !input.trim()} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#4f392e] text-white transition-all duration-200 hover:bg-[#b4725a] hover:shadow-md disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-[#b4725a] focus:ring-offset-2 dark:bg-[#C9A84C] dark:text-black dark:hover:bg-[#d4b45c] dark:focus:ring-[#C9A84C] dark:focus:ring-offset-[#161616]" aria-label="Send message">
+        <button 
+          onClick={handleSend} 
+          disabled={isLoading || submitting || !input.trim() || (!hasPending && !duplicateContext && input.trim().length < 20)} 
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#4f392e] text-white transition-all duration-200 hover:bg-[#b4725a] hover:shadow-md disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-[#b4725a] focus:ring-offset-2 dark:bg-[#C9A84C] dark:text-black dark:hover:bg-[#d4b45c] dark:focus:ring-[#C9A84C] dark:focus:ring-offset-[#161616]" aria-label="Send message"
+        >
           <Send size={16} />
         </button>
       </div>

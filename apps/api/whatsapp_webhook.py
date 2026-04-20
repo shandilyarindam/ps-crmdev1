@@ -44,6 +44,8 @@ from shared import (
     send_resend_email,
     build_ticket_details_url,
     redis_client,
+    is_within_india,
+    validate_text_quality,
 )
 
 
@@ -147,7 +149,8 @@ async def receive_message(request: Request):
 
         elif mtype == "image":
             image_id = msg["image"]["id"]
-            await handle_image(from_, image_id)
+            caption = msg["image"].get("caption", "").strip()
+            await handle_image(from_, image_id, caption)
 
         elif mtype == "location":
             lat = msg["location"]["latitude"]
@@ -226,6 +229,12 @@ async def handle_text(phone: str, text: str):
                 }
             ]
         )
+        return
+
+    # ── awaiting description flow ─────────────────────────────────────────────
+    if session.get("state") == "awaiting_description" and session.get("pending_image_id"):
+        # Resume the handle_image flow as if they sent the text with the image
+        await handle_image(phone, session["pending_image_id"], caption=text)
         return
 
     # ── confirm ticket ─────────────────────────────────────────────────────────
@@ -418,26 +427,48 @@ async def show_ticket_details(phone: str, ticket_id_str: str):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-async def handle_image(phone: str, image_id: str):
-    await send_text(phone, "📸 Got your photo! Analyzing the issue... Please wait.")
+async def handle_image(phone: str, image_id: str, caption: str = ""):
+    # 1. Check if we already have a valid description (min 20 chars)
+    # If not, we ask for it and hold the image in session.
+    is_valid, text_err = validate_text_quality(caption)
+    
+    if not is_valid:
+        # Prompt for description and store image_id for later
+        session = await get_session(phone)
+        session.update({
+            "pending_image_id": image_id,
+            "state": "awaiting_description",
+            "fallback_count": 0
+        })
+        await save_session(phone, session)
+        
+        await send_text(phone, 
+            "📸 *Photo received!*\n\n"
+            "To help me identify the problem accurately, please provide a short description of the issue (min 20 characters).\n\n"
+            "_Example: 'There is a large pothole in the middle of the road near the market.'_"
+        )
+        return
 
-    # 1. Download image bytes from Meta
+    await send_text(phone, "⏳ Analyzing the issue... Please wait.")
+
+    # 2. Download image bytes from Meta
     try:
         image_bytes = await download_whatsapp_media(image_id)
     except Exception as e:
         await send_text(phone, f"❌ Could not download image: {e}")
         return
 
-    # 2. Convert to PIL for Gemini
+    # 3. Convert to PIL for Gemini
     try:
         pil_image = Image.open(BytesIO(image_bytes)).convert("RGB")
     except Exception:
         await send_text(phone, "❌ Could not read image. Please send a clear JPEG or PNG.")
         return
 
-    # 3. Run Gemini classification (same prompt as your /analyze endpoint)
+    # 4. Run Gemini classification
     try:
-        result = await classify_image_with_gemini(pil_image)
+        # Use caption as context for Gemini
+        result = await classify_image_with_gemini(pil_image, user_text=caption)
     except Exception as e:
         await send_text(phone, f"❌ AI analysis failed: {e}")
         return
@@ -498,6 +529,12 @@ async def handle_image(phone: str, image_id: str):
 
 async def handle_location(phone: str, lat: float, lng: float):
     session = await get_session(phone)
+
+    # 1. Boundary Check (India only)
+    if not is_within_india(lat, lng):
+        await send_text(phone, "📍 *Out of Bounds*\n\nJanSamadhan is currently only available for issues within India. Please report problems from a valid location in India.")
+        await delete_session(phone)
+        return
 
     if session.get("state") != "awaiting_location":
         await send_text(phone, "Please send a *photo* of the issue first, then share your location.")
@@ -770,8 +807,10 @@ async def check_status(phone: str, ticket_id: Optional[str]):
 # 8. GEMINI IMAGE CLASSIFICATION  (mirrors your /analyze endpoint logic)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-async def classify_image_with_gemini(pil_image: Image.Image) -> dict:
+async def classify_image_with_gemini(pil_image: Image.Image, user_text: str = "") -> dict:
     from google.genai import types as genai_types
+
+    user_context = f"\nUser description to aid classification: {user_text}\n" if user_text else ""
 
     child_list = "\n".join(
         f"{cid}: {cat['name']} (authority={cat['authority']})"
@@ -782,6 +821,7 @@ async def classify_image_with_gemini(pil_image: Image.Image) -> dict:
     prompt = f"""You are a civic-issue classifier for an Indian city grievance system.
 
 Analyse the image and respond ONLY with a valid JSON object — no markdown, no extra text.
+{user_context}
 
 === SAFETY CHECK (do this FIRST) ===
 - If the image contains explicit, adult, or sexually suggestive content → return {{"decision": "explicit_blocked", "reason": "Image contains explicit or adult content."}}
