@@ -134,9 +134,25 @@ export async function POST(req: NextRequest): Promise<NextResponse<GeminiRespons
   const messages = body.messages as ChatMessage[];
   const language = body.language as string | undefined;
 
+  // Map ISO codes to explicit language names so Gemini doesn't misinterpret them
+  const LANGUAGE_NAMES: Record<string, string> = {
+    "en-IN": "English",
+    "hi-IN": "Hindi",
+    "ta-IN": "Tamil",
+    "te-IN": "Telugu",
+    "kn-IN": "Kannada",
+    "ml-IN": "Malayalam",
+    "bn-IN": "Bengali",
+    "mr-IN": "Marathi",
+    "gu-IN": "Gujarati",
+    "pa-IN": "Punjabi",
+  };
+
+  const languageName = language ? (LANGUAGE_NAMES[language] ?? language) : null;
+
   // Build Gemini API contents: system instruction + conversation history
-  const systemPrompt = language 
-    ? `${SYSTEM_PROMPT}\n\nCRITICAL INSTRUCTION: You MUST strictly reply in the language with the ISO code "${language}". Even if the user speaks in English, your conversational responses AND the 'reply' field in your JSON MUST be localized entirely in the language corresponding to "${language}".`
+  const systemPrompt = languageName && languageName !== "English"
+    ? `${SYSTEM_PROMPT}\n\nCRITICAL INSTRUCTION: You MUST strictly reply in ${languageName}. All your conversational responses AND the 'reply' field in your JSON output MUST be written entirely in ${languageName}. Do NOT reply in English unless the user explicitly asks for it.`
     : SYSTEM_PROMPT;
 
   const contents: GeminiApiContent[] = [

@@ -145,8 +145,8 @@ async def receive_message(request: Request):
         mtype  = msg.get("type")
 
         if mtype == "text":
-            text = msg["text"]["body"].strip().lower()
-            await handle_text(from_, text)
+            raw_text = msg["text"]["body"].strip()
+            await handle_text(from_, raw_text)
 
         elif mtype == "image":
             image_id = msg["image"]["id"]
@@ -189,8 +189,9 @@ async def receive_message(request: Request):
 # 3. TEXT HANDLER
 # ═══════════════════════════════════════════════════════════════════════════════
 
-async def handle_text(phone: str, text: str):
+async def handle_text(phone: str, raw_text: str):
     session = await get_session(phone)
+    text = raw_text.lower()  # lowercase for command matching only
 
     # ── greeting ──────────────────────────────────────────────────────────────
     if text in ("hi", "hello", "hey", "start", "namaste", "menu", "help"):
@@ -234,8 +235,8 @@ async def handle_text(phone: str, text: str):
 
     # ── awaiting description flow ─────────────────────────────────────────────
     if session.get("state") == "awaiting_description" and session.get("pending_image_id"):
-        # Resume the handle_image flow as if they sent the text with the image
-        await handle_image(phone, session["pending_image_id"], caption=text)
+        # Resume the handle_image flow with the ORIGINAL case text (not lowered)
+        await handle_image(phone, session["pending_image_id"], caption=raw_text)
         return
 
     # ── confirm ticket ─────────────────────────────────────────────────────────
@@ -745,7 +746,6 @@ async def upvote_duplicate(phone: str, session: dict):
     if not duplicate or not duplicate.get("id"):
         await send_text(phone, "❌ No duplicate to upvote. Send *hi* to start again.")
         await delete_session(phone)
-        return
         return
 
     complaint_id = duplicate["id"]

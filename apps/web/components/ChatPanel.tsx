@@ -910,13 +910,10 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
     [scrollToBottom],
   );
 
-  /* ----- IMAGE UPLOAD: + button handler ----- */
-  const handleImageSelect = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file || isLoading) return;
-      // Reset file input so same file can be re-selected
-      e.target.value = "";
+  /* ----- SHARED IMAGE PROCESSING LOGIC ----- */
+  const processImageFile = useCallback(
+    async (file: File) => {
+      if (isLoading) return;
 
       // Create a data URL preview
       const reader = new FileReader();
@@ -992,7 +989,7 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
         } catch (err) {
           const msg = toUserFacingError(err);
           addBotMessage(`⚠️ ${msg}`);
-          setPendingImageDataUrl(null); // Clear the image if the network request fails or drops!
+          setPendingImageDataUrl(null);
           setPendingImageFile(null);
         } finally {
           setIsLoading(false);
@@ -1002,6 +999,36 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
       reader.readAsDataURL(file);
     },
     [isLoading, input, scrollToBottom, addBotMessage], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  /* ----- IMAGE UPLOAD: + button handler ----- */
+  const handleImageSelect = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      // Reset file input so same file can be re-selected
+      e.target.value = "";
+      await processImageFile(file);
+    },
+    [processImageFile],
+  );
+
+  /* ----- IMAGE PASTE HANDLER ----- */
+  const handlePaste = useCallback(
+    async (e: React.ClipboardEvent) => {
+      const items = e.clipboardData.items;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf("image") !== -1) {
+          const file = items[i].getAsFile();
+          if (file) {
+            e.preventDefault();
+            await processImageFile(file);
+            break;
+          }
+        }
+      }
+    },
+    [processImageFile],
   );
 
   /* ----- send a user message ----- */
@@ -1606,7 +1633,7 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
         <button ref={micBtnRef} onClick={handleMicClick} disabled={isLoading || submitting || isTranscribing} className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-40 ${isRecording ? "border-red-400 bg-red-500 text-white hover:bg-red-600 dark:border-red-500 dark:bg-red-600 dark:hover:bg-red-700 focus:ring-red-400 dark:focus:ring-red-500 dark:focus:ring-offset-[#161616]" : "border-gray-200 bg-gray-50 text-gray-500 hover:bg-[#b4725a] hover:text-white hover:border-[#b4725a] hover:shadow-md dark:border-[#2a2a2a] dark:bg-[#1e1e1e] dark:text-gray-400 dark:hover:bg-[#C9A84C] dark:hover:text-black dark:hover:border-[#C9A84C] focus:ring-[#b4725a] dark:focus:ring-[#C9A84C] dark:focus:ring-offset-[#161616]"}`} aria-label={isRecording ? "Stop recording" : "Start voice input"} title={isRecording ? "Tap to stop recording" : "Tap to speak your complaint"}>
           {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
         </button>
-        <input ref={inputRef} type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder={duplicateContext ? t(selectedLanguage, "type_upvote") : hasPending ? t(selectedLanguage, "confirm_location_prompt") : t(selectedLanguage, "describe_issue")} disabled={submitting} className="flex-1 rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-800 outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#b4725a] focus:ring-2 focus:ring-[#b4725a]/20 focus:bg-white dark:border-[#2a2a2a] dark:bg-[#1e1e1e] dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:border-[#C9A84C] dark:focus:ring-[#C9A84C]/20 dark:focus:bg-[#252525]" />
+        <input ref={inputRef} type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} onPaste={handlePaste} placeholder={duplicateContext ? t(selectedLanguage, "type_upvote") : hasPending ? t(selectedLanguage, "confirm_location_prompt") : t(selectedLanguage, "describe_issue")} disabled={submitting} className="flex-1 rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-800 outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#b4725a] focus:ring-2 focus:ring-[#b4725a]/20 focus:bg-white dark:border-[#2a2a2a] dark:bg-[#1e1e1e] dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:border-[#C9A84C] dark:focus:ring-[#C9A84C]/20 dark:focus:bg-[#252525]" />
         <button 
           onClick={handleSend} 
           disabled={isLoading || submitting || !input.trim() || (!hasPending && !duplicateContext && input.trim().length < 20)} 
