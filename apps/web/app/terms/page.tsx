@@ -122,6 +122,18 @@ export default function TermsAndConditionsPage() {
             </ul>
           </div>
 
+          <div className="animate-slide-up">
+            <h2 className="text-3xl font-bold mb-6 tracking-tight">10. Non-Governmental Status & Branding</h2>
+            <div className={`space-y-4 text-lg leading-relaxed ${textMutedClass}`}>
+              <p>
+                JanSamadhan is an independent technical prototype developed in a private capacity. The use of certain symbols, including the State Emblem of India, is strictly for demonstrating UI/UX potential for official infrastructure.
+              </p>
+              <p>
+                This project is not affiliated with, endorsed by, or representing any government body. All complaint data and AI responses are part of a simulated technical demonstration.
+              </p>
+            </div>
+          </div>
+
           <div className="animate-slide-up pt-10 text-center">
             <p className={`text-sm tracking-widest uppercase font-bold opacity-30`}>End of Terms</p>
             <div className="mt-8 flex justify-center gap-6">

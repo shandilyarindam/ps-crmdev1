@@ -1933,6 +1933,9 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
             <div className="max-w-3xl mx-auto rounded-2xl border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#1e1e1e] px-3 py-3 shadow-lg">
               {inputBarContent}
             </div>
+            <p className="mt-2 text-center text-[10px] text-gray-400 dark:text-gray-500 italic pb-1">
+              AI-simulated responses for demonstration purposes. Reports are not officially submitted to government portals in this prototype.
+            </p>
           </div>
 
           {/* Bottom spacer for initial vertical centering */}

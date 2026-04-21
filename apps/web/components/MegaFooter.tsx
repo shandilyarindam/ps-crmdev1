@@ -339,6 +339,9 @@ export function MegaFooter({
           >
             {copyrightText}
           </p>
+          <p className="text-[10px] opacity-40 max-w-md text-center sm:text-left leading-tight">
+            JanSamadhan is a technical exploration into civic infrastructure. All symbols are used for UI/UX demonstration. Not associated with the Government of India.
+          </p>
           <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
             <a
               href="/documentation"

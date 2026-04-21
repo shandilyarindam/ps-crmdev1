@@ -119,6 +119,9 @@ export default function DocumentationClient() {
             This page consolidates system intent, architecture, lifecycle guarantees, and operational behavior in
             one readable reference. It is designed for high scanning speed while preserving technical depth.
           </p>
+          <p className="mt-4 text-sm font-bold opacity-60 border-l-2 border-current pl-4 italic">
+            NOTE: JanSamadhan is a Private R&D Prototype. This platform is a technology demonstration and is not an official government service.
+          </p>
 
           <div className={styles.heroChips}>
             {heroChips.map((chip) => (
