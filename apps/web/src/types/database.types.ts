@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.4"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       categories: {
@@ -756,6 +731,60 @@ export type Database = {
           },
         ]
       }
+      spatial_wards: {
+        Row: {
+          ac_name: string | null
+          ac_no: number | null
+          ac_no_1: number | null
+          extrude: number | null
+          fid: number | null
+          geom: unknown
+          nw2022: string | null
+          ogc_fid: number
+          sc_pop: number | null
+          tessellate: number | null
+          totalpop: number | null
+          visibility: number | null
+          ward_no: number | null
+          wardname: string | null
+          wno_sec: number | null
+        }
+        Insert: {
+          ac_name?: string | null
+          ac_no?: number | null
+          ac_no_1?: number | null
+          extrude?: number | null
+          fid?: number | null
+          geom?: unknown
+          nw2022?: string | null
+          ogc_fid?: number
+          sc_pop?: number | null
+          tessellate?: number | null
+          totalpop?: number | null
+          visibility?: number | null
+          ward_no?: number | null
+          wardname?: string | null
+          wno_sec?: number | null
+        }
+        Update: {
+          ac_name?: string | null
+          ac_no?: number | null
+          ac_no_1?: number | null
+          extrude?: number | null
+          fid?: number | null
+          geom?: unknown
+          nw2022?: string | null
+          ogc_fid?: number
+          sc_pop?: number | null
+          tessellate?: number | null
+          totalpop?: number | null
+          visibility?: number | null
+          ward_no?: number | null
+          wardname?: string | null
+          wno_sec?: number | null
+        }
+        Relationships: []
+      }
       suspected_incidents: {
         Row: {
           detection_count: number | null
@@ -999,6 +1028,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ward_features: {
+        Row: {
+          feature: Json | null
+        }
+        Relationships: []
+      }
+      ward_geojson: {
+        Row: {
+          ac_name: string | null
+          geometry: Json | null
+          nw2022: string | null
+          sc_pop: number | null
+          totalpop: number | null
+          ward_no: number | null
+          wardname: string | null
+        }
+        Insert: {
+          ac_name?: string | null
+          geometry?: never
+          nw2022?: string | null
+          sc_pop?: number | null
+          totalpop?: number | null
+          ward_no?: number | null
+          wardname?: string | null
+        }
+        Update: {
+          ac_name?: string | null
+          geometry?: never
+          nw2022?: string | null
+          sc_pop?: number | null
+          totalpop?: number | null
+          ward_no?: number | null
+          wardname?: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {
@@ -1323,9 +1388,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       complaint_source: ["citizen", "system"],
