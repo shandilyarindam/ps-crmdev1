@@ -20,12 +20,15 @@ const MapComponent = dynamic(() => import("@/components/MapComponent"), {
   ),
 });
 
+import { cn } from "@/src/lib/utils";
+
 export interface MapSectionProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onShowIncidentsClick?: () => void;
   wardTitle?: string;
   wardSubtitle?: string;
+  className?: string;
 }
 
 export const MapSection: React.FC<MapSectionProps> = ({
@@ -34,6 +37,7 @@ export const MapSection: React.FC<MapSectionProps> = ({
   onShowIncidentsClick,
   wardTitle = "Ward 11 - Najafgarh (Delhi)",
   wardSubtitle = "South West Zone  |  Population: 2.13 Lakh  |  Households: 38,542",
+  className,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -51,7 +55,7 @@ export const MapSection: React.FC<MapSectionProps> = ({
   return (
     <div
       ref={containerRef}
-      className="opacity-0 flex-1 min-h-[350px] md:min-h-[450px] bg-white rounded-xl border border-slate-200 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 relative overflow-hidden flex flex-col"
+      className={cn("opacity-0 flex-1 min-h-[350px] md:min-h-[450px] bg-white rounded-xl border border-slate-200 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 relative overflow-hidden flex flex-col", className)}
     >
       {/* Map Header */}
       <div className="p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm z-10 sticky top-0">

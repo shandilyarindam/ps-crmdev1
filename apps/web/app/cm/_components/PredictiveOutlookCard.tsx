@@ -32,6 +32,7 @@ export const PredictiveOutlookCard: React.FC<PredictiveOutlookCardProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 

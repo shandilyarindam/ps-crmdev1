@@ -7,6 +7,8 @@ import { useGSAP } from "@gsap/react";
 
 gsap.registerPlugin(useGSAP);
 
+import { cn } from "@/src/lib/utils";
+
 export interface QuickActionsFooterProps {
   onCallCouncillor: () => void;
   onScheduleVisit: () => void;
@@ -14,6 +16,7 @@ export interface QuickActionsFooterProps {
   onDeployStaff: () => void;
   onGenerateReport: () => void;
   onFiltersClick: () => void;
+  className?: string;
 }
 
 export const QuickActionsFooter: React.FC<QuickActionsFooterProps> = ({
@@ -23,6 +26,7 @@ export const QuickActionsFooter: React.FC<QuickActionsFooterProps> = ({
   onDeployStaff,
   onGenerateReport,
   onFiltersClick,
+  className,
 }) => {
   const footerRef = useRef<HTMLDivElement>(null);
 
@@ -40,7 +44,7 @@ export const QuickActionsFooter: React.FC<QuickActionsFooterProps> = ({
   return (
     <footer
       ref={footerRef}
-      className="opacity-0 bg-white border-t border-slate-200 mt-auto sticky bottom-0 z-50 shrink-0 dark:border-zinc-800 dark:bg-zinc-900 select-none"
+      className={cn("opacity-0 bg-white border-t border-slate-200 mt-auto sticky bottom-0 z-50 shrink-0 dark:border-zinc-800 dark:bg-zinc-900 select-none", className)}
     >
       {/* Quick Actions Panel */}
       <div className="px-4 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-zinc-800">

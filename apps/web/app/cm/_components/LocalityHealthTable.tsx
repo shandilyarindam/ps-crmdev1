@@ -7,14 +7,18 @@ import { LocalityHealth } from "./cm-types";
 
 gsap.registerPlugin(useGSAP);
 
+import { cn } from "@/src/lib/utils";
+
 export interface LocalityHealthTableProps {
   localities: LocalityHealth[];
   onViewAnalyticsClick?: () => void;
+  className?: string;
 }
 
 export const LocalityHealthTable: React.FC<LocalityHealthTableProps> = ({
   localities,
   onViewAnalyticsClick,
+  className,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -33,7 +37,7 @@ export const LocalityHealthTable: React.FC<LocalityHealthTableProps> = ({
   return (
     <div
       ref={containerRef}
-      className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 flex flex-col h-60 min-h-0 select-none"
+      className={cn("bg-white rounded-xl border border-slate-200 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 flex flex-col h-60 min-h-0 select-none", className)}
     >
       <h3 className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-zinc-500 uppercase mb-2 shrink-0">
         LOCALITY HEALTH OVERVIEW

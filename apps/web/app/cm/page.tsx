@@ -44,7 +44,7 @@ export default function CMCommandCenterPage() {
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
-  const [mounted, setMounted] = useState(false);
+
   const [timeStr, setTimeStr] = useState("10:42 AM");
   const [dateStr, setDateStr] = useState("June 16, 2026");
 
@@ -67,7 +67,7 @@ export default function CMCommandCenterPage() {
 
   // Clock ticks
   useEffect(() => {
-    setMounted(true);
+
     const updateTime = () => {
       const now = new Date();
       setTimeStr(
@@ -392,65 +392,75 @@ export default function CMCommandCenterPage() {
         {/* KPI Cards Row */}
         <KPIStatsRow kpis={kpis} onCardClick={(id) => triggerToast(`Navigating to details for KPI card: ${id}`)} />
 
-        {/* Central Map & Controls Layout Area */}
-        <section className="flex flex-col xl:flex-row gap-3 min-h-0 flex-1">
-          {/* Left Sidebar: Map Controls */}
+        {/* Main Dashboard Grid/Flex Layout */}
+        <div className="flex flex-col xl:flex-row gap-3">
+          {/* Column 1: Left Map Controls */}
           <MapLayersPanel
             activeLayer={activeLayer}
             onLayerChange={setActiveLayer}
             intensity={intensity}
             onIntensityChange={setIntensity}
+            className="xl:h-[954px]"
           />
 
-          {/* Central Map Section */}
-          <MapSection
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            onShowIncidentsClick={() => triggerToast("Incident details refreshed")}
-          />
+          {/* Column 2 & 3 Combined: Central Map/Data & AI/Dept Area */}
+          <div className="flex-1 flex flex-col gap-3">
+            {/* Top half: Map & AI/Dept */}
+            <div className="flex flex-col xl:flex-row gap-3 xl:h-[450px] shrink-0">
+              <MapSection
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                onShowIncidentsClick={() => triggerToast("Incident details refreshed")}
+                className="xl:h-full"
+              />
+              <div className="w-full xl:w-80 shrink-0 flex flex-col gap-3 xl:h-full">
+                <AIInsightsPanel insights={insights} />
+                <DepartmentPerformanceTable
+                  departments={sortedDepartments}
+                  sortField={sortField}
+                  sortAsc={sortAsc}
+                  onSort={handleSort}
+                  onViewAllClick={() => triggerToast("Opening comprehensive department log...")}
+                />
+              </div>
+            </div>
 
-          {/* Right Side Panels: AI Insights & Department Performance */}
-          <div className="w-full xl:w-80 shrink-0 flex flex-col gap-3 min-h-0">
-            <AIInsightsPanel insights={insights} />
-            <DepartmentPerformanceTable
-              departments={sortedDepartments}
-              sortField={sortField}
-              sortAsc={sortAsc}
-              onSort={handleSort}
-              onViewAllClick={() => triggerToast("Opening comprehensive department log...")}
+            {/* Bottom half: Analytics cards in 3 columns */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 shrink-0">
+              <LocalityHealthTable
+                localities={localities}
+                onViewAnalyticsClick={() => triggerToast("Redirecting to detailed location breakdown...")}
+                className="xl:h-full"
+              />
+              <div className="flex flex-col gap-3">
+                <ComplaintBreakdownGrid />
+                <WorkforceStatusCard activePercentage="71%" />
+              </div>
+              <div className="flex flex-col gap-3">
+                <PredictiveOutlookCard
+                  data={predictionData}
+                  expectedGrowth="+12%"
+                  estimatedSlaMisses={6}
+                  highRiskHotspots={["Roshampura", "Najafgarh Rd", "Jharoda Kalan"]}
+                  isDark={isDark}
+                />
+                <WardPerformanceGrid />
+              </div>
+            </div>
+          </div>
+
+          {/* Column 4: Right Councillor/Interventions Rail */}
+          <div className="w-full xl:w-[380px] shrink-0 flex flex-col gap-3 xl:h-[954px]">
+            <CouncillorInfoCard councillor={councillorData} />
+            <ActiveInterventionsPanel
+              interventions={interventions}
+              activeFilter={interventionFilter}
+              onFilterChange={setInterventionFilter}
+              onReviewClick={setSelectedIntervention}
+              onViewAllClick={() => triggerToast("Opening interventions portal...")}
             />
           </div>
-        </section>
-
-        {/* Middle Section: Councillor Info & Active Interventions */}
-        <section className="flex flex-col lg:flex-row gap-3 min-h-0 shrink-0">
-          <CouncillorInfoCard councillor={councillorData} />
-          <ActiveInterventionsPanel
-            interventions={interventions}
-            activeFilter={interventionFilter}
-            onFilterChange={setInterventionFilter}
-            onReviewClick={setSelectedIntervention}
-            onViewAllClick={() => triggerToast("Opening interventions portal...")}
-          />
-        </section>
-
-        {/* Bottom Data Panels Grid: Health, Breakdown (NEW), Prediction, Workforce, Performance */}
-        <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3 shrink-0">
-          <LocalityHealthTable
-            localities={localities}
-            onViewAnalyticsClick={() => triggerToast("Redirecting to detailed location breakdown...")}
-          />
-          <ComplaintBreakdownGrid />
-          <PredictiveOutlookCard
-            data={predictionData}
-            expectedGrowth="+12%"
-            estimatedSlaMisses={6}
-            highRiskHotspots={["Roshampura", "Najafgarh Rd", "Jharoda Kalan"]}
-            isDark={isDark}
-          />
-          <WorkforceStatusCard activePercentage="71%" />
-          <WardPerformanceGrid />
-        </section>
+        </div>
       </main>
 
       {/* Footer Controls & Live Ticker */}

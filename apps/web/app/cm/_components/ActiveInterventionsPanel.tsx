@@ -82,7 +82,7 @@ export const ActiveInterventionsPanel: React.FC<ActiveInterventionsPanelProps> =
           return (
             <button
               key={tab.id}
-              onClick={() => onFilterChange(tab.id as any)}
+              onClick={() => onFilterChange(tab.id as "all" | "critical" | "high" | "medium")}
               className={`px-2 py-1 text-[10px] font-bold rounded-md transition-all ${
                 activeFilter === tab.id
                   ? "bg-emerald-600 text-white shadow-sm"

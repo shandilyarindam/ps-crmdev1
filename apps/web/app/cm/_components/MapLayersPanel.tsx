@@ -30,6 +30,8 @@ export interface SeverityLegendItem {
   colorClass: string;
 }
 
+import { cn } from "@/src/lib/utils";
+
 export interface MapLayersPanelProps {
   activeLayer: string;
   onLayerChange: (layerId: string) => void;
@@ -37,6 +39,7 @@ export interface MapLayersPanelProps {
   onIntensityChange: (intensity: number) => void;
   layers?: MapLayerItem[];
   legendItems?: SeverityLegendItem[];
+  className?: string;
 }
 
 const iconMap: Record<MapLayerItem["iconName"], LucideIcon> = {
@@ -75,6 +78,7 @@ export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
   onIntensityChange,
   layers = defaultLayers,
   legendItems = defaultLegend,
+  className,
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -92,7 +96,7 @@ export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
   return (
     <aside
       ref={panelRef}
-      className="opacity-0 w-full xl:w-56 shrink-0 flex flex-row xl:flex-col gap-2.5 select-none"
+      className={cn("opacity-0 w-full xl:w-56 shrink-0 flex flex-row xl:flex-col gap-2.5 select-none", className)}
     >
       {/* Map Layers Section */}
       <div className="flex-1 rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between">
