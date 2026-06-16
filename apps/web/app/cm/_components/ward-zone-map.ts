@@ -5,7 +5,7 @@ export type ZoneId =
   | "central"
   | "city-sp"
   | "civil-lines"
-  | "dwarka"
+  | "najafgarh"
   | "karol-bagh"
   | "keshav-puram"
   | "narela"
@@ -28,13 +28,13 @@ export const ZONES: ZoneDef[] = [
   { id: "central", name: "Central", color: "#6366f1" },
   { id: "city-sp", name: "City-SP", color: "#ef4444" },
   { id: "civil-lines", name: "Civil Lines", color: "#f59e0b" },
-  { id: "dwarka", name: "Dwarka", color: "#14b8a6" },
+  { id: "najafgarh", name: "Najafgarh", color: "#14b8a6" },
   { id: "karol-bagh", name: "Karol Bagh", color: "#f97316" },
   { id: "keshav-puram", name: "Keshav Puram", color: "#10b981" },
   { id: "narela", name: "Narela", color: "#84cc16" },
   { id: "rohini", name: "Rohini", color: "#22c55e" },
-  { id: "shahdara-north", name: "Shahdara North", color: "#a855f7" },
-  { id: "shahdara-south", name: "Shahdara South", color: "#ec4899" },
+  { id: "shahdara-north", name: "North Shahdara", color: "#a855f7" },
+  { id: "shahdara-south", name: "South Shahdara", color: "#ec4899" },
   { id: "south", name: "South", color: "#3b82f6" },
   { id: "west", name: "West", color: "#06b6d4" },
 ];
