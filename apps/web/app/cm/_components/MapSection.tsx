@@ -73,6 +73,8 @@ export interface MapSectionProps {
   onLayerChange?: (layerId: string) => void;
   intensity?: number;
   onIntensityChange?: (intensity: number) => void;
+  activeSeverities?: string[];
+  onToggleSeverity?: (severity: string) => void;
 }
 
 export const MapSection: React.FC<MapSectionProps> = ({
@@ -96,6 +98,8 @@ export const MapSection: React.FC<MapSectionProps> = ({
   onLayerChange,
   intensity,
   onIntensityChange,
+  activeSeverities,
+  onToggleSeverity,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -169,6 +173,8 @@ export const MapSection: React.FC<MapSectionProps> = ({
               intensity={intensity}
               onIntensityChange={onIntensityChange}
               variant="floating"
+              activeSeverities={activeSeverities}
+              onToggleSeverity={onToggleSeverity}
             />
           </div>
         )}

@@ -41,6 +41,8 @@ export interface MapLayersPanelProps {
   legendItems?: SeverityLegendItem[];
   className?: string;
   variant?: "sidebar" | "floating";
+  activeSeverities?: string[];
+  onToggleSeverity?: (severity: string) => void;
 }
 
 const iconMap: Record<MapLayerItem["iconName"], LucideIcon> = {
@@ -82,6 +84,8 @@ export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
   legendItems = defaultLegend,
   className,
   variant = "sidebar",
+  activeSeverities,
+  onToggleSeverity,
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -150,12 +154,23 @@ export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
               SEVERITY LEGEND
             </h3>
             <ul className="space-y-1">
-              {legendItems.map((item, idx) => (
-                <li key={idx} className="flex items-center gap-2 text-xs text-slate-600 dark:text-zinc-400">
-                  <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${item.colorClass}`}></span>
-                  <span className="font-semibold text-[11px] truncate">{item.label}</span>
-                </li>
-              ))}
+              {legendItems.map((item, idx) => {
+                const isSelected = !activeSeverities || activeSeverities.includes(item.label);
+                return (
+                  <li
+                    key={idx}
+                    onClick={() => onToggleSeverity?.(item.label)}
+                    className={`flex items-center gap-2 text-xs cursor-pointer select-none transition-all ${
+                      isSelected
+                        ? "text-slate-600 dark:text-zinc-300 opacity-100 font-semibold"
+                        : "text-slate-400 dark:text-zinc-500 opacity-40 hover:opacity-65"
+                    }`}
+                  >
+                    <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${item.colorClass} ${!isSelected && "bg-slate-300 dark:bg-zinc-700"}`}></span>
+                    <span className="text-[11px] truncate">{item.label}</span>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
@@ -234,12 +249,23 @@ export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
           SEVERITY LEGEND
         </h3>
         <ul className="grid grid-cols-2 xl:grid-cols-1 gap-1.5">
-          {legendItems.map((item, idx) => (
-            <li key={idx} className="flex items-center gap-2 text-xs text-slate-600 dark:text-zinc-400">
-              <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${item.colorClass}`}></span>
-              <span className="font-semibold text-[11px] truncate">{item.label}</span>
-            </li>
-          ))}
+          {legendItems.map((item, idx) => {
+            const isSelected = !activeSeverities || activeSeverities.includes(item.label);
+            return (
+              <li
+                key={idx}
+                onClick={() => onToggleSeverity?.(item.label)}
+                className={`flex items-center gap-2 text-xs cursor-pointer select-none transition-all ${
+                  isSelected
+                    ? "text-slate-600 dark:text-zinc-450 opacity-100 font-semibold"
+                    : "text-slate-400 dark:text-zinc-500 opacity-40 hover:opacity-65"
+                }`}
+              >
+                <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${item.colorClass} ${!isSelected && "bg-slate-300 dark:bg-zinc-700"}`}></span>
+                <span className="text-[11px] truncate">{item.label}</span>
+              </li>
+            );
+          })}
         </ul>
 
         {/* Heatmap Intensity Slider */}

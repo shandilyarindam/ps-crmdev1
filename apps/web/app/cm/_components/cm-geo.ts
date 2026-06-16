@@ -187,22 +187,46 @@ export function wardByNo(wards: WardFeature[], wardNo: number): WardFeature | un
  * zone (point-in-polygon). Real-but-sparse today; lights up as Delhi complaints
  * with valid coordinates are added.
  */
-export function useComplaintPoints(): { points: { lat: number; lng: number }[]; loaded: boolean } {
-  const [points, setPoints] = useState<{ lat: number; lng: number }[]>([]);
+export interface ComplaintPoint {
+  lat: number;
+  lng: number;
+  severity: string;
+  sla_breached: boolean;
+  assigned_department: string | null;
+  title: string;
+  description: string;
+}
+
+export function useComplaintPoints(): { points: ComplaintPoint[]; loaded: boolean } {
+  const [points, setPoints] = useState<ComplaintPoint[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let alive = true;
     (async () => {
-      const { data, error } = await supabase.from("complaints").select("location");
+      const { data, error } = await supabase
+        .from("complaints")
+        .select("location, severity, effective_severity, sla_breached, assigned_department, title, description");
       if (!alive) return;
       if (error || !data) {
         setLoaded(true);
         return;
       }
       const pts = data
-        .map((c) => parseLocationToLatLng((c as { location: unknown }).location))
-        .filter((p): p is { lat: number; lng: number } => !!p);
+        .map((c: any) => {
+          const latLng = parseLocationToLatLng(c.location);
+          if (!latLng) return null;
+          return {
+            lat: latLng.lat,
+            lng: latLng.lng,
+            severity: c.effective_severity || c.severity,
+            sla_breached: !!c.sla_breached,
+            assigned_department: c.assigned_department,
+            title: c.title ?? "",
+            description: c.description ?? "",
+          };
+        })
+        .filter((p): p is ComplaintPoint => !!p);
       setPoints(pts);
       setLoaded(true);
     })();

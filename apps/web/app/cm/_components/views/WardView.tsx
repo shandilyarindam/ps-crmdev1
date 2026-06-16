@@ -38,6 +38,12 @@ export interface WardViewProps {
   wardSubtitle: string;
   /** The selected ward's polygon, drawn as an outline + fit. */
   wardRegion?: WardFeature;
+  activeLayer: string;
+  onLayerChange: (layerId: string) => void;
+  intensity: number;
+  onIntensityChange: (intensity: number) => void;
+  activeSeverities: string[];
+  onToggleSeverity: (severity: string) => void;
 }
 
 export const WardView: React.FC<WardViewProps> = ({
@@ -47,15 +53,45 @@ export const WardView: React.FC<WardViewProps> = ({
   wardTitle,
   wardSubtitle,
   wardRegion,
+  activeLayer,
+  onLayerChange,
+  intensity,
+  onIntensityChange,
+  activeSeverities,
+  onToggleSeverity,
 }) => {
-  const [activeLayer, setActiveLayer] = useState("density");
   const [searchQuery, setSearchQuery] = useState("");
-  const [intensity, setIntensity] = useState(70);
   const [sortField, setSortField] = useState<keyof DepartmentPerf>("open");
   const [sortAsc, setSortAsc] = useState(false);
   const [interventionFilter, setInterventionFilter] = useState("all");
   const [selectedIntervention, setSelectedIntervention] = useState<Intervention | null>(null);
   const [activeActionModal, setActiveActionModal] = useState<string | null>(null);
+
+  const escalationTabs = useMemo(() => [
+    { id: "all", label: "All" },
+    { id: "critical", label: "Critical", match: (i: Intervention) => i.severity === "critical" },
+    { id: "escalated", label: "Escalated", match: (i: Intervention) => !!i.escalated },
+  ], []);
+
+  // Search & tab filters for interventions
+  const filteredInterventions = useMemo(() => {
+    let list = wardInterventions;
+    if (interventionFilter !== "all") {
+      const tab = escalationTabs.find((t) => t.id === interventionFilter);
+      if (tab?.match) list = list.filter(tab.match);
+    }
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      list = list.filter(
+        (i) =>
+          i.title.toLowerCase().includes(query) ||
+          i.description.toLowerCase().includes(query) ||
+          (i.zone?.toLowerCase().includes(query) ?? false) ||
+          (i.ward?.toLowerCase().includes(query) ?? false)
+      );
+    }
+    return list;
+  }, [interventionFilter, searchQuery, escalationTabs]);
 
   const handleSort = (field: keyof DepartmentPerf) => {
     if (sortField === field) setSortAsc(!sortAsc);
@@ -110,9 +146,11 @@ export const WardView: React.FC<WardViewProps> = ({
                 regions={wardRegion ? [wardRegion] : undefined}
                 className="xl:h-full"
                 activeLayer={activeLayer}
-                onLayerChange={setActiveLayer}
+                onLayerChange={onLayerChange}
                 intensity={intensity}
-                onIntensityChange={setIntensity}
+                onIntensityChange={onIntensityChange}
+                activeSeverities={activeSeverities}
+                onToggleSeverity={onToggleSeverity}
               />
               <div className="w-full xl:w-80 shrink-0 flex flex-col gap-3 xl:h-full">
                 <AIInsightsPanel insights={wardInsights} />
@@ -152,10 +190,11 @@ export const WardView: React.FC<WardViewProps> = ({
           <div className="w-full xl:w-[380px] shrink-0 flex flex-col gap-3 xl:h-[954px]">
             <CouncillorInfoCard councillor={wardCouncillor} />
             <ActiveInterventionsPanel
-              interventions={wardInterventions}
+              interventions={filteredInterventions}
               activeFilter={interventionFilter}
               onFilterChange={setInterventionFilter}
               onReviewClick={setSelectedIntervention}
+              tabs={escalationTabs}
               onViewAllClick={() => triggerToast("Opening interventions portal...")}
             />
           </div>

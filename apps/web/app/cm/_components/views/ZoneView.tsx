@@ -37,6 +37,12 @@ export interface ZoneViewProps {
   onRegionClick: (wardNo: string) => void;
   triggerToast: (message: string) => void;
   isDark: boolean;
+  activeLayer: string;
+  onLayerChange: (layerId: string) => void;
+  intensity: number;
+  onIntensityChange: (intensity: number) => void;
+  activeSeverities: string[];
+  onToggleSeverity: (severity: string) => void;
 }
 
 // All / Critical / Escalated tabs (zone + delhi level)
@@ -54,14 +60,48 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
   onRegionClick,
   triggerToast,
   isDark,
+  activeLayer,
+  onLayerChange,
+  intensity,
+  onIntensityChange,
+  activeSeverities,
+  onToggleSeverity,
 }) => {
-  const [activeLayer, setActiveLayer] = useState("density");
   const [searchQuery, setSearchQuery] = useState("");
-  const [intensity, setIntensity] = useState(70);
   const [sortField, setSortField] = useState<keyof DepartmentPerf>("open");
   const [sortAsc, setSortAsc] = useState(false);
   const [interventionFilter, setInterventionFilter] = useState("all");
   const [selectedIntervention, setSelectedIntervention] = useState<Intervention | null>(null);
+
+  // Search filter for map regions
+  const filteredWardRegions = useMemo(() => {
+    if (!searchQuery) return wardRegions;
+    const query = searchQuery.toLowerCase();
+    return wardRegions.filter((r) =>
+      r.properties.wardname.toLowerCase().includes(query) ||
+      String(r.properties.ward_no).includes(query)
+    );
+  }, [wardRegions, searchQuery]);
+
+  // Search & tab filters for interventions
+  const filteredInterventions = useMemo(() => {
+    let list = zoneInterventions;
+    if (interventionFilter !== "all") {
+      const tab = escalationTabs.find((t) => t.id === interventionFilter);
+      if (tab?.match) list = list.filter(tab.match);
+    }
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      list = list.filter(
+        (i) =>
+          i.title.toLowerCase().includes(query) ||
+          i.description.toLowerCase().includes(query) ||
+          (i.zone?.toLowerCase().includes(query) ?? false) ||
+          (i.ward?.toLowerCase().includes(query) ?? false)
+      );
+    }
+    return list;
+  }, [interventionFilter, searchQuery]);
 
   const handleSort = (field: keyof DepartmentPerf) => {
     if (sortField === field) setSortAsc(!sortAsc);
@@ -100,16 +140,18 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
                 wardSubtitle={`${wardRegions.length} Wards  •  Click a ward to drill in`}
                 searchPlaceholder="Search Ward / Location..."
                 onBack={onBack}
-                regions={wardRegions}
+                regions={filteredWardRegions}
                 regionCounts={wardCounts}
                 onRegionClick={onRegionClick}
                 choropleth
                 showComplaints={false}
                 className="xl:h-full"
                 activeLayer={activeLayer}
-                onLayerChange={setActiveLayer}
+                onLayerChange={onLayerChange}
                 intensity={intensity}
-                onIntensityChange={setIntensity}
+                onIntensityChange={onIntensityChange}
+                activeSeverities={activeSeverities}
+                onToggleSeverity={onToggleSeverity}
               />
               <div className="w-full xl:w-80 shrink-0 flex flex-col gap-3 xl:h-full">
                 <AIInsightsPanel insights={zoneInsights} />
@@ -157,7 +199,7 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
               ]}
             />
             <ActiveInterventionsPanel
-              interventions={zoneInterventions}
+              interventions={filteredInterventions}
               activeFilter={interventionFilter}
               onFilterChange={setInterventionFilter}
               onReviewClick={setSelectedIntervention}

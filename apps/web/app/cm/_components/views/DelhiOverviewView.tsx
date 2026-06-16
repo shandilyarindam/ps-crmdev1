@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 
 import { KPIStatsRow } from "../KPIStatsRow";
 import { MapSection } from "../MapSection";
@@ -21,6 +21,12 @@ export interface DelhiOverviewViewProps {
   /** Click a zone polygon to drill into it. */
   onRegionClick: (zoneId: string) => void;
   triggerToast: (message: string) => void;
+  activeLayer: string;
+  onLayerChange: (layerId: string) => void;
+  intensity: number;
+  onIntensityChange: (intensity: number) => void;
+  activeSeverities: string[];
+  onToggleSeverity: (severity: string) => void;
 }
 
 // All / Critical / Escalated tabs
@@ -35,12 +41,44 @@ export const DelhiOverviewView: React.FC<DelhiOverviewViewProps> = ({
   zoneCounts,
   onRegionClick,
   triggerToast,
+  activeLayer,
+  onLayerChange,
+  intensity,
+  onIntensityChange,
+  activeSeverities,
+  onToggleSeverity,
 }) => {
-  const [activeLayer, setActiveLayer] = useState("density");
   const [searchQuery, setSearchQuery] = useState("");
-  const [intensity, setIntensity] = useState(70);
   const [interventionFilter, setInterventionFilter] = useState("all");
   const [selectedIntervention, setSelectedIntervention] = useState<Intervention | null>(null);
+
+  // Search filter for map regions
+  const filteredZoneRegions = useMemo(() => {
+    if (!searchQuery) return zoneRegions;
+    return zoneRegions.filter((r) =>
+      r.properties.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [zoneRegions, searchQuery]);
+
+  // Search & tab filters for interventions
+  const filteredInterventions = useMemo(() => {
+    let list = cmInterventions;
+    if (interventionFilter !== "all") {
+      const tab = escalationTabs.find((t) => t.id === interventionFilter);
+      if (tab?.match) list = list.filter(tab.match);
+    }
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      list = list.filter(
+        (i) =>
+          i.title.toLowerCase().includes(query) ||
+          i.description.toLowerCase().includes(query) ||
+          (i.zone?.toLowerCase().includes(query) ?? false) ||
+          (i.ward?.toLowerCase().includes(query) ?? false)
+      );
+    }
+    return list;
+  }, [interventionFilter, searchQuery]);
 
   return (
     <>
@@ -56,22 +94,24 @@ export const DelhiOverviewView: React.FC<DelhiOverviewViewProps> = ({
               wardTitle="Delhi Overview"
               wardSubtitle="12 Zones  •  250 Wards  •  Population: 2.1 Cr"
               searchPlaceholder="Search Zone / Ward..."
-              regions={zoneRegions}
+              regions={filteredZoneRegions}
               regionCounts={zoneCounts}
               onRegionClick={onRegionClick}
               choropleth
               showComplaints={false}
               className="xl:h-full"
               activeLayer={activeLayer}
-              onLayerChange={setActiveLayer}
+              onLayerChange={onLayerChange}
               intensity={intensity}
-              onIntensityChange={setIntensity}
+              onIntensityChange={onIntensityChange}
+              activeSeverities={activeSeverities}
+              onToggleSeverity={onToggleSeverity}
             />
           </div>
 
           <div className="w-full xl:w-[380px] shrink-0 flex flex-col gap-3 xl:h-[560px]">
             <ActiveInterventionsPanel
-              interventions={cmInterventions}
+              interventions={filteredInterventions}
               activeFilter={interventionFilter}
               onFilterChange={setInterventionFilter}
               onReviewClick={setSelectedIntervention}
