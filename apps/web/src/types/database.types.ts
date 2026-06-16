@@ -748,6 +748,8 @@ export type Database = {
           ward_no: number | null
           wardname: string | null
           wno_sec: number | null
+          zone_id: string | null
+          zone_name: string | null
         }
         Insert: {
           ac_name?: string | null
@@ -765,6 +767,8 @@ export type Database = {
           ward_no?: number | null
           wardname?: string | null
           wno_sec?: number | null
+          zone_id?: string | null
+          zone_name?: string | null
         }
         Update: {
           ac_name?: string | null
@@ -782,6 +786,8 @@ export type Database = {
           ward_no?: number | null
           wardname?: string | null
           wno_sec?: number | null
+          zone_id?: string | null
+          zone_name?: string | null
         }
         Relationships: []
       }
@@ -1044,6 +1050,8 @@ export type Database = {
           totalpop: number | null
           ward_no: number | null
           wardname: string | null
+          zone_id: string | null
+          zone_name: string | null
         }
         Insert: {
           ac_name?: string | null
@@ -1053,6 +1061,8 @@ export type Database = {
           totalpop?: number | null
           ward_no?: number | null
           wardname?: string | null
+          zone_id?: string | null
+          zone_name?: string | null
         }
         Update: {
           ac_name?: string | null
@@ -1062,6 +1072,8 @@ export type Database = {
           totalpop?: number | null
           ward_no?: number | null
           wardname?: string | null
+          zone_id?: string | null
+          zone_name?: string | null
         }
         Relationships: []
       }

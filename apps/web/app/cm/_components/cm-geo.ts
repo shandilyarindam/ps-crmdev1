@@ -14,7 +14,7 @@ import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import type { Feature, MultiPolygon, Polygon, Position } from "geojson";
 import { supabase } from "@/src/lib/supabase";
 import { parseLocationToLatLng } from "@/lib/parse-location";
-import { ZONE_BY_ID, type ZoneId, zoneIdForAc } from "./ward-zone-map";
+import { ZONE_BY_ID, type ZoneId } from "./ward-zone-map";
 
 export interface WardProps {
   ward_no: number;
@@ -45,7 +45,7 @@ export function useWardGeoJSON(): { wards: WardFeature[]; status: GeoStatus } {
     (async () => {
       const { data, error } = await supabase
         .from("ward_geojson")
-        .select("ward_no,wardname,ac_name,totalpop,geometry")
+        .select("ward_no,wardname,ac_name,totalpop,zone_id,geometry")
         // Deterministic order so the turf union below is stable run-to-run.
         .order("ward_no", { ascending: true });
       if (!alive) return;
@@ -68,7 +68,7 @@ export function useWardGeoJSON(): { wards: WardFeature[]; status: GeoStatus } {
             wardname: r.wardname ?? "",
             ac_name: r.ac_name,
             totalpop: r.totalpop,
-            zoneId: zoneIdForAc(r.ac_name),
+            zoneId: (r.zone_id as ZoneId) ?? "unzoned",
           },
         }));
       setWards(feats);
