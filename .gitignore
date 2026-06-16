@@ -31,3 +31,7 @@ env/
 # Models
 # We keep best.onnx in the repo for easy deployment to Railway as per user request
 # best.onnx
+
+# Graphify
+graphify-out/
+graphify/
