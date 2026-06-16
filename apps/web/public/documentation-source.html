@@ -1,0 +1,2118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JanSamadhan — Documentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0D0D0D;
+  --paper: #F7F5F0;
+  --cream: #EDE9E0;
+  --accent: #D4380D;
+  --accent2: #1D6FA4;
+  --gold: #B8860B;
+  --muted: #5A5550;
+  --border: #C8C4BC;
+  --code-bg: #1A1A1A;
+  --code-fg: #E8E3D8;
+  --green: #1B6B1E;
+  --orange: #C94E00;
+  --yellow: #916000;
+  --red: #B71C1C;
+  --col: 700px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+/* ACCESSIBILITY */
+a:focus-visible, button:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 8px;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 8px 16px;
+  font-size: 14px;
+  z-index: 999;
+  border-radius: 4px;
+}
+.skip-link:focus { left: 16px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  html { scroll-behavior: auto; }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; font-size: 13px; }
+  .page { padding: 20px; max-width: 100%; }
+  h2 { font-size: 18px; }
+  details[open] > *:not(summary) { display: block; }
+  details summary { pointer-events: none; }
+  details summary::after { display: none; }
+  .usp-grid { grid-template-columns: repeat(3,1fr); }
+  .role-grid { grid-template-columns: repeat(4,1fr); }
+  .vs-table { grid-template-columns: 1fr 1fr; }
+  .two-col { grid-template-columns: 1fr 1fr; }
+  .stat-row { grid-template-columns: repeat(6,1fr); }
+}
+
+/* NAV */
+.top-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  background: var(--ink);
+  color: var(--paper);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  height: 50px;
+  gap: 6px;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+.top-nav::-webkit-scrollbar { display: none; }
+.top-nav .brand {
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  margin-right: 16px;
+  flex-shrink: 0;
+  color: var(--paper);
+  text-decoration: none;
+  letter-spacing: 0.05em;
+}
+.top-nav a {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: #aaa;
+  text-decoration: none;
+  padding: 5px 9px;
+  border-radius: 3px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.top-nav a:hover { color: var(--paper); background: rgba(255,255,255,0.1); }
+
+/* TOC */
+.toc-float {
+  position: fixed;
+  right: 20px;
+  top: 70px;
+  width: 175px;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 14px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  z-index: 50;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.toc-float a {
+  display: block;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 3px 0;
+  line-height: 1.6;
+  transition: color 0.15s;
+  border-left: 2px solid transparent;
+  padding-left: 8px;
+  margin-left: -8px;
+}
+.toc-float a:hover { color: var(--ink); }
+.toc-float a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 700; }
+.toc-title {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--border);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+@media (max-width: 1120px) { .toc-float { display: none; } }
+
+/* LAYOUT */
+.page {
+  max-width: var(--col);
+  margin: 0 auto;
+  padding: 80px 24px 120px;
+}
+
+/* COVER */
+.cover {
+  padding: 56px 0 44px;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 52px;
+}
+.cover-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+.cover h1 {
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(38px, 7vw, 62px);
+  font-weight: 700;
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.cover h1 span { color: var(--accent); }
+.cover-sub {
+  font-size: 19px;
+  font-weight: 300;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+.cover-quote {
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  color: var(--muted);
+  border-left: 3px solid var(--accent);
+  padding-left: 16px;
+  margin-bottom: 28px;
+  font-style: italic;
+  line-height: 1.7;
+}
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.badge {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  padding: 5px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.badge.live { border-color: var(--accent); color: var(--accent); background: rgba(212,56,13,0.06); }
+
+/* READING PATHS */
+.reading-paths {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.path-btn {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  padding: 8px 14px;
+  border: 1.5px solid var(--ink);
+  border-radius: 3px;
+  background: transparent;
+  cursor: pointer;
+  color: var(--ink);
+  transition: all 0.15s;
+  text-decoration: none;
+  display: inline-block;
+}
+.path-btn:hover { background: var(--ink); color: var(--paper); }
+.path-btn span { color: var(--muted); font-size: 10px; margin-left: 4px; }
+
+/* JUDGE SNAPSHOT */
+.snapshot {
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 6px;
+  padding: 28px 28px 24px;
+  margin-bottom: 52px;
+}
+.snapshot-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 16px;
+}
+.snapshot h2 {
+  font-family: 'Space Mono', monospace;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--paper);
+  letter-spacing: -0.01em;
+}
+.snapshot h2::before { display: none; }
+.snapshot-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+@media (max-width: 540px) { .snapshot-grid { grid-template-columns: 1fr; } }
+.snapshot-block {
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 14px 16px;
+}
+.snapshot-block-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: 6px;
+}
+.snapshot-block p {
+  color: #ccc;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+.snapshot-block strong { color: var(--paper); }
+.snapshot-proof {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  border-top: 1px solid #333;
+  padding-top: 16px;
+}
+.proof-item { text-align: center; }
+.proof-num {
+  font-family: 'Space Mono', monospace;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 3px;
+}
+.proof-label { font-size: 11px; color: #888; line-height: 1.3; }
+.snapshot-outcome {
+  background: #1A1A1A;
+  border-radius: 4px;
+  padding: 14px 16px;
+  margin-top: 16px;
+  font-size: 14px;
+  color: #ccc;
+  line-height: 1.6;
+}
+.snapshot-outcome strong { color: var(--paper); }
+
+/* SECTION */
+.section {
+  margin-bottom: 64px;
+  scroll-margin-top: 64px;
+}
+.section-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 5px;
+}
+.why-matters {
+  font-size: 14px;
+  color: var(--muted);
+  font-style: italic;
+  margin-bottom: 16px;
+  border-left: 2px solid var(--border);
+  padding-left: 12px;
+}
+h2 {
+  font-family: 'Space Mono', monospace;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+h2::before { content: '— '; color: var(--border); }
+h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 28px 0 10px;
+}
+p { margin-bottom: 14px; color: #1E1A16; }
+.judge-takeaway {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--ink);
+  padding: 12px 16px;
+  margin-top: 20px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.judge-takeaway::before {
+  content: '▸ Judge takeaway: ';
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* CALLOUTS */
+.callout {
+  border-left: 3px solid var(--accent);
+  padding: 14px 18px;
+  background: rgba(212,56,13,0.05);
+  margin: 18px 0;
+  font-size: 15px;
+}
+.callout.blue { border-color: var(--accent2); background: rgba(29,111,164,0.05); }
+.callout.green { border-color: var(--green); background: rgba(27,107,30,0.05); }
+.callout.grey { border-color: var(--border); background: var(--cream); }
+.callout strong { font-weight: 600; }
+
+/* TABLES */
+.tbl-wrap { overflow-x: auto; margin: 18px 0; }
+.tbl-intro {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 8px;
+  font-style: italic;
+}
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th {
+  background: var(--ink);
+  color: var(--paper);
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-align: left;
+  padding: 10px 13px;
+  font-weight: 400;
+}
+td {
+  padding: 10px 13px;
+  border-bottom: 1px solid var(--cream);
+  vertical-align: top;
+  line-height: 1.5;
+}
+tr:nth-child(even) td { background: var(--cream); }
+td code {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  background: rgba(0,0,0,0.08);
+  padding: 2px 5px;
+  border-radius: 2px;
+}
+
+/* CODE */
+pre {
+  background: var(--code-bg);
+  color: var(--code-fg);
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  padding: 20px;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 16px 0;
+}
+code {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  background: rgba(0,0,0,0.08);
+  padding: 2px 5px;
+  border-radius: 2px;
+}
+pre code { background: none; padding: 0; }
+
+/* STAT ROW */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin: 20px 0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.stat-cell { background: var(--paper); padding: 18px 14px; text-align: center; }
+.stat-num {
+  font-family: 'Space Mono', monospace;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
+
+/* PILLS */
+.pill {
+  display: inline-block;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border-radius: 20px;
+  margin: 2px;
+}
+.pill.red { background: rgba(183,28,28,0.1); color: var(--red); border: 1px solid rgba(183,28,28,0.3); }
+.pill.orange { background: rgba(201,78,0,0.1); color: var(--orange); border: 1px solid rgba(201,78,0,0.3); }
+.pill.yellow { background: rgba(145,96,0,0.1); color: var(--yellow); border: 1px solid rgba(145,96,0,0.3); }
+.pill.green { background: rgba(27,107,30,0.1); color: var(--green); border: 1px solid rgba(27,107,30,0.3); }
+.pill.blue { background: rgba(29,111,164,0.1); color: var(--accent2); border: 1px solid rgba(29,111,164,0.3); }
+.pill.grey { background: rgba(0,0,0,0.06); color: var(--muted); border: 1px solid var(--border); }
+
+/* USP GRID */
+.usp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+.usp-card {
+  border: 1.5px solid var(--border);
+  padding: 16px;
+  border-radius: 4px;
+  background: var(--paper);
+  transition: border-color 0.2s, transform 0.15s;
+}
+.usp-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.usp-icon { font-size: 20px; margin-bottom: 8px; }
+.usp-title { font-size: 14px; font-weight: 600; line-height: 1.3; margin-bottom: 4px; }
+.usp-desc { font-size: 13px; color: var(--muted); line-height: 1.4; }
+
+/* FLOW */
+.flow {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  padding: 20px;
+  margin: 16px 0;
+  overflow-x: auto;
+  white-space: pre;
+  line-height: 1.85;
+  border-radius: 4px;
+}
+
+/* LIFECYCLE SVG */
+.diagram-wrap {
+  margin: 20px 0;
+  overflow-x: auto;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 20px;
+}
+
+/* SLA BARS */
+.sla-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 9px 0;
+}
+.sla-level { width: 110px; flex-shrink: 0; }
+.sla-bar-wrap { flex: 1; background: var(--cream); height: 10px; border-radius: 2px; overflow: hidden; }
+.sla-bar { height: 100%; border-radius: 2px; transition: width 0.8s ease; }
+.sla-time {
+  width: 75px;
+  text-align: right;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+/* DETAILS */
+details {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin: 12px 0;
+  overflow: hidden;
+}
+details summary {
+  padding: 15px 18px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--cream);
+  user-select: none;
+}
+details summary::-webkit-details-marker { display: none; }
+details summary::after { content: '+'; font-family: 'Space Mono', monospace; font-size: 18px; color: var(--muted); }
+details[open] summary::after { content: '−'; }
+details > *:not(summary) { padding: 0 18px 18px; margin-top: 16px; }
+
+/* ROLE CARDS */
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+.role-card {
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  padding: 16px;
+  text-align: center;
+}
+.role-emoji { font-size: 30px; margin-bottom: 8px; }
+.role-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+.role-desc { font-size: 13px; color: var(--muted); line-height: 1.4; }
+.role-card.citizen { border-color: var(--accent2); }
+.role-card.authority { border-color: var(--gold); }
+.role-card.worker { border-color: var(--green); }
+.role-card.admin { border-color: var(--accent); }
+
+/* ARCH STACK */
+.arch-stack { display: flex; flex-direction: column; gap: 8px; margin: 20px 0; }
+.arch-layer {
+  display: flex;
+  align-items: stretch;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.arch-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  padding: 12px 10px;
+  background: var(--ink);
+  color: var(--paper);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+}
+.arch-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+  align-items: center;
+  flex: 1;
+}
+.arch-chip {
+  font-size: 13px;
+  padding: 5px 10px;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.arch-chip strong { font-weight: 600; }
+
+/* CHECKLIST */
+.checklist { list-style: none; margin: 12px 0; }
+.checklist li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--cream);
+  font-size: 15px;
+  line-height: 1.5;
+}
+.checklist li:last-child { border-bottom: none; }
+.check-icon { flex-shrink: 0; margin-top: 2px; font-size: 14px; }
+.check-pass { color: var(--green); }
+.check-warn { color: var(--orange); }
+
+/* TWO COL */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 16px 0;
+}
+@media (max-width: 560px) { .two-col { grid-template-columns: 1fr; } }
+.box { border: 1.5px solid var(--border); border-radius: 4px; padding: 16px; background: var(--cream); }
+.box-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+/* NUMBER LIST — FIXED: block layout, no two-col */
+.number-list { list-style: none; margin: 16px 0; }
+.number-list li {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 0 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--cream);
+  font-size: 15px;
+  line-height: 1.6;
+  align-items: start;
+}
+.number-list li:last-child { border-bottom: none; }
+.nl-num {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 700;
+  padding-top: 2px;
+}
+.nl-content { }
+.nl-content strong { display: block; margin-bottom: 2px; }
+
+/* COMPARISON */
+.vs-table { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 20px 0; }
+@media (max-width: 560px) { .vs-table { grid-template-columns: 1fr; } }
+.vs-col { border: 1.5px solid var(--border); border-radius: 4px; overflow: hidden; }
+.vs-head { padding: 11px 14px; font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; }
+.vs-head.bad { background: rgba(183,28,28,0.08); color: var(--red); }
+.vs-head.good { background: rgba(27,107,30,0.08); color: var(--green); }
+.vs-list { list-style: none; padding: 10px 14px; }
+.vs-list li { font-size: 14px; padding: 6px 0; border-bottom: 1px solid var(--cream); display: flex; gap: 8px; align-items: flex-start; }
+.vs-list li:last-child { border-bottom: none; }
+
+/* ENUMS */
+.enum-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.enum-val {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  padding: 5px 11px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--cream);
+}
+.enum-val.terminal { border-color: var(--red); background: rgba(183,28,28,0.06); color: var(--red); }
+.enum-val.ok { border-color: var(--green); background: rgba(27,107,30,0.06); color: var(--green); }
+.enum-val.warn { border-color: var(--orange); background: rgba(201,78,0,0.06); color: var(--orange); }
+.enum-val.grey { color: var(--muted); }
+
+/* API METHOD */
+.api-method {
+  display: inline-block;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-weight: 700;
+  margin-right: 2px;
+}
+.api-method.get { background: rgba(29,111,164,0.12); color: var(--accent2); }
+.api-method.post { background: rgba(27,107,30,0.12); color: var(--green); }
+.api-method.patch { background: rgba(145,96,0,0.12); color: var(--yellow); }
+
+/* ROADMAP */
+.roadmap { margin: 20px 0; }
+.rm-item { display: flex; gap: 16px; padding: 13px 0; border-bottom: 1px solid var(--cream); align-items: flex-start; }
+.rm-item:last-child { border-bottom: none; }
+.rm-phase { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); width: 70px; flex-shrink: 0; padding-top: 2px; }
+.rm-title { font-weight: 500; font-size: 15px; margin-bottom: 3px; }
+
+/* LIVE MATRIX */
+.live-matrix { margin: 20px 0; }
+.lm-row { display: flex; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--cream); align-items: flex-start; font-size: 14px; }
+.lm-row:last-child { border-bottom: none; }
+.lm-feature { flex: 1; font-weight: 500; }
+.lm-status { width: 120px; flex-shrink: 0; font-family: 'Space Mono', monospace; font-size: 11px; text-align: right; }
+.lm-status.live { color: var(--green); }
+.lm-status.partial { color: var(--yellow); }
+.lm-status.planned { color: var(--muted); }
+
+/* GLOSSARY STRIP */
+.gloss-strip {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 18px 20px;
+  margin: 20px 0;
+}
+.gloss-strip-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.gloss-terms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.gloss-term { font-size: 14px; }
+.gloss-term strong { font-family: 'Space Mono', monospace; font-size: 12px; }
+
+/* FOOTER */
+.footer {
+  border-top: 2px solid var(--ink);
+  padding: 32px 0;
+  margin-top: 80px;
+  text-align: center;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+.footer a { color: var(--accent); text-decoration: none; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--cream); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.rule { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<!-- TOP NAV -->
+<nav class="top-nav no-print" aria-label="Section navigation">
+  <a class="brand" href="#top">JANSAMADHAN</a>
+  <a href="#snapshot">Snapshot</a>
+  <a href="#problem">Problem</a>
+  <a href="#solution">Solution</a>
+  <a href="#usps">Why Different</a>
+  <a href="#journey">Journey</a>
+  <a href="#guarantees">Guarantees</a>
+  <a href="#systems">Systems</a>
+  <a href="#flows">Role Flows</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#database">Database</a>
+  <a href="#api">API</a>
+  <a href="#security">Security</a>
+  <a href="#operations">Operations</a>
+  <a href="#failures">Failures</a>
+  <a href="#comparison">vs Others</a>
+  <a href="#scope">Scope</a>
+  <a href="#roadmap">Roadmap</a>
+  <a href="#glossary">Glossary</a>
+</nav>
+
+<!-- TOC FLOAT -->
+<aside class="toc-float no-print" aria-label="Table of contents">
+  <div class="toc-title">Contents</div>
+  <a href="#snapshot">00 Judge Snapshot</a>
+  <a href="#problem">01 Problem</a>
+  <a href="#solution">02 Solution</a>
+  <a href="#usps">03 Why Different</a>
+  <a href="#journey">04 Journey</a>
+  <a href="#guarantees">05 Guarantees</a>
+  <a href="#systems">06 Core Systems</a>
+  <a href="#flows">07 Role Flows</a>
+  <a href="#architecture">08 Architecture</a>
+  <a href="#database">09 Database</a>
+  <a href="#api">10 API Reference</a>
+  <a href="#security">11 Security</a>
+  <a href="#operations">12 Operations</a>
+  <a href="#failures">13 Failures</a>
+  <a href="#comparison">14 vs Others</a>
+  <a href="#scope">15 Scope & Limits</a>
+  <a href="#roadmap">16 Roadmap</a>
+  <a href="#glossary">17 Glossary</a>
+</aside>
+
+<div class="page" id="top">
+<main id="main-content">
+
+<!-- COVER -->
+<div class="cover section" id="cover">
+  <div class="cover-label">Technical Documentation · Hackathon 2026 · Team 404</div>
+  <h1>Jan<span>Samadhan</span></h1>
+  <div class="cover-sub">जन समाधान — Smart Civic Grievance Management for India</div>
+  <div class="cover-quote">"Every complaint is a contract between a citizen and their government.<br>JanSamadhan makes that contract visible, enforceable, and measurable."</div>
+  <div class="badges">
+    <span class="badge live">🌐 Live — jansamadhan.perkkk.dev</span>
+    <span class="badge">Next.js 15</span>
+    <span class="badge">FastAPI</span>
+    <span class="badge">Supabase + PostGIS</span>
+    <span class="badge">Gemini AI</span>
+    <span class="badge">DIGIPIN</span>
+    <span class="badge">SDG 11 · SDG 16</span>
+  </div>
+  <div class="reading-paths no-print">
+    <a class="path-btn" href="#snapshot">2-min read <span>→ Snapshot + Journey + Guarantees</span></a>
+    <a class="path-btn" href="#systems">5-min read <span>→ add Systems + Security</span></a>
+    <a class="path-btn" href="#architecture">10-min read <span>→ add Architecture + API</span></a>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stat-row" aria-label="Platform statistics">
+  <div class="stat-cell"><div class="stat-num">42+</div><div class="stat-label">Complaint Types</div></div>
+  <div class="stat-cell"><div class="stat-num">9</div><div class="stat-label">Delhi Zones</div></div>
+  <div class="stat-cell"><div class="stat-num">56+</div><div class="stat-label">API Endpoints</div></div>
+  <div class="stat-cell"><div class="stat-num">28</div><div class="stat-label">RLS Policies</div></div>
+  <div class="stat-cell"><div class="stat-num">4</div><div class="stat-label">User Portals</div></div>
+  <div class="stat-cell"><div class="stat-num">10</div><div class="stat-label">Languages</div></div>
+</div>
+
+<!-- QUICK GLOSSARY STRIP -->
+<div class="gloss-strip">
+  <div class="gloss-strip-title">8 terms you'll see — know these and you'll follow everything</div>
+  <div class="gloss-terms">
+    <div class="gloss-term"><strong>DIGIPIN</strong> — India Post's GPS code (4m×4m precision, works offline)</div>
+    <div class="gloss-term"><strong>RLS</strong> — Database walls between departments (can't be bypassed)</div>
+    <div class="gloss-term"><strong>SLA</strong> — Complaint deadline (L1=14d, L2=7d, L3=48h, L4=4h)</div>
+    <div class="gloss-term"><strong>RPC</strong> — Atomic DB operation (guaranteed, no race conditions)</div>
+    <div class="gloss-term"><strong>ENUM</strong> — Fixed valid states only (invalid values rejected at DB)</div>
+    <div class="gloss-term"><strong>PostGIS</strong> — Spatial DB extension used for 20m duplicate detection</div>
+    <div class="gloss-term"><strong>YOLO</strong> — AI vision model for CCTV pothole/issue detection</div>
+    <div class="gloss-term"><strong>Seva</strong> — JanSamadhan's AI chatbot (Gemini-powered, Hindi+English)</div>
+  </div>
+</div>
+
+<!-- JUDGE SNAPSHOT -->
+<div class="snapshot section" id="snapshot" role="region" aria-label="Judge quick snapshot">
+  <div class="snapshot-label">00 — Judge Quick Snapshot · 30 seconds</div>
+  <h2>What is this and why does it matter?</h2>
+  <div class="snapshot-grid">
+    <div class="snapshot-block">
+      <div class="snapshot-block-label">The Problem</div>
+      <p>India's civic complaint systems are siloed, English-only, and <strong>34% of complaints close without action</strong> (CAG 2023). Citizens have no visibility. Departments have no accountability.</p>
+    </div>
+    <div class="snapshot-block">
+      <div class="snapshot-block-label">What JanSamadhan Does</div>
+      <p>An AI-first civic platform where citizens file in Hindi/English/voice, complaints auto-route to the right department, workers are dispatched with GPS precision, and <strong>every step is enforced at the database layer</strong> — not just the UI.</p>
+    </div>
+    <div class="snapshot-block">
+      <div class="snapshot-block-label">What Makes It Hard to Build</div>
+      <p>Deduplication across 4,000+ ULBs, department isolation without leakage, race-condition-safe worker assignment, CCTV auto-detection with false-positive prevention, and <strong>offline-capable location</strong> encoding in low-connectivity areas.</p>
+    </div>
+    <div class="snapshot-block">
+      <div class="snapshot-block-label">Hard Guarantees (not promises)</div>
+      <p>Invalid status transitions are <strong>impossible at DB level</strong>. Dept. cross-access is <strong>impossible at DB level</strong>. Duplicate assignment is <strong>impossible via row locks</strong>. These are not frontend checks.</p>
+    </div>
+  </div>
+  <div class="snapshot-proof">
+    <div class="proof-item"><div class="proof-num">₹6.43</div><div class="proof-label">Per grievance<br>vs ₹83-250 CPGRAMS</div></div>
+    <div class="proof-item"><div class="proof-num">13-39×</div><div class="proof-label">Cheaper than<br>existing systems</div></div>
+    <div class="proof-item"><div class="proof-num">5×</div><div class="proof-label">Feature depth vs<br>CPGRAMS/Salesforce</div></div>
+    <div class="proof-item"><div class="proof-num">4m²</div><div class="proof-label">Worker navigation<br>precision (DIGIPIN)</div></div>
+    <div class="proof-item"><div class="proof-num">97%</div><div class="proof-label">Complete<br>MVP Live</div></div>
+  </div>
+  <div class="snapshot-outcome">
+    <strong>Before JanSamadhan:</strong> Seema reports a sewage overflow. It lands in the wrong department. No one knows. Complaint closes in 30 days without action. &nbsp;|&nbsp; <strong>After:</strong> Seva AI classifies it to DJB in 3 seconds. Worker dispatched to 4m² GPS precision. Resolved in 6 hours. Proof photo uploaded. Seema rates it 8/10.
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<div class="section" id="problem">
+  <div class="section-label">01</div>
+  <h2>Problem Statement</h2>
+  <div class="why-matters">Why this matters: India's 1.4 billion citizens have nowhere to go when civic systems fail them.</div>
+  <p>India has <strong>4,000+ urban local bodies</strong>, 28 state governments, and hundreds of civic departments — all operating siloed grievance systems with zero interoperability.</p>
+
+  <div class="tbl-wrap">
+    <p class="tbl-intro">Every row below is a real failure mode that citizens experience daily.</p>
+    <table aria-label="Problem areas in current civic systems">
+      <thead><tr><th>Pain Point</th><th>Reality on the Ground</th></tr></thead>
+      <tbody>
+        <tr><td><strong>No single window</strong></td><td>Citizens must know which portal to use for which issue — most don't</td></tr>
+        <tr><td><strong>Zero visibility</strong></td><td>Complaints disappear — no updates, no timelines, no accountability</td></tr>
+        <tr><td><strong>Duplicate noise</strong></td><td>50 citizens report the same pothole → 50 noise entries, zero deduplication</td></tr>
+        <tr><td><strong>Language barrier</strong></td><td>Most portals require English, excluding 800M+ Hindi speakers</td></tr>
+        <tr><td><strong>No spatial intelligence</strong></td><td>Authorities can't see complaint clusters or hotspot zones on a map</td></tr>
+        <tr><td><strong>Worker context gap</strong></td><td>Workers get vague text assignments — no photos, no GPS, no SLA deadline</td></tr>
+        <tr><td><strong>Jurisdictional overlap</strong></td><td>MCD, NDMC, DJB, PWD — complaints routinely land in the wrong department</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>📊 CAG Report 2023:</strong> 34% of CPGRAMS complaints are closed without action. The system is built to absorb complaints, not resolve them.
+  </div>
+  <div class="judge-takeaway">This is a governance accountability problem, not a tech problem. JanSamadhan makes accountability structural — enforced by the database, not dependent on human compliance.</div>
+</div>
+
+<!-- SOLUTION -->
+<div class="section" id="solution">
+  <div class="section-label">02</div>
+  <h2>What JanSamadhan Does</h2>
+  <div class="why-matters">Four portals, one platform — every stakeholder has exactly what they need, nothing more.</div>
+
+  <div class="role-grid" aria-label="Four user portals">
+    <div class="role-card citizen">
+      <div class="role-emoji">👤</div>
+      <div class="role-name">Citizen</div>
+      <div class="role-desc">File in Hindi/English/voice. Real-time tracking. Rate outcomes. Earn rewards.</div>
+    </div>
+    <div class="role-card authority">
+      <div class="role-emoji">🏛️</div>
+      <div class="role-name">Authority</div>
+      <div class="role-desc">Department-only view (DB-enforced). Assign workers. Escalate. Add internal notes.</div>
+    </div>
+    <div class="role-card worker">
+      <div class="role-emoji">👷</div>
+      <div class="role-name">Worker</div>
+      <div class="role-desc">Mobile-optimised. Navigate to 4m² GPS pin. Update status. Upload proof.</div>
+    </div>
+    <div class="role-card admin">
+      <div class="role-emoji">⚙️</div>
+      <div class="role-name">Admin</div>
+      <div class="role-desc">Full platform control. All complaints, SLA breach dashboard, CCTV live monitoring, analytics.</div>
+    </div>
+  </div>
+
+  <p>Complaint categories span <strong>42+ types across 9 Delhi jurisdiction bodies</strong>: DMRC (Metro), NHAI (Highways), PWD/MCD/NDMC (Roads, Sanitation), DJB (Water/Sewage), DISCOM (Electricity), Delhi Police (Law), DPCC/Forest Dept (Environment).</p>
+  <div class="judge-takeaway">One app for the citizen. Isolated views for each department. Single source of truth for the admin. No manual routing, no cross-department leakage.</div>
+</div>
+
+<!-- USPs — top 8 in main, rest in details -->
+<div class="section" id="usps">
+  <div class="section-label">03</div>
+  <h2>Why This Is Different</h2>
+  <div class="why-matters">These are engineering decisions with real accountability impact — not feature checkboxes.</div>
+
+  <div class="usp-grid" aria-label="Top 8 differentiators">
+    <div class="usp-card">
+      <div class="usp-icon">🤖</div>
+      <div class="usp-title">AI Complaint Intake</div>
+      <div class="usp-desc">Gemini classifies Hindi/English free-text → auto-fills category, severity, authority. No form literacy required.</div>
+    </div>
+    <div class="usp-card">
+      <div class="usp-icon">📍</div>
+      <div class="usp-title">DIGIPIN Location</div>
+      <div class="usp-desc">India Post's 10-char GPS code. 4m×4m precision. Works offline. Permanent, renaming-proof address.</div>
+    </div>
+    <div class="usp-card">
+      <div class="usp-icon">🔍</div>
+      <div class="usp-title">PostGIS Deduplication</div>
+      <div class="usp-desc">20m radius scan before submission. Crowd upvotes instead of spam. Atomic severity recalculation.</div>
+    </div>
+    <div class="usp-card">
+      <div class="usp-icon">🔒</div>
+      <div class="usp-title">DB-Level Dept. Isolation</div>
+      <div class="usp-desc">28 RLS policies using JWT claims. DJB cannot see PWD. Bypassing the UI doesn't help.</div>
+    </div>
+    <div class="usp-card">
+      <div class="usp-icon">⏱️</div>
+      <div class="usp-title">Auto-Escalation on SLA Breach</div>
+      <div class="usp-desc">Cron RPC fires automatically. No human needed. Escalated complaints surface at top of authority dashboard.</div>
+    </div>
+    <div class="usp-card">
+      <div class="usp-icon">📹</div>
+      <div class="usp-title">CCTV + YOLO Detection</div>
+      <div class="usp-desc">10-frame burst + reliability engine prevents false positives. Auto-creates tickets. Admin dashcam live center.</div>
+    </div>
+    <div class="usp-card">
+      <div class="usp-icon">📋</div>
+      <div class="usp-title">Immutable Audit Trail</div>
+      <div class="usp-desc">Every status change logged to ticket_history. Citizens see public trail. Authorities see internal notes. Tamper-proof.</div>
+    </div>
+    <div class="usp-card">
+      <div class="usp-icon">⚛️</div>
+      <div class="usp-title">Race-Condition-Safe Ops</div>
+      <div class="usp-desc">FOR UPDATE row locks on assignment RPC. Two authorities cannot grab the same worker simultaneously.</div>
+    </div>
+  </div>
+
+  <details>
+    <summary>See all 17 differentiators</summary>
+    <div class="usp-grid" style="margin-top:0">
+      <div class="usp-card">
+        <div class="usp-icon">📸</div>
+        <div class="usp-title">Proof-Based Resolution</div>
+        <div class="usp-desc">Workers must upload photo proof before marking resolved — no paperwork-only closures.</div>
+      </div>
+      <div class="usp-card">
+        <div class="usp-icon">📱</div>
+        <div class="usp-title">WhatsApp + Email Notifications</div>
+        <div class="usp-desc">Deep-link directly to ticket UUID. Closure confirmation loop. Citizen reopens within 72h.</div>
+      </div>
+      <div class="usp-card">
+        <div class="usp-icon">🗺️</div>
+        <div class="usp-title">Real-Time Spatial Heatmap</div>
+        <div class="usp-desc">Live severity-aware complaint clusters. Nearby complaint discovery for citizens and admins.</div>
+      </div>
+      <div class="usp-card">
+        <div class="usp-icon">🏆</div>
+        <div class="usp-title">Gamified Civic Participation</div>
+        <div class="usp-desc">Wallet + rewards + leaderboard. Spam penalties. Gamification award RPC tracks every action.</div>
+      </div>
+      <div class="usp-card">
+        <div class="usp-icon">🎓</div>
+        <div class="usp-title">Supervised Learning Pipeline</div>
+        <div class="usp-desc">Worker field events captured for YOLO model retraining. Export-batch workflow + metrics endpoint.</div>
+      </div>
+      <div class="usp-card">
+        <div class="usp-icon">🗣️</div>
+        <div class="usp-title">Voice Input — 10 Languages</div>
+        <div class="usp-desc">Sarvam STT proxy. Hindi, Tamil, Telugu, Kannada, Malayalam, Bengali, Marathi, Gujarati, Punjabi, English.</div>
+      </div>
+      <div class="usp-card">
+        <div class="usp-icon">🛡️</div>
+        <div class="usp-title">Bot & Spam Protection</div>
+        <div class="usp-desc">Cloudflare Turnstile on every submission + spam flag + admin moderation + wallet penalty workflow.</div>
+      </div>
+      <div class="usp-card">
+        <div class="usp-icon">🚀</div>
+        <div class="usp-title">One-Command Deployment</div>
+        <div class="usp-desc">docker compose up --build — all 3 services. GCP Cloud Build CI/CD for production. Secrets in GCP Secret Manager.</div>
+      </div>
+      <div class="usp-card">
+        <div class="usp-icon">🔧</div>
+        <div class="usp-title">Material/Inventory Workflow</div>
+        <div class="usp-desc">Workers request materials from field. Authorities allot. Inventory tracked. Full field-execution depth.</div>
+      </div>
+    </div>
+  </details>
+
+  <div class="judge-takeaway">Every differentiator above is enforced at the database or infrastructure layer — not just the UI. Removing the frontend doesn't remove the guarantees.</div>
+</div>
+
+<!-- END-TO-END JOURNEY -->
+<div class="section" id="journey">
+  <div class="section-label">04</div>
+  <h2>End-to-End Complaint Journey</h2>
+  <div class="why-matters">One complaint, traced from citizen's mouth to proof photo — every system that fires along the way.</div>
+
+  <p>Seema reports a sewage overflow on her street in Delhi.</p>
+
+  <ol class="number-list" aria-label="Complaint lifecycle walkthrough">
+    <li>
+      <div class="nl-num">01</div>
+      <div class="nl-content">
+        <strong>Intake via Seva AI</strong>
+        Seema opens JanSamadhan, types in Hindi: "Hamare gali mein nali overflow ho rahi hai — bahut gandagi hai." Gemini classifies in seconds: Category → Sewer Line Blockage · Authority → DJB · Severity → L3 High (48h SLA). Seva shows a preview — Seema confirms.
+      </div>
+    </li>
+    <li>
+      <div class="nl-num">02</div>
+      <div class="nl-content">
+        <strong>Location Pinning + DIGIPIN</strong>
+        GPS auto-detects her location. She drags the map pin 5m to the exact overflow spot. DIGIPIN encoded: <strong>39J-948-H2PK</strong> (4m×4m square). PostGIS 20m scan runs — no duplicate found. Complaint proceeds.
+      </div>
+    </li>
+    <li>
+      <div class="nl-num">03</div>
+      <div class="nl-content">
+        <strong>Ticket Created</strong>
+        Turnstile verification passes. Ticket inserted: <strong>DL-2026-00312</strong>. SLA deadline: 48 hours from now. Email + WhatsApp confirmation sent with deep-link to her ticket UUID. Ticket history row created (submitted state).
+      </div>
+    </li>
+    <li>
+      <div class="nl-num">04</div>
+      <div class="nl-content">
+        <strong>Authority Receives + Assigns</strong>
+        DJB authority logs in. RLS ensures they see only DJB complaints. DL-2026-00312 appears at top (L3 High). They assign to field worker Rajan. The <strong>assign_worker_to_complaint</strong> RPC fires with a FOR UPDATE row lock — no race condition possible.
+      </div>
+    </li>
+    <li>
+      <div class="nl-num">05</div>
+      <div class="nl-content">
+        <strong>Worker Field Execution</strong>
+        Rajan sees the ticket on his mobile dashboard. He taps Navigate — Google Maps opens at the DIGIPIN coordinates. He marks In Progress. Clears the drain. Uploads a proof photo to complaints-media/resolution/. Status → Resolved.
+      </div>
+    </li>
+    <li>
+      <div class="nl-num">06</div>
+      <div class="nl-content">
+        <strong>DB Trigger Fires Automatically</strong>
+        On resolution, a PostgreSQL trigger fires: Rajan's availability resets to Available, current_complaint → NULL, resolved_at timestamp set. No API call required — the database handles state cleanup.
+      </div>
+    </li>
+    <li>
+      <div class="nl-num">07</div>
+      <div class="nl-content">
+        <strong>Citizen Confirmation + Rating</strong>
+        Seema gets a WhatsApp message with a deep-link. She sees the proof photo. She confirms resolved. Rating window opens — she rates 8/10. Wallet points awarded to both Seema and Rajan.
+      </div>
+    </li>
+    <li>
+      <div class="nl-num">08</div>
+      <div class="nl-content">
+        <strong>Immutable Audit Trail</strong>
+        Full ticket_history shows every state change with timestamps. Visible to admin, partially to citizen, internal authority notes hidden. Tamper-proof. Total time: 6 hours against a 48-hour SLA.
+      </div>
+    </li>
+  </ol>
+
+  <div class="callout green">
+    <strong>Result:</strong> Resolved in 6 hours against a 48h SLA. Full digital trail. Proof photo on record. Citizen rated it. Worker rewarded. Model gets smarter from the event.
+  </div>
+</div>
+
+<!-- GUARANTEES -->
+<div class="section" id="guarantees">
+  <div class="section-label">05</div>
+  <h2>Trust & Accountability Guarantees</h2>
+  <div class="why-matters">These are not UI rules. They are database-level constraints that cannot be bypassed by any user, including admins.</div>
+
+  <ul class="checklist" aria-label="System guarantees">
+    <li>
+      <span class="check-icon check-pass" aria-hidden="true">✓</span>
+      <div>
+        <strong>No duplicate ticket for the same issue within 20m</strong><br>
+        Enforced via PostGIS ST_DWithin before INSERT. The check runs at DB layer, not application layer. <span class="pill blue">RPC: check_for_duplicate_report</span>
+      </div>
+    </li>
+    <li>
+      <span class="check-icon check-pass" aria-hidden="true">✓</span>
+      <div>
+        <strong>No invalid status transition is possible</strong><br>
+        A BEFORE UPDATE trigger raises a PostgreSQL exception on any invalid state change. Bypassing the UI does not help. <span class="pill blue">Trigger: enforce_status_transition()</span>
+      </div>
+    </li>
+    <li>
+      <span class="check-icon check-pass" aria-hidden="true">✓</span>
+      <div>
+        <strong>No authority can access another department's complaints</strong><br>
+        28 RLS policies use JWT claims at the DB layer — not application logic. Even direct DB queries from outside the app are blocked. <span class="pill blue">28 RLS Policies</span>
+      </div>
+    </li>
+    <li>
+      <span class="check-icon check-pass" aria-hidden="true">✓</span>
+      <div>
+        <strong>No race condition on worker assignment</strong><br>
+        FOR UPDATE row lock inside the assignment RPC prevents two authorities assigning the same worker simultaneously. <span class="pill blue">RPC: assign_worker_to_complaint</span>
+      </div>
+    </li>
+    <li>
+      <span class="check-icon check-pass" aria-hidden="true">✓</span>
+      <div>
+        <strong>Ticket IDs are globally unique</strong><br>
+        PostgreSQL SEQUENCE guarantees. DL-YYYY-NNNNN never repeats even under concurrent submissions.
+      </div>
+    </li>
+    <li>
+      <span class="check-icon check-pass" aria-hidden="true">✓</span>
+      <div>
+        <strong>SLA breach detection is fully automatic</strong><br>
+        Cron-callable check_sla_breaches() RPC requires no application uptime to escalate past-deadline complaints.
+      </div>
+    </li>
+    <li>
+      <span class="check-icon check-pass" aria-hidden="true">✓</span>
+      <div>
+        <strong>Severity never decreases</strong><br>
+        effective_severity = max(severity, upvote_boost) enforced inside the upvote RPC. Once escalated, it stays.
+      </div>
+    </li>
+    <li>
+      <span class="check-icon check-pass" aria-hidden="true">✓</span>
+      <div>
+        <strong>DIGIPIN encoding works without internet</strong><br>
+        Pure algorithm — no external API call at encoding time. Works in low-connectivity areas and offline.
+      </div>
+    </li>
+  </ul>
+
+  <div class="judge-takeaway">These guarantees hold even if the frontend crashes, the backend is bypassed, or a user has DB access. The database is the last line of defence — and it holds.</div>
+</div>
+
+<!-- LIFECYCLE STATE MACHINE -->
+<div class="section" id="lifecycle">
+  <div class="section-label">05b</div>
+  <h2>Complaint Lifecycle State Machine</h2>
+  <div class="why-matters">Every complaint moves through these states. The transition rules are enforced at Postgres — not the frontend.</div>
+
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" style="width:100%;font-family:'Space Mono',monospace;" role="img" aria-label="Complaint lifecycle state machine diagram">
+      <title>Complaint Lifecycle State Machine</title>
+      <desc>States: submitted, under_review, assigned, in_progress, escalated, resolved, pending_closure, rejected. Arrows show valid transitions.</desc>
+      <defs>
+        <marker id="arr" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#888"/>
+        </marker>
+        <marker id="arr-red" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#B71C1C"/>
+        </marker>
+        <marker id="arr-green" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#1B6B1E"/>
+        </marker>
+      </defs>
+      <!-- SUBMITTED -->
+      <rect x="12" y="122" width="94" height="34" rx="4" fill="#0D0D0D"/>
+      <text x="59" y="144" text-anchor="middle" font-size="9.5" fill="#F7F5F0">SUBMITTED</text>
+      <!-- UNDER REVIEW -->
+      <rect x="156" y="122" width="100" height="34" rx="4" fill="#1D6FA4" opacity="0.9"/>
+      <text x="206" y="144" text-anchor="middle" font-size="9.5" fill="#F7F5F0">UNDER REVIEW</text>
+      <!-- REJECTED -->
+      <rect x="156" y="224" width="100" height="34" rx="4" fill="#B71C1C"/>
+      <text x="206" y="246" text-anchor="middle" font-size="9.5" fill="#F7F5F0">REJECTED ■</text>
+      <!-- ASSIGNED -->
+      <rect x="306" y="122" width="90" height="34" rx="4" fill="#333"/>
+      <text x="351" y="144" text-anchor="middle" font-size="9.5" fill="#F7F5F0">ASSIGNED</text>
+      <!-- IN PROGRESS -->
+      <rect x="306" y="32" width="90" height="34" rx="4" fill="#916000"/>
+      <text x="351" y="54" text-anchor="middle" font-size="9.5" fill="#F7F5F0">IN PROGRESS</text>
+      <!-- ESCALATED -->
+      <rect x="448" y="78" width="90" height="34" rx="4" fill="#C94E00"/>
+      <text x="493" y="100" text-anchor="middle" font-size="9.5" fill="#F7F5F0">ESCALATED</text>
+      <!-- RESOLVED -->
+      <rect x="448" y="178" width="90" height="34" rx="4" fill="#1B6B1E"/>
+      <text x="493" y="200" text-anchor="middle" font-size="9.5" fill="#F7F5F0">RESOLVED</text>
+      <!-- PENDING CLOSURE -->
+      <rect x="558" y="178" width="68" height="34" rx="4" fill="#555" opacity="0.75"/>
+      <text x="592" y="192" text-anchor="middle" font-size="8.5" fill="#F7F5F0">PENDING</text>
+      <text x="592" y="205" text-anchor="middle" font-size="8.5" fill="#F7F5F0">CLOSURE</text>
+      <!-- ARROWS -->
+      <line x1="106" y1="139" x2="154" y2="139" stroke="#888" stroke-width="1.3" marker-end="url(#arr)"/>
+      <line x1="59" y1="156" x2="176" y2="222" stroke="#B71C1C" stroke-width="1" stroke-dasharray="4,2" marker-end="url(#arr-red)"/>
+      <line x1="256" y1="139" x2="304" y2="139" stroke="#888" stroke-width="1.3" marker-end="url(#arr)"/>
+      <line x1="206" y1="156" x2="206" y2="222" stroke="#B71C1C" stroke-width="1" stroke-dasharray="4,2" marker-end="url(#arr-red)"/>
+      <line x1="351" y1="122" x2="351" y2="68" stroke="#888" stroke-width="1.3" marker-end="url(#arr)"/>
+      <line x1="396" y1="49" x2="446" y2="80" stroke="#C94E00" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#arr)"/>
+      <line x1="396" y1="130" x2="446" y2="96" stroke="#C94E00" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#arr)"/>
+      <line x1="396" y1="52" x2="448" y2="185" stroke="#1B6B1E" stroke-width="1.3" marker-end="url(#arr-green)"/>
+      <path d="M 448,95 Q 396,115 258,133" stroke="#888" stroke-width="1" fill="none" stroke-dasharray="4,2" marker-end="url(#arr)"/>
+      <line x1="538" y1="195" x2="556" y2="195" stroke="#888" stroke-width="1" marker-end="url(#arr)"/>
+      <!-- LEGEND -->
+      <line x1="12" y1="278" x2="38" y2="278" stroke="#888" stroke-width="1.5"/>
+      <text x="43" y="282" font-size="9" fill="#888">normal flow</text>
+      <line x1="120" y1="278" x2="146" y2="278" stroke="#B71C1C" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <text x="151" y="282" font-size="9" fill="#888">terminal / exception</text>
+      <text x="290" y="282" font-size="9" fill="#1B6B1E">■ Citizen can reopen max 2× within 72h</text>
+    </svg>
+  </div>
+
+  <h3>SLA Deadlines by Severity</h3>
+  <p style="font-size:14px;color:var(--muted);margin-bottom:12px">Longer bars = longer deadline. Red = most urgent.</p>
+
+  <div class="sla-row">
+    <div class="sla-level"><span class="pill green">L1 Low</span></div>
+    <div class="sla-bar-wrap"><div class="sla-bar" style="width:15%;background:#1B6B1E" role="progressbar" aria-label="L1 Low - 14 days"></div></div>
+    <div class="sla-time">14 days</div>
+  </div>
+  <div class="sla-row">
+    <div class="sla-level"><span class="pill yellow">L2 Medium</span></div>
+    <div class="sla-bar-wrap"><div class="sla-bar" style="width:36%;background:#916000"></div></div>
+    <div class="sla-time">7 days</div>
+  </div>
+  <div class="sla-row">
+    <div class="sla-level"><span class="pill orange">L3 High</span></div>
+    <div class="sla-bar-wrap"><div class="sla-bar" style="width:70%;background:#C94E00"></div></div>
+    <div class="sla-time">48 hours</div>
+  </div>
+  <div class="sla-row">
+    <div class="sla-level"><span class="pill red">L4 Critical</span></div>
+    <div class="sla-bar-wrap"><div class="sla-bar" style="width:100%;background:#B71C1C"></div></div>
+    <div class="sla-time">4 hours</div>
+  </div>
+
+  <div class="callout" style="margin-top:16px">
+    <strong>Community Escalation:</strong> 10–24 upvotes → +1 severity · 25–49 → +2 severity · 50+ → force L4 Critical. Severity <strong>never goes down</strong>.
+  </div>
+</div>
+
+<!-- CORE SYSTEMS -->
+<div class="section" id="systems">
+  <div class="section-label">06</div>
+  <h2>Core Systems Breakdown</h2>
+  <div class="why-matters">Each system below solves a specific real-world failure. Click to expand.</div>
+
+  <details open>
+    <summary>🤖 AI Intake — Seva Chatbot, Voice, WhatsApp</summary>
+    <div class="two-col">
+      <div class="box">
+        <div class="box-title">Seva Chatbot (Gemini)</div>
+        <ul class="checklist">
+          <li><span class="check-icon check-pass">✓</span> Hindi + English free-text input</li>
+          <li><span class="check-icon check-pass">✓</span> Classifies into 42+ categories</li>
+          <li><span class="check-icon check-pass">✓</span> Suggests L1–L4 severity</li>
+          <li><span class="check-icon check-pass">✓</span> Identifies responsible authority</li>
+          <li><span class="check-icon check-pass">✓</span> Multi-turn conversation with clarification</li>
+          <li><span class="check-icon check-pass">✓</span> Chat history persisted (Redis-backed)</li>
+          <li><span class="check-icon check-pass">✓</span> Session data stored in seva_queries for analytics</li>
+        </ul>
+      </div>
+      <div class="box">
+        <div class="box-title">Voice + WhatsApp</div>
+        <ul class="checklist">
+          <li><span class="check-icon check-pass">✓</span> Sarvam STT proxy — /api/stt</li>
+          <li><span class="check-icon check-pass">✓</span> 10 Indian languages</li>
+          <li><span class="check-icon check-pass">✓</span> WhatsApp menu-driven reporting</li>
+          <li><span class="check-icon check-pass">✓</span> Image-first intake via WhatsApp</li>
+          <li><span class="check-icon check-pass">✓</span> Location capture via WhatsApp</li>
+          <li><span class="check-icon check-pass">✓</span> Status lookup + account linking</li>
+          <li><span class="check-icon check-pass">✓</span> Closure confirmation with deep-link UUID</li>
+        </ul>
+      </div>
+    </div>
+  </details>
+
+  <details>
+    <summary>📍 DIGIPIN & Location Intelligence</summary>
+    <p>DIGIPIN (Digital Postal Index Number) is India's official location coding system by the Department of Posts, GoI.</p>
+    <div class="flow">GPS coordinate  →  FastAPI /digipin/:lat/:lng  →  10-char code
+Example: 28.6315°N, 77.2167°E  →  39J-948-H2PK  (4m × 4m area)</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Why DIGIPIN Matters</th><th>Impact</th></tr></thead>
+        <tbody>
+          <tr><td>Works without street names</td><td>Slums, villages, new colonies — no address needed</td></tr>
+          <tr><td>Offline capable</td><td>Pure algorithm — no API call, works on 2G</td></tr>
+          <tr><td>4m × 4m precision</td><td>Workers navigate to exact spot, not a 200m street</td></tr>
+          <tr><td>Survives renaming</td><td>Permanent identifier despite address/ward changes</td></tr>
+          <tr><td>Ward-level aggregates</td><td>Analytics by DIGIPIN prefix — cluster intelligence</td></tr>
+          <tr><td>Duplicate anchor</td><td>PostGIS ST_DWithin on geography column uses it</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <details>
+    <summary>🔍 Duplicate Detection & Community Upvote Engine</summary>
+    <div class="flow">Before submission:
+  check_for_duplicate_report(lat, lng, category_id)
+  PostGIS ST_DWithin → 20m radius, same category, active status
+  ↓ Duplicate found → show existing ticket → citizen upvotes instead
+  ↓ No duplicate → submission proceeds
+
+  increment_upvote_count(complaint_id) RPC
+  → Atomic: upvote count + severity recalculation in one transaction
+  → effective_severity = max(base_severity, upvote_tier)
+  → NEVER decreases
+
+  At 15+ upvotes: possible_duplicate flag raised for admin review
+  At 50+ upvotes: force L4 Critical regardless of original severity</div>
+  </details>
+
+  <details>
+    <summary>⏱️ SLA & Auto-Escalation Engine</summary>
+    <p>SLA deadlines set at ticket creation. A PostgreSQL cron-callable RPC handles auto-escalation — no application logic, no uptime dependency.</p>
+    <pre><code>-- Cron-callable RPC
+check_sla_breaches()
+  → finds: NOW() > sla_deadline AND status IN (assigned, in_progress)
+  → updates: status → 'escalated'
+  → surfaces: at top of authority dashboard with ⚠️ indicator</code></pre>
+    <p>The <strong>enforce_status_transition()</strong> trigger runs BEFORE every status UPDATE and raises a PostgreSQL exception on any invalid transition.</p>
+  </details>
+
+  <details>
+    <summary>📹 CCTV / YOLO Auto-Detection System</summary>
+    <div class="flow">CCTV feed / dashcam input
+  ↓
+  AI service: /cctv/analyze_live
+  10-frame burst → YOLO v8 inference per frame
+  Reliability engine: multi-trigger threshold on frame consensus
+  (prevents single-frame false positives from creating tickets)
+  ↓
+  Confidence above threshold?
+  ├── Yes → auto-create ticket with DIGIPIN from camera metadata
+  └── No  → discard, log event for supervised learning dataset
+  ↓
+  Admin dashcam-live: /admin/dashcam-live
+  Real-time telemetry cards for approved feeds
+  ↓
+  Verification: /cctv/verify
+  Admin confirms: repaired | not_repaired
+  Worker event captured → retraining dataset pipeline</div>
+    <p>Precomputed dashcam artifact endpoints allow demo reproducibility without requiring live camera feeds.</p>
+  </details>
+
+  <details>
+    <summary>🔧 Material & Inventory Workflow</summary>
+    <p>Workers can request materials needed for field resolution. Authorities approve and allot from inventory. Full supply-chain visibility per complaint.</p>
+    <ul class="checklist">
+      <li><span class="check-icon check-pass">✓</span> Worker submits material request from field (linked to complaint)</li>
+      <li><span class="check-icon check-pass">✓</span> Authority reviews and allots from inventory</li>
+      <li><span class="check-icon check-pass">✓</span> Inventory tracked per department</li>
+      <li><span class="check-icon check-pass">✓</span> Full audit trail per material request</li>
+    </ul>
+  </details>
+
+  <details>
+    <summary>🏆 Gamification + Wallet System</summary>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Action</th><th>Effect</th></tr></thead>
+        <tbody>
+          <tr><td>File a complaint</td><td>Wallet points via award_points() RPC</td></tr>
+          <tr><td>Complaint resolved with good rating</td><td>Points + leaderboard position update</td></tr>
+          <tr><td>Upvote a complaint</td><td>Minor points + contributes to crowd escalation</td></tr>
+          <tr><td>Spam flag applied</td><td>Strike + penalty deduction from wallet</td></tr>
+          <tr><td>Reward redemption</td><td>redeem_reward() RPC — atomic transaction</td></tr>
+          <tr><td>Admin wallet sync</td><td>Retroactive point provisioning for existing users</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <details>
+    <summary>📬 Notification & Feedback System</summary>
+    <ul class="checklist">
+      <li><span class="check-icon check-pass">✓</span> Resend email — complaint_created and worker_assigned events</li>
+      <li><span class="check-icon check-pass">✓</span> WhatsApp closure confirmation with ticket UUID deep-link</li>
+      <li><span class="check-icon check-pass">✓</span> FRONTEND_BASE_URL controls deployed domain across all links</li>
+      <li><span class="check-icon check-pass">✓</span> Citizen closure confirmation loop for pending_closure status</li>
+      <li><span class="check-icon check-pass">✓</span> Twitter/X escalation sharing with tiered authority handles</li>
+      <li><span class="check-icon check-pass">✓</span> Chat history save/load/clear API for session continuity</li>
+    </ul>
+  </details>
+
+  <details>
+    <summary>📊 Admin Analytics & Governance</summary>
+    <ul class="checklist">
+      <li><span class="check-icon check-pass">✓</span> Global complaint stats endpoint — platform-wide performance</li>
+      <li><span class="check-icon check-pass">✓</span> Department performance analytics — per-authority SLA compliance</li>
+      <li><span class="check-icon check-pass">✓</span> Gemini-generated weekly analytics summary report</li>
+      <li><span class="check-icon check-pass">✓</span> Supervised learning metrics — model lifecycle readiness</li>
+      <li><span class="check-icon check-pass">✓</span> Export batch workflow for YOLO retraining datasets</li>
+    </ul>
+  </details>
+</div>
+
+<!-- ROLE FLOWS -->
+<div class="section" id="flows">
+  <div class="section-label">07</div>
+  <h2>Role Flows</h2>
+  <div class="why-matters">Each portal is purpose-built. No role sees more than they need.</div>
+
+  <details open>
+    <summary>👤 Citizen — Filing + Tracking</summary>
+    <div class="flow">Citizen opens app
+    │
+    ├── PRIMARY: Seva AI Chatbot ──────────────────────────────────────────
+    │   Describe in Hindi/English/voice  →  Gemini classifies
+    │   Seva shows auto-filled summary  →  Citizen confirms or edits
+    │
+    └── SECONDARY: Manual Form ─────────────────────────────────────────
+        Fill title + description  →  Pick category  →  Set L1-L4 severity
+
+    (both paths merge ↓)
+    Attach photo (optional — HEIC/JPEG/PNG, 5MB)
+    GPS auto-pin  →  Drag to exact spot  →  DIGIPIN encoded
+    PostGIS 20m scan  →  Cloudflare Turnstile  →  Ticket created: DL-YYYY-NNNNN
+    Email + WhatsApp confirmation  →  Real-time dashboard tracking
+    On resolution → rate 1-10 within 72h window → wallet points earned</div>
+  </details>
+
+  <details>
+    <summary>🏛️ Authority — Department-Scoped Review</summary>
+    <div class="callout blue" style="margin-top:0;margin-bottom:12px">
+      <strong>Core principle:</strong> RLS at DB layer means authority literally cannot fetch complaints outside their department. Not a UI filter — a database wall enforced by JWT claims.
+    </div>
+    <div class="flow">Authority logs in  →  JWT  →  RLS checks department claim  →  filtered DB view
+
+Dashboard: L4 Critical first, SLA breaches flagged ⚠️
+
+Per ticket:
+├── Assign to worker  →  assign_worker_to_complaint RPC (FOR UPDATE lock)
+├── Add internal note  →  is_internal=true (invisible to citizen)
+├── Escalate manually  →  severity upgraded
+├── Request material allotment  →  inventory workflow
+└── Reject spam  →  terminal state</div>
+  </details>
+
+  <details>
+    <summary>👷 Worker — Field Operations</summary>
+    <div class="flow">Worker toggles availability → Available
+Authority assigns  →  ticket appears on mobile dashboard
+
+Worker sees: description · photos · DIGIPIN · SLA countdown · severity
+
+Tap Navigate  →  Google Maps opens at DIGIPIN coordinates
+Mark: In Progress  →  do the work
+
+Resolved?
+├── Yes  →  upload proof photo  →  status: Resolved
+│          DB trigger: availability → available, resolved_at set
+└── No   →  flag for authority  →  escalated  →  reassignment</div>
+    <div class="tbl-wrap" style="margin-top:12px">
+      <table>
+        <thead><tr><th>✅ Worker CAN</th><th>❌ Worker CANNOT</th></tr></thead>
+        <tbody>
+          <tr><td>See assigned complaints</td><td>See other workers' tickets</td></tr>
+          <tr><td>Update status for their jobs</td><td>Change category or authority</td></tr>
+          <tr><td>Upload proof photos</td><td>View internal authority notes</td></tr>
+          <tr><td>Request materials for field work</td><td>Assign themselves to other complaints</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <details>
+    <summary>⚙️ Admin — Full Platform Control</summary>
+    <div class="flow">Admin dashboard: all complaints · all departments · all statuses
+
+├── Spatial map  →  cluster hotspots by DIGIPIN zone
+├── Assign workers to any complaint (race-safe RPC)
+├── Invite Authority/Worker accounts  →  role + dept in invite metadata
+├── SLA breach dashboard  →  past-deadline complaints
+├── Dashcam Live (/admin/dashcam-live)  →  real-time CCTV telemetry
+├── Analytics  →  global stats, dept performance, Gemini weekly report
+├── Wallet sync  →  retroactive point provisioning
+└── Spam moderation  →  flag + penalty + review queue</div>
+  </details>
+</div>
+
+<!-- ARCHITECTURE -->
+<div class="section" id="architecture">
+  <div class="section-label">08</div>
+  <h2>System Architecture</h2>
+  <div class="why-matters">Four layers. Each does exactly one thing. No layer bypasses another's guarantees.</div>
+
+  <div class="arch-stack" aria-label="System architecture layers">
+    <div class="arch-layer">
+      <div class="arch-label">Client</div>
+      <div class="arch-content">
+        <span class="arch-chip">👤 <strong>Citizen</strong> /citizen — 9 routes</span>
+        <span class="arch-chip">🏛️ <strong>Authority</strong> /authority — 8 routes</span>
+        <span class="arch-chip">👷 <strong>Worker</strong> /worker — 3 routes</span>
+        <span class="arch-chip">⚙️ <strong>Admin</strong> /admin — 11 routes</span>
+        <span class="arch-chip">🌐 <strong>Public</strong> — 8 routes (heatmap, leaderboard)</span>
+        <span class="arch-chip">Next.js 15 + React 19 + Tailwind v4</span>
+        <span class="arch-chip">Leaflet.js + Mappls India Tiles</span>
+      </div>
+    </div>
+    <div class="arch-layer">
+      <div class="arch-label">API</div>
+      <div class="arch-content">
+        <span class="arch-chip">💬 <strong>FastAPI</strong> — 35+ endpoints: Seva, DIGIPIN, Analytics, CCTV proxy, WhatsApp webhook</span>
+        <span class="arch-chip">🔧 <strong>Next.js API Routes</strong> — Complaints, Chat, STT, Wallet, Admin ops</span>
+        <span class="arch-chip">🤖 <strong>AI Service</strong> — YOLO v8, CCTV reliability engine, dashcam artifacts</span>
+      </div>
+    </div>
+    <div class="arch-layer">
+      <div class="arch-label">Data</div>
+      <div class="arch-content">
+        <span class="arch-chip">🗄️ <strong>PostgreSQL 15 + PostGIS 3.4</strong> — 19 tables</span>
+        <span class="arch-chip">🔒 <strong>28 RLS Policies</strong></span>
+        <span class="arch-chip">⚡ <strong>8 DB Triggers</strong></span>
+        <span class="arch-chip">🔧 <strong>14 RPC Functions</strong></span>
+        <span class="arch-chip">📁 <strong>Supabase Storage</strong> — complaints-media</span>
+        <span class="arch-chip">⚡ <strong>Redis (Upstash)</strong> — Cache + sessions</span>
+      </div>
+    </div>
+    <div class="arch-layer">
+      <div class="arch-label">External</div>
+      <div class="arch-content">
+        <span class="arch-chip">🤖 Google Gemini (paid)</span>
+        <span class="arch-chip">🔐 Google OAuth + Cloudflare Turnstile</span>
+        <span class="arch-chip">🗣️ Sarvam STT — 10 languages</span>
+        <span class="arch-chip">📧 Resend — transactional email</span>
+        <span class="arch-chip">📱 Meta WhatsApp Cloud API</span>
+        <span class="arch-chip">🗺️ Mappls API — India geocoding</span>
+      </div>
+    </div>
+    <div class="arch-layer">
+      <div class="arch-label">Infra</div>
+      <div class="arch-content">
+        <span class="arch-chip">☁️ GCP Cloud Run — 3 services (crm-web, crm-api, crm-ai)</span>
+        <span class="arch-chip">🔨 Cloud Build CI/CD — deploy on push</span>
+        <span class="arch-chip">🔑 GCP Secret Manager — no keys in images</span>
+        <span class="arch-chip">🐳 Docker Compose — local dev</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Local Quick Start</h3>
+  <pre><code>docker compose up --build
+# web:  http://localhost:8080
+# api:  http://localhost:8000
+# ai:   http://localhost:8001/health</code></pre>
+</div>
+
+<!-- DATABASE -->
+<div class="section" id="database">
+  <div class="section-label">09</div>
+  <h2>Database Design</h2>
+  <div class="why-matters">19 tables, 3 ENUM types, 28 RLS policies, 8 triggers, 14 RPC functions. Every critical operation enforced at Postgres.</div>
+
+  <h3>ENUM State Types</h3>
+  <p style="font-size:14px;color:var(--muted);margin-bottom:8px">Invalid values are rejected at DB level before any trigger or policy runs.</p>
+  <div class="box-title">complaint_status</div>
+  <div class="enum-row">
+    <span class="enum-val">submitted</span>
+    <span class="enum-val">under_review</span>
+    <span class="enum-val">assigned</span>
+    <span class="enum-val warn">in_progress</span>
+    <span class="enum-val warn">escalated</span>
+    <span class="enum-val ok">resolved</span>
+    <span class="enum-val grey">pending_closure</span>
+    <span class="enum-val terminal">rejected</span>
+  </div>
+  <div class="box-title" style="margin-top:12px">severity_level</div>
+  <div class="enum-row">
+    <span class="enum-val ok">L1 — Low (14 days)</span>
+    <span class="enum-val grey">L2 — Medium (7 days)</span>
+    <span class="enum-val warn">L3 — High (48 hours)</span>
+    <span class="enum-val terminal">L4 — Critical (4 hours)</span>
+  </div>
+  <div class="box-title" style="margin-top:12px">worker_availability</div>
+  <div class="enum-row">
+    <span class="enum-val ok">available</span>
+    <span class="enum-val warn">busy</span>
+    <span class="enum-val grey">off_duty</span>
+  </div>
+
+  <h3>Key RPC Functions</h3>
+  <p class="tbl-intro">These are the atomic operations the system depends on — each runs as a single DB transaction.</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>RPC</th><th>What It Does</th></tr></thead>
+      <tbody>
+        <tr><td><code>check_for_duplicate_report</code></td><td>ST_DWithin 20m radius — duplicate detection before INSERT</td></tr>
+        <tr><td><code>increment_upvote_count</code></td><td>Atomic upvote + severity recalculation in one transaction</td></tr>
+        <tr><td><code>assign_worker_to_complaint</code></td><td>Race-safe assignment with FOR UPDATE row lock</td></tr>
+        <tr><td><code>check_sla_breaches</code></td><td>Cron-callable: auto-escalates past-deadline complaints</td></tr>
+        <tr><td><code>nearest_urgent_complaint</code></td><td>Worker dispatch by proximity + urgency weighting</td></tr>
+        <tr><td><code>award_points</code></td><td>Wallet points update for gamification</td></tr>
+        <tr><td><code>redeem_reward</code></td><td>Atomic reward redemption transaction</td></tr>
+        <tr><td><code>get_nearby_complaints</code></td><td>Distance-ranked complaints within configurable radius</td></tr>
+        <tr><td><code>update_complaint_status_citizen</code></td><td>Citizen reopen / resolve confirmation</td></tr>
+        <tr><td><code>find_duplicate_complaints_v2</code></td><td>Extended duplicate search with active-status and radius controls</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>DB Setup Order (must follow this sequence)</h3>
+  <ol class="number-list">
+    <li><div class="nl-num">01</div><div class="nl-content">Create 3 ENUM types: complaint_status, severity_level, worker_availability</div></li>
+    <li><div class="nl-num">02</div><div class="nl-content">Create all 19 tables in dependency order</div></li>
+    <li><div class="nl-num">03</div><div class="nl-content">Create spatial + performance indexes (GIST on geography column)</div></li>
+    <li><div class="nl-num">04</div><div class="nl-content">Create ticket ID sequence and generate_ticket_id trigger</div></li>
+    <li><div class="nl-num">05</div><div class="nl-content">Create all 8 trigger functions and attach them</div></li>
+    <li><div class="nl-num">06</div><div class="nl-content">Create all 14 RPC functions</div></li>
+    <li><div class="nl-num">07</div><div class="nl-content">Enable RLS and create all 28 policies</div></li>
+    <li><div class="nl-num">08</div><div class="nl-content">Seed 43 categories across 9 Delhi authority zones</div></li>
+    <li><div class="nl-num">09</div><div class="nl-content">Create complaints-media storage bucket from Supabase Dashboard UI</div></li>
+    <li><div class="nl-num">10</div><div class="nl-content">Apply pending_closure ALTER TYPE migration (see backend_instructions.md) — required for WhatsApp closure confirmation flow</div></li>
+  </ol>
+</div>
+
+<!-- API REFERENCE -->
+<div class="section" id="api">
+  <div class="section-label">10</div>
+  <h2>API Reference</h2>
+  <div class="why-matters">56+ endpoints across 3 services. Expand each service to see the full surface.</div>
+
+  <details open>
+    <summary>FastAPI Backend — 35+ endpoints (apps/api/main.py)</summary>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Endpoint</th><th>Method</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>/analyze</code></td><td><span class="api-method post">POST</span></td><td>AI-assisted complaint preview generation</td></tr>
+          <tr><td><code>/confirm</code></td><td><span class="api-method post">POST</span></td><td>Complaint creation + category routing + notifications</td></tr>
+          <tr><td><code>/citizen/tickets</code></td><td><span class="api-method get">GET</span></td><td>Citizen tickets feed with caching</td></tr>
+          <tr><td><code>/citizen/nearby</code></td><td><span class="api-method get">GET</span></td><td>Nearby complaints for discovery and upvoting</td></tr>
+          <tr><td><code>/digipin/:lat/:lng</code></td><td><span class="api-method get">GET</span></td><td>DIGIPIN encoding for GPS coordinate</td></tr>
+          <tr><td><code>/api/geocode</code></td><td><span class="api-method get">GET</span></td><td>Geocoding proxy for India locations</td></tr>
+          <tr><td><code>/api/authority/assign</code></td><td><span class="api-method patch">PATCH</span></td><td>Worker assignment + reassignment</td></tr>
+          <tr><td><code>/api/authority/dashboard</code></td><td><span class="api-method get">GET</span></td><td>Consolidated authority dashboard (cached)</td></tr>
+          <tr><td><code>/api/authority/workers</code></td><td><span class="api-method get">GET</span></td><td>Available workers for assignment</td></tr>
+          <tr><td><code>/api/worker/dashboard</code></td><td><span class="api-method get">GET</span></td><td>Worker consolidated dashboard</td></tr>
+          <tr><td><code>/api/worker/profile</code></td><td><span class="api-method get">GET</span></td><td>Worker profile data</td></tr>
+          <tr><td><code>/api/worker/supervised-samples</code></td><td><span class="api-method post">POST</span></td><td>Capture supervised learning events from field</td></tr>
+          <tr><td><code>/api/supervised-samples/export</code></td><td><span class="api-method get">GET</span></td><td>Export supervised sample datasets for retraining</td></tr>
+          <tr><td><code>/api/supervised-samples/metrics</code></td><td><span class="api-method get">GET</span></td><td>ML collection counters + export readiness</td></tr>
+          <tr><td><code>/api/admin/analytics</code></td><td><span class="api-method get">GET</span></td><td>Global complaint stats + platform performance</td></tr>
+          <tr><td><code>/api/admin/dept-analytics</code></td><td><span class="api-method get">GET</span></td><td>Per-department SLA compliance and performance</td></tr>
+          <tr><td><code>/api/notifications/complaint-email</code></td><td><span class="api-method post">POST</span></td><td>Event-driven email (created, assigned, resolved)</td></tr>
+          <tr><td><code>/api/notify/closure-confirmation</code></td><td><span class="api-method post">POST</span></td><td>WhatsApp closure confirmation trigger</td></tr>
+          <tr><td><code>/api/chat/history</code></td><td><span class="api-method get">GET</span></td><td>Load Redis-backed chat session history</td></tr>
+          <tr><td><code>/api/chat/save</code></td><td><span class="api-method post">POST</span></td><td>Persist chat session to Redis</td></tr>
+          <tr><td><code>/api/chat/clear</code></td><td><span class="api-method post">POST</span></td><td>Clear chat session history</td></tr>
+          <tr><td><code>/whatsapp/webhook</code></td><td><span class="api-method get">GET</span> <span class="api-method post">POST</span></td><td>WhatsApp webhook verify + bot message intake</td></tr>
+          <tr><td><code>/cctv/analyze_live</code></td><td><span class="api-method post">POST</span></td><td>CCTV AI analysis via backend proxy</td></tr>
+          <tr><td><code>/cctv/verify</code></td><td><span class="api-method post">POST</span></td><td>CCTV verification outcome (repaired / not_repaired)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <details>
+    <summary>Next.js API Routes (apps/web/app/api)</summary>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Endpoint</th><th>Method</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>/api/complaints</code></td><td><span class="api-method post">POST</span> <span class="api-method patch">PATCH</span></td><td>Complaint create / upvote / status actions</td></tr>
+          <tr><td><code>/api/chat</code></td><td><span class="api-method post">POST</span></td><td>Server-side Gemini proxy with model fallback</td></tr>
+          <tr><td><code>/api/stt</code></td><td><span class="api-method post">POST</span></td><td>Speech-to-text proxy (Sarvam, X-Language header)</td></tr>
+          <tr><td><code>/api/verify-turnstile</code></td><td><span class="api-method post">POST</span></td><td>Server-side captcha validation</td></tr>
+          <tr><td><code>/api/citizen/wallet</code></td><td><span class="api-method get">GET</span> <span class="api-method post">POST</span></td><td>Wallet, rewards, redemption operations</td></tr>
+          <tr><td><code>/api/citizen/leaderboard</code></td><td><span class="api-method get">GET</span></td><td>Citizen leaderboard feed</td></tr>
+          <tr><td><code>/api/admin/authorities</code></td><td><span class="api-method get">GET</span> <span class="api-method patch">PATCH</span> <span class="api-method post">POST</span></td><td>Admin authority CRUD</td></tr>
+          <tr><td><code>/api/admin/workers</code></td><td><span class="api-method get">GET</span> <span class="api-method patch">PATCH</span> <span class="api-method post">POST</span></td><td>Admin worker CRUD</td></tr>
+          <tr><td><code>/api/admin/complaints</code></td><td><span class="api-method get">GET</span></td><td>Admin complaint query (consolidated, all-dept)</td></tr>
+          <tr><td><code>/api/admin/complaints/spam</code></td><td><span class="api-method post">POST</span></td><td>Spam moderation + penalty workflow</td></tr>
+          <tr><td><code>/api/admin/system/sync-wallets</code></td><td><span class="api-method post">POST</span></td><td>Retroactive wallet sync for existing users</td></tr>
+          <tr><td><code>/api/authority/upvote-counts</code></td><td><span class="api-method get">GET</span></td><td>Upvote count aggregation per complaint for authority view</td></tr>
+          <tr><td><code>/api/gamification/award</code></td><td><span class="api-method post">POST</span></td><td>Gamification point award trigger</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <details>
+    <summary>AI Service APIs (ai-service/service/main.py)</summary>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Endpoint</th><th>Method</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>/health</code></td><td><span class="api-method get">GET</span></td><td>AI service health + model readiness check</td></tr>
+          <tr><td><code>/infer/image</code></td><td><span class="api-method post">POST</span></td><td>Image inference for model testing</td></tr>
+          <tr><td><code>/cctv/analyze_live</code></td><td><span class="api-method post">POST</span></td><td>Reliability-engine CCTV burst analysis (10-frame)</td></tr>
+          <tr><td><code>/cctv/verify</code></td><td><span class="api-method post">POST</span></td><td>Camera/ticket verification state update</td></tr>
+          <tr><td><code>/geocode</code></td><td><span class="api-method get">GET</span></td><td>Geocoding service proxy</td></tr>
+          <tr><td><code>/dashcam/artifact</code></td><td><span class="api-method get">GET</span></td><td>Precomputed dashcam artifact for demo reproducibility</td></tr>
+          <tr><td><code>/dashcam/list</code></td><td><span class="api-method get">GET</span></td><td>List available dashcam feed artifacts</td></tr>
+          <tr><td><code>/dashcam/telemetry</code></td><td><span class="api-method get">GET</span></td><td>Real-time dashcam telemetry for admin dashboard</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <details>
+    <summary>Environment Variables</summary>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Variable</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>NEXT_PUBLIC_SUPABASE_URL</code></td><td>Supabase project URL</td></tr>
+          <tr><td><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></td><td>Public anon key (client-side calls)</td></tr>
+          <tr><td><code>SUPABASE_SERVICE_ROLE_KEY</code></td><td>Service role key (server-side admin ops)</td></tr>
+          <tr><td><code>GEMINI_API_KEY</code></td><td>Google Gemini API key (paid tier)</td></tr>
+          <tr><td><code>GEMINI_PRIMARY_MODEL</code></td><td>Primary Gemini model override</td></tr>
+          <tr><td><code>GEMINI_FALLBACK_MODEL</code></td><td>Fallback on quota/model errors</td></tr>
+          <tr><td><code>MAPPLS_API_KEY</code></td><td>Mappls Maps API for India geocoding</td></tr>
+          <tr><td><code>NEXT_PUBLIC_API_URL</code></td><td>FastAPI backend URL</td></tr>
+          <tr><td><code>NEXT_PUBLIC_TURNSTILE_SITE_KEY</code></td><td>Cloudflare Turnstile site key</td></tr>
+          <tr><td><code>TURNSTILE_SECRET_KEY</code></td><td>Server-side captcha verification</td></tr>
+          <tr><td><code>SARVAM_API_KEY</code></td><td>Sarvam STT proxy key</td></tr>
+          <tr><td><code>RESEND_API_KEY</code></td><td>Resend transactional email</td></tr>
+          <tr><td><code>FRONTEND_BASE_URL</code></td><td>Deployed domain for deep-links (critical)</td></tr>
+          <tr><td><code>AI_SERVICE_URL</code></td><td>Standalone AI service URL for CCTV proxy</td></tr>
+          <tr><td><code>REDIS_URL</code></td><td>Redis cache/session backend (Upstash)</td></tr>
+          <tr><td><code>WHATSAPP_TOKEN</code></td><td>Meta WhatsApp Cloud API token</td></tr>
+          <tr><td><code>WHATSAPP_PHONE_NUMBER_ID</code></td><td>WhatsApp sender phone number ID</td></tr>
+          <tr><td><code>WHATSAPP_VERIFY_TOKEN</code></td><td>Webhook verification token</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+</div>
+
+<!-- SECURITY -->
+<div class="section" id="security">
+  <div class="section-label">11</div>
+  <h2>Security & Abuse Prevention</h2>
+  <div class="why-matters">A civic platform with fake complaints is worse than no platform. Every layer has a defence.</div>
+
+  <div class="tbl-wrap">
+    <p class="tbl-intro">RLS role access matrix — what each role can and cannot see.</p>
+    <table>
+      <thead><tr><th>Role</th><th>Access Scope</th></tr></thead>
+      <tbody>
+        <tr><td>👤 Citizen</td><td>Own complaints (insert + read), public listing, upvotes, ratings</td></tr>
+        <tr><td>👷 Worker</td><td>Only their assigned complaints — zero visibility into others'</td></tr>
+        <tr><td>🏛️ Authority</td><td>Only complaints from their assigned department — JWT-enforced</td></tr>
+        <tr><td>⚙️ Admin</td><td>Full access across all tables and all departments</td></tr>
+        <tr><td>service_role</td><td>Bypass for server-side triggers and cron only</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <ul class="checklist">
+    <li><span class="check-icon check-pass">✓</span><div><strong>28 RLS policies</strong> on all tables — auth.uid() and auth.jwt() based, no recursive subqueries</div></li>
+    <li><span class="check-icon check-pass">✓</span><div><strong>ENUM State Machine</strong> — invalid values rejected at DB before any trigger or policy runs</div></li>
+    <li><span class="check-icon check-pass">✓</span><div><strong>enforce_status_transition() trigger</strong> — BEFORE UPDATE raises exception on invalid state. UI bypass does not help.</div></li>
+    <li><span class="check-icon check-pass">✓</span><div><strong>Cloudflare Turnstile</strong> on complaint submission and login — prevents bot flooding</div></li>
+    <li><span class="check-icon check-pass">✓</span><div><strong>FOR UPDATE row locks</strong> in assignment RPC — no concurrent assignment race conditions</div></li>
+    <li><span class="check-icon check-pass">✓</span><div><strong>DIGIPIN is offline-safe</strong> — pure algorithm, no external API call at encoding time</div></li>
+    <li><span class="check-icon check-pass">✓</span><div><strong>GCP Secret Manager</strong> — no sensitive keys in Docker images, all injected at runtime</div></li>
+    <li><span class="check-icon check-pass">✓</span><div><strong>Spam moderation queue</strong> — admin flags + wallet penalty + strike system deters abuse</div></li>
+  </ul>
+
+  <div class="judge-takeaway">Security here is structural — it works because the database enforces it, not because we trust users or the UI to behave correctly.</div>
+</div>
+
+<!-- OPERATIONS & DEPLOYMENT -->
+<div class="section" id="operations">
+  <div class="section-label">12</div>
+  <h2>Operations & Deployment</h2>
+  <div class="why-matters">One command to run the full stack locally. Three Cloud Run services in production with CI/CD on every push.</div>
+
+  <div class="two-col">
+    <div class="box">
+      <div class="box-title">Production Stack</div>
+      <ul class="checklist">
+        <li><span class="check-icon check-pass">☁️</span> GCP Cloud Run — crm-web, crm-api, crm-ai</li>
+        <li><span class="check-icon check-pass">🔨</span> Cloud Build — CI/CD on push</li>
+        <li><span class="check-icon check-pass">🔑</span> GCP Secret Manager — no keys in images</li>
+        <li><span class="check-icon check-pass">🗄️</span> Supabase — DB + Auth + Storage</li>
+        <li><span class="check-icon check-pass">📦</span> Artifact Registry — container images</li>
+      </ul>
+    </div>
+    <div class="box">
+      <div class="box-title">Local Development</div>
+      <pre style="margin:0;padding:10px;font-size:11px;background:var(--code-bg);color:var(--code-fg);border-radius:3px"># One command:
+docker compose up --build
+
+# Or 3 terminals:
+cd apps/web && pnpm dev
+cd apps/api && uvicorn main:app
+cd ai-service && uvicorn service.main:app</pre>
+    </div>
+  </div>
+
+  <h3>Pre-Deploy Checklist</h3>
+  <ul class="checklist">
+    <li><span class="check-icon check-warn">☐</span> All required env vars present and non-empty</li>
+    <li><span class="check-icon check-warn">☐</span> pending_closure ENUM migration applied to target DB</li>
+    <li><span class="check-icon check-warn">☐</span> FRONTEND_BASE_URL set to deployed domain — all deep-links depend on this</li>
+    <li><span class="check-icon check-warn">☐</span> Resend sender domain verified + WhatsApp Cloud API token active</li>
+    <li><span class="check-icon check-warn">☐</span> AI model weights at MODEL_PATH or downloadable from MODEL_URL at runtime</li>
+    <li><span class="check-icon check-warn">☐</span> docker compose up --build succeeds; /health returns ok=true</li>
+  </ul>
+
+  <h3>Key Observability Endpoints</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Signal</th><th>Likely Cause</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Deep-link in WA opens 404</td><td>FRONTEND_BASE_URL wrong, or using display code not UUID</td><td>Check build_ticket_details_url() uses complaint UUID</td></tr>
+        <tr><td>WhatsApp bot: message received, no ticket created</td><td>Missing WHATSAPP_TOKEN or webhook parse failure</td><td>Verify WHATSAPP_* env vars; check webhook payload logs</td></tr>
+        <tr><td>STT returns 500/502</td><td>SARVAM_API_KEY invalid or X-Language header missing</td><td>Validate key + header forwarding in /api/stt</td></tr>
+        <tr><td>Supervised samples not captured</td><td>Missing table or worker token auth mismatch</td><td>Verify table exists; check worker token ownership</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- FAILURE HANDLING -->
+<div class="section" id="failures">
+  <div class="section-label">13</div>
+  <h2>Failure Handling & Edge Cases</h2>
+  <div class="why-matters">Production thinking: every failure mode has a defined system response. Nothing is silently ignored.</div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Scenario</th><th>System Response</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Gemini quota hit</strong></td><td>Graceful fallback to manual form — no user-visible error, primary→fallback model chain</td></tr>
+        <tr><td><strong>Duplicate submission</strong></td><td>Pre-submission PostGIS check shows existing ticket, offers upvote instead</td></tr>
+        <tr><td><strong>Wrong department routed</strong></td><td>Authority can reassign; admin can re-categorize; full audit trail preserved</td></tr>
+        <tr><td><strong>SLA breach, no action</strong></td><td>check_sla_breaches() cron auto-escalates; surfaces top of authority dashboard with ⚠️</td></tr>
+        <tr><td><strong>Worker goes offline mid-task</strong></td><td>Complaint stays assigned; authority can reassign; SLA breach auto-escalates if deadline passes</td></tr>
+        <tr><td><strong>Citizen reopens falsely resolved</strong></td><td>Reopen allowed max 2× within 72h via update_complaint_status_citizen RPC</td></tr>
+        <tr><td><strong>CCTV false positive (single frame)</strong></td><td>10-frame burst + reliability engine threshold prevents single-frame noise from creating tickets</td></tr>
+        <tr><td><strong>Bot spam attack</strong></td><td>Cloudflare Turnstile + spam flag + wallet penalty + admin moderation queue — layered defence</td></tr>
+        <tr><td><strong>WhatsApp deep-link 404</strong></td><td>Verify FRONTEND_BASE_URL set to deployed domain; URL must use complaint UUID not display code</td></tr>
+        <tr><td><strong>Race condition on assignment</strong></td><td>FOR UPDATE row lock in RPC — second assign attempt raises DB-level conflict, rejected</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- COMPARISON -->
+<div class="section" id="comparison">
+  <div class="section-label">14</div>
+  <h2>Why This Is Better & Safer Than Existing Systems</h2>
+  <div class="why-matters">Head-to-head against CPGRAMS — India's current national grievance system.</div>
+
+  <div class="vs-table">
+    <div class="vs-col">
+      <div class="vs-head bad">❌ CPGRAMS / Existing Portals</div>
+      <ul class="vs-list">
+        <li><span>✗</span> English-only — excludes 800M+ Hindi speakers</li>
+        <li><span>✗</span> No spatial dedup — same pothole filed 50 times</li>
+        <li><span>✗</span> All departments see all complaints — no isolation</li>
+        <li><span>✗</span> No SLA enforcement — complaints "close" without action</li>
+        <li><span>✗</span> No proof of resolution required</li>
+        <li><span>✗</span> No real-time tracking for citizens</li>
+        <li><span>✗</span> 34% complaints closed without action (CAG 2023)</li>
+        <li><span>✗</span> Cost: ₹83–250 per grievance (DARPG budget)</li>
+      </ul>
+    </div>
+    <div class="vs-col">
+      <div class="vs-head good">✅ JanSamadhan</div>
+      <ul class="vs-list">
+        <li><span>✓</span> 10 Indian languages + voice + WhatsApp</li>
+        <li><span>✓</span> PostGIS 20m dedup before submission</li>
+        <li><span>✓</span> 28 RLS policies — DB-enforced dept. isolation</li>
+        <li><span>✓</span> Auto-escalation on SLA breach via cron RPC</li>
+        <li><span>✓</span> Photo proof required before resolved status</li>
+        <li><span>✓</span> Real-time tracking + WhatsApp deep-links</li>
+        <li><span>✓</span> Immutable audit trail on every change</li>
+        <li><span>✓</span> Cost: ₹6.43 per grievance (20-ward Delhi pilot)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout blue">
+    <strong>Feature depth vs CPGRAMS + Salesforce Gov Cloud:</strong> AI classification ✓ · Spatial dedup ✓ · DIGIPIN worker nav ✓ · WhatsApp bot ✓ · CCTV auto-detection ✓ · Community escalation ✓ · Indian voice input ✓ — <strong>all No or Partial in competitors</strong>.
+  </div>
+</div>
+
+<!-- SCOPE & LIMITS -->
+<div class="section" id="scope">
+  <div class="section-label">15</div>
+  <h2>Current Scope & Known Limits</h2>
+  <div class="why-matters">Honesty about what's live, what's partial, and what's planned builds more trust than claiming perfection.</div>
+
+  <h3>What Is Live Today vs Planned</h3>
+  <div class="live-matrix">
+    <div class="lm-row"><div class="lm-feature">All 4 portals (Citizen, Authority, Worker, Admin)</div><div class="lm-status live">✅ Live</div></div>
+    <div class="lm-row"><div class="lm-feature">Seva AI chatbot — Hindi + English</div><div class="lm-status live">✅ Live</div></div>
+    <div class="lm-row"><div class="lm-feature">DIGIPIN location encoding</div><div class="lm-status live">✅ Live</div></div>
+    <div class="lm-row"><div class="lm-feature">PostGIS duplicate detection</div><div class="lm-status live">✅ Live</div></div>
+    <div class="lm-row"><div class="lm-feature">WhatsApp bot (v1 — intake + closure confirmation)</div><div class="lm-status live">✅ Live</div></div>
+    <div class="lm-row"><div class="lm-feature">CCTV reliability engine + admin dashcam live</div><div class="lm-status live">✅ Live</div></div>
+    <div class="lm-row"><div class="lm-feature">Voice input — 10 languages via Sarvam STT</div><div class="lm-status live">✅ Live</div></div>
+    <div class="lm-row"><div class="lm-feature">Gamification wallet + leaderboard</div><div class="lm-status live">✅ Live</div></div>
+    <div class="lm-row"><div class="lm-feature">Supervised learning pipeline + export</div><div class="lm-status live">✅ Live</div></div>
+    <div class="lm-row"><div class="lm-feature">Material/inventory workflow</div><div class="lm-status live">✅ Live</div></div>
+    <div class="lm-row"><div class="lm-feature">Terraform IaC (scaffold exists, no .tf files yet)</div><div class="lm-status partial">⚠️ Partial</div></div>
+    <div class="lm-row"><div class="lm-feature">pending_closure migration (separate from initial schema)</div><div class="lm-status partial">⚠️ Requires manual step</div></div>
+    <div class="lm-row"><div class="lm-feature">OpenAPI spec committed to repo</div><div class="lm-status partial">⚠️ Live docs only (/docs)</div></div>
+    <div class="lm-row"><div class="lm-feature">Multi-city (Mumbai, Bengaluru, Chennai)</div><div class="lm-status planned">🔄 Phase 2</div></div>
+    <div class="lm-row"><div class="lm-feature">CPGRAMS bridge API</div><div class="lm-status planned">🔄 Phase 5</div></div>
+    <div class="lm-row"><div class="lm-feature">Aadhaar integration</div><div class="lm-status planned">🔄 Deferred — regulatory</div></div>
+  </div>
+
+  <h3>What We Intentionally Didn't Build</h3>
+  <ul class="checklist">
+    <li><span class="check-icon" style="color:var(--muted)">—</span> Separate "features section" — covered by USPs + systems</li>
+    <li><span class="check-icon" style="color:var(--muted)">—</span> CPGRAMS bridge — planned Phase 5, out of hackathon scope</li>
+    <li><span class="check-icon" style="color:var(--muted)">—</span> Multi-city support — Delhi pilot validates the model first</li>
+    <li><span class="check-icon" style="color:var(--muted)">—</span> Aadhaar integration — deferred due to regulatory complexity</li>
+  </ul>
+
+  <div class="judge-takeaway">97% complete, MVP live. The gaps above are documented — not hidden. A system that knows its limits is a system you can trust in production.</div>
+</div>
+
+<!-- ROADMAP -->
+<div class="section" id="roadmap">
+  <div class="section-label">16</div>
+  <h2>Roadmap — National Scale</h2>
+  <div class="why-matters">Designed from day one for national scale. Delhi pilot proves the model. Every phase is additive.</div>
+
+  <div class="roadmap">
+    <div class="rm-item">
+      <div class="rm-phase">Phase 1</div>
+      <div><div class="rm-title">Delhi Pilot — 9 zones, 42+ categories, all 4 portals</div><div><span class="pill green">✅ Complete · MVP Live</span></div></div>
+    </div>
+    <div class="rm-item">
+      <div class="rm-phase">Phase 2</div>
+      <div><div class="rm-title">Multi-city: Mumbai (BMC), Bengaluru (BBMP), Chennai (GCC)</div><div><span class="pill grey">🔄 Planned</span></div></div>
+    </div>
+    <div class="rm-item">
+      <div class="rm-phase">Phase 3</div>
+      <div><div class="rm-title">Offline-capable service worker caching for low-connectivity</div><div><span class="pill grey">🔄 Planned</span></div></div>
+    </div>
+    <div class="rm-item">
+      <div class="rm-phase">Phase 4</div>
+      <div><div class="rm-title">WhatsApp integration — full bot + guided submission flows</div><div><span class="pill green">✅ Live (v1)</span></div></div>
+    </div>
+    <div class="rm-item">
+      <div class="rm-phase">Phase 5</div>
+      <div><div class="rm-title">CPGRAMS bridge — API for cross-jurisdiction escalation</div><div><span class="pill grey">🔄 Planned</span></div></div>
+    </div>
+    <div class="rm-item">
+      <div class="rm-phase">Phase 6</div>
+      <div><div class="rm-title">Official DIGIPIN REST API (India Post v2, expected 2027)</div><div><span class="pill grey">🔄 Planned</span></div></div>
+    </div>
+  </div>
+
+  <div class="callout grey">
+    <strong>Scale cost:</strong> ₹6.43/grievance at 20-ward pilot → ₹3.52/grievance at 250 wards (all Delhi). Shared-plan services amortize — cost per grievance drops as scale increases. No proprietary hardware required.
+  </div>
+</div>
+
+<!-- GLOSSARY -->
+<div class="section" id="glossary">
+  <div class="section-label">17</div>
+  <h2>Glossary</h2>
+  <div class="why-matters">Full definitions for every technical term used in this document.</div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Term</th><th>Plain English</th><th>Technical Detail</th></tr></thead>
+      <tbody>
+        <tr><td><strong>DIGIPIN</strong></td><td>India's GPS address system</td><td>India Post's 10-char code identifying a 4m×4m area. Offline-capable.</td></tr>
+        <tr><td><strong>RLS</strong></td><td>Database access walls between departments</td><td>PostgreSQL Row-Level Security — restricts rows by JWT claims. Cannot be bypassed from app layer.</td></tr>
+        <tr><td><strong>PostGIS</strong></td><td>Spatial database extension</td><td>Adds geographic query support to PostgreSQL. Used for 20m duplicate detection (ST_DWithin).</td></tr>
+        <tr><td><strong>ENUM</strong></td><td>Fixed list of allowed values</td><td>PostgreSQL type — column can only hold defined values. Invalid values rejected at DB before any trigger runs.</td></tr>
+        <tr><td><strong>RPC</strong></td><td>Atomic database operation</td><td>Supabase server-side function. Runs as single DB transaction with rollback on error.</td></tr>
+        <tr><td><strong>SLA</strong></td><td>Complaint deadline</td><td>Service Level Agreement — L1=14d, L2=7d, L3=48h, L4=4h. Breach triggers auto-escalation.</td></tr>
+        <tr><td><strong>FOR UPDATE</strong></td><td>Row reservation</td><td>PostgreSQL row lock — prevents two concurrent transactions modifying the same row. Used in worker assignment.</td></tr>
+        <tr><td><strong>Seva</strong></td><td>JanSamadhan's AI assistant</td><td>Gemini-powered chatbot. Handles Hindi/English complaint intake, classification, and multi-turn conversation.</td></tr>
+        <tr><td><strong>YOLO</strong></td><td>Real-time object detection AI</td><td>You Only Look Once — v8 model used for pothole/issue detection from CCTV and dashcam feeds.</td></tr>
+        <tr><td><strong>ONNX</strong></td><td>ML model format</td><td>Open Neural Network Exchange — portable format for YOLO inference in the AI service.</td></tr>
+        <tr><td><strong>Sarvam STT</strong></td><td>Voice recognition for Indian languages</td><td>Sarvam AI's speech-to-text. Powers voice complaint intake in 10 languages via /api/stt proxy.</td></tr>
+        <tr><td><strong>CPGRAMS</strong></td><td>India's current national complaint portal</td><td>Centralised Public Grievance Redress and Monitoring System. 34% complaints close without action (CAG 2023).</td></tr>
+        <tr><td><strong>effective_severity</strong></td><td>Final complaint urgency after crowd input</td><td>max(base severity, upvote-escalated severity). Never decreases once set.</td></tr>
+        <tr><td><strong>pending_closure</strong></td><td>Waiting for citizen confirmation</td><td>Status between worker marking resolved and citizen confirming. Allows reopen within 72h (max 2×).</td></tr>
+        <tr><td><strong>ST_DWithin</strong></td><td>Geographic proximity check</td><td>PostGIS function — checks if two coordinates are within a specified distance. Core of 20m duplicate detection.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div>JanSamadhan — Technical Documentation · April 2026 · Team 404 · Hackathon 2026</div>
+  <div style="margin-top:8px">
+    <a href="https://jansamadhan.perkkk.dev/" target="_blank" rel="noopener">🌐 Live Demo</a> &nbsp;·&nbsp;
+    SDG 11 (Sustainable Cities) · SDG 16 (Accountable Institutions) &nbsp;·&nbsp;
+    Built for 1.4 billion citizens
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+// Active TOC
+const sections = document.querySelectorAll('.section[id], [id]');
+const tocLinks = document.querySelectorAll('.toc-float a');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      tocLinks.forEach(a => a.classList.remove('active'));
+      const active = document.querySelector(`.toc-float a[href="#${entry.target.id}"]`);
+      if (active) active.classList.add('active');
+    }
+  });
+}, { rootMargin: '-50px 0px -60% 0px', threshold: 0 });
+document.querySelectorAll('[id]').forEach(s => observer.observe(s));
+
+// Auto-open all details on print
+window.addEventListener('beforeprint', () => {
+  document.querySelectorAll('details').forEach(d => d.open = true);
+});
+window.addEventListener('afterprint', () => {
+  document.querySelectorAll('details:not([data-was-open])').forEach(d => {
+    if (!d.dataset.wasOpen) d.open = false;
+  });
+});
+</script>
+</body>
+</html>

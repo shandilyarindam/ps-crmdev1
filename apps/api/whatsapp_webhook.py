@@ -1,16 +1,4 @@
-"""
-whatsapp_webhook.py  –  JanSamadhan WhatsApp Bot
-=================================================
-Add this file to your project and register the router in main.py:
 
-    from whatsapp_webhook import router as whatsapp_router
-    app.include_router(whatsapp_router)
-
-Required environment variables (add to your Render env):
-    WHATSAPP_TOKEN          – your permanent / temporary access token
-    WHATSAPP_PHONE_NUMBER_ID – the phone-number-id from Meta API Setup page
-    WHATSAPP_VERIFY_TOKEN   – any string you choose (used for webhook verification)
-"""
 
 import os
 import json
@@ -294,6 +282,11 @@ async def handle_text(phone: str, raw_text: str):
     # If not a command, we give the text to Gemini.
     # Architecture: User can describe via text to "get context", but MUST provide photo to submit.
     
+    # Enforce minimum 10-character description for WhatsApp bot fallback flow
+    if len(raw_text.strip()) < 10:
+        await send_text(phone, "⚠️ *Description too short!*\n\nPlease describe the civic issue in more detail (minimum 10 characters).")
+        return
+
     # Check if we already have an image in session
     has_image = bool(session.get("image_bytes"))
     
@@ -382,6 +375,7 @@ async def handle_text(phone: str, raw_text: str):
                 else:
                     # Just a chat/reply
                     await send_text(phone, bot_reply)
+                    count = session.get("fallback_count", 0) + 1
                     session["fallback_count"] = count
                     await save_session(phone, session)
                     return
@@ -538,9 +532,20 @@ async def handle_image(phone: str, image_id: str, caption: str = ""):
         caption = extracted_text.get("description", "")
         print(f"[WhatsApp] Resuming from awaiting_photo state. Using description: {caption[:50]}...")
 
-    # 1. Check if we already have a valid description (min 20 chars)
-    # (Bypassed for WhatsApp to allow seamless image-first flow without forcing text descriptions)
-
+    # 1. Enforce minimum 10-character description for WhatsApp bot
+    clean_caption = caption.strip() if caption else ""
+    if len(clean_caption) < 10:
+        session.update({
+            "pending_image_id": image_id,
+            "state": "awaiting_description",
+            "fallback_count": 0
+        })
+        await save_session(phone, session)
+        if clean_caption:
+            await send_text(phone, "⚠️ *Description too short!*\n\nPlease provide a brief description of the issue (minimum 10 characters).")
+        else:
+            await send_text(phone, "📸 *Photo Received!*\n\nPlease send a brief description of the issue (minimum 10 characters).")
+        return
 
     await send_text(phone, "⏳ Analyzing the issue... Please wait.")
 
@@ -1138,35 +1143,7 @@ async def send_list_message(phone: str, body_text: str, button_text: str, sectio
         print(f"[send_list_message exception] {e}")
 
 
-async def send_list_message(phone: str, body_text: str, button_text: str, sections: list):
-    """
-    Sends an interactive message of type 'list'.
-    Sections should be formatted according to WhatsApp Cloud API structure.
-    """
-    payload = {
-        "messaging_product": "whatsapp",
-        "recipient_type": "individual",
-        "to": phone,
-        "type": "interactive",
-        "interactive": {
-            "type": "list",
-            "body": {
-                "text": body_text
-            },
-            "action": {
-                "button": button_text,
-                "sections": sections
-            }
-        }
-    }
-    headers = {
-        "Authorization": f"Bearer {get_whatsapp_token()}",
-        "Content-Type": "application/json",
-    }
-    async with httpx.AsyncClient(timeout=10) as client:
-        resp = await client.post(get_graph_api_url(), json=payload, headers=headers)
-        if resp.status_code != 200:
-            print(f"[send_list_message error] {resp.status_code}: {resp.text}")
+# (Duplicate definition removed)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
