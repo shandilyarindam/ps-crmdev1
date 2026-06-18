@@ -43,6 +43,8 @@ export interface ZoneViewProps {
   onIntensityChange: (intensity: number) => void;
   activeSeverities: string[];
   onToggleSeverity: (severity: string) => void;
+  liveWardScores?: Record<number, { score: number; activeComplaints: number }>;
+  zoneHealthScore?: number;
 }
 
 // All / Critical / Escalated tabs (zone + delhi level)
@@ -66,12 +68,28 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
   onIntensityChange,
   activeSeverities,
   onToggleSeverity,
+  liveWardScores,
+  zoneHealthScore,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<keyof DepartmentPerf>("open");
   const [sortAsc, setSortAsc] = useState(false);
   const [interventionFilter, setInterventionFilter] = useState("all");
   const [selectedIntervention, setSelectedIntervention] = useState<Intervention | null>(null);
+
+  const liveWardHealthRows = useMemo(() => {
+    return wardRegions.map((w) => {
+      const wardNo = w.properties.ward_no;
+      const wardName = w.properties.wardname;
+      const stats = liveWardScores?.[wardNo] || { score: 100, activeComplaints: 0 };
+      return {
+        name: `Ward ${wardNo} - ${wardName}`,
+        count: stats.activeComplaints,
+        sev: `${stats.score}%`,
+        color: stats.score >= 85 ? "bg-emerald-500" : stats.score >= 70 ? "bg-amber-400" : "bg-red-600",
+      };
+    });
+  }, [wardRegions, liveWardScores]);
 
   // Search filter for map regions
   const filteredWardRegions = useMemo(() => {
@@ -167,7 +185,7 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 shrink-0">
               <LocalityHealthTable
-                localities={wardHealthRows}
+                localities={liveWardHealthRows}
                 title="WARD HEALTH SUMMARY"
                 rowLabel="Ward"
                 actionLabel="View Ward Analytics"
@@ -192,7 +210,7 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
               showParty={false}
               onCall={() => triggerToast("Connecting to Zone Commissioner...")}
               metrics={[
-                { label: "Zone Health", value: "76", suffix: "/100", highlight: true },
+                { label: "Zone Health", value: String(zoneHealthScore ?? 76), suffix: "/100", highlight: true },
                 { label: "Budget Used", value: "68%" },
                 { label: "Field Staff", value: "428" },
                 { label: "Escalations", value: "5" },

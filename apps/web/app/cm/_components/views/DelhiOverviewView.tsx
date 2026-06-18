@@ -9,7 +9,7 @@ import { DelhiHealthScoreBar } from "../DelhiHealthScoreBar";
 import { QuickActionsFooter } from "../QuickActionsFooter";
 import { InterventionReviewModal } from "../InterventionReviewModal";
 
-import { Intervention, InterventionTab } from "../cm-types";
+import { Intervention, InterventionTab, ZoneScore } from "../cm-types";
 import { delhiKpis, cmInterventions, delhiZoneScores } from "../cm-mock";
 import type { ZoneFeature } from "../cm-geo";
 
@@ -27,6 +27,10 @@ export interface DelhiOverviewViewProps {
   onIntensityChange: (intensity: number) => void;
   activeSeverities: string[];
   onToggleSeverity: (severity: string) => void;
+  overallScore?: number;
+  trendStr?: string;
+  liveZoneScores?: ZoneScore[];
+  isLoading?: boolean;
 }
 
 // All / Critical / Escalated tabs
@@ -47,6 +51,10 @@ export const DelhiOverviewView: React.FC<DelhiOverviewViewProps> = ({
   onIntensityChange,
   activeSeverities,
   onToggleSeverity,
+  overallScore = 84,
+  trendStr = "+3 pts",
+  liveZoneScores,
+  isLoading = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [interventionFilter, setInterventionFilter] = useState("all");
@@ -123,7 +131,12 @@ export const DelhiOverviewView: React.FC<DelhiOverviewViewProps> = ({
           </div>
         </div>
 
-        <DelhiHealthScoreBar overall={84} trend="+3 pts" zones={delhiZoneScores} />
+        <DelhiHealthScoreBar 
+          overall={overallScore} 
+          trend={trendStr} 
+          zones={liveZoneScores && liveZoneScores.length > 0 ? liveZoneScores : delhiZoneScores} 
+          isLoading={isLoading}
+        />
       </main>
 
       <QuickActionsFooter onFiltersClick={() => triggerToast("Filters panel coming soon")} />

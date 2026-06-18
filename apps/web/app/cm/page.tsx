@@ -14,6 +14,7 @@ import {
   usePrecomputedZoneRegions,
   useWardGeoJSON,
   useComplaintPoints,
+  useDelhiHealthScores,
   wardRegionsForZone,
   wardByNo,
   countPointsInRegions,
@@ -60,6 +61,20 @@ export default function CMCommandCenterPage() {
   const { zoneRegions } = usePrecomputedZoneRegions();
   const { wards } = useWardGeoJSON(view !== "delhi");
   const { points } = useComplaintPoints();
+
+  // Live health scores calculated from DB
+  const { overall: liveOverallScore, trend: liveTrendStr, zones: liveZoneScores, wards: liveWardScores, loaded } = useDelhiHealthScores();
+
+  const selectedZoneHealthScore = useMemo(() => {
+    if (!selectedZoneId) return undefined;
+    const zoneData = liveZoneScores.find(z => z.id === selectedZoneId);
+    return zoneData?.score;
+  }, [selectedZoneId, liveZoneScores]);
+
+  const selectedWardHealthScore = useMemo(() => {
+    if (selectedWardNo == null) return undefined;
+    return liveWardScores[selectedWardNo]?.score;
+  }, [selectedWardNo, liveWardScores]);
 
   // Dynamic filter function for points used in choropleth & markers
   const filteredPoints = useMemo(() => {
@@ -226,6 +241,10 @@ export default function CMCommandCenterPage() {
             onIntensityChange={setIntensity}
             activeSeverities={activeSeverities}
             onToggleSeverity={handleToggleSeverity}
+            overallScore={liveOverallScore}
+            trendStr={liveTrendStr}
+            liveZoneScores={liveZoneScores}
+            isLoading={!loaded}
           />
         )}
         {view === "zone" && (
@@ -243,6 +262,8 @@ export default function CMCommandCenterPage() {
             onIntensityChange={setIntensity}
             activeSeverities={activeSeverities}
             onToggleSeverity={handleToggleSeverity}
+            liveWardScores={liveWardScores}
+            zoneHealthScore={selectedZoneHealthScore}
           />
         )}
         {view === "ward" && (
@@ -259,6 +280,7 @@ export default function CMCommandCenterPage() {
             onIntensityChange={setIntensity}
             activeSeverities={activeSeverities}
             onToggleSeverity={handleToggleSeverity}
+            liveWardHealthScore={selectedWardHealthScore}
           />
         )}
       </div>

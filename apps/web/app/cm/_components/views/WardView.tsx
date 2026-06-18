@@ -44,6 +44,7 @@ export interface WardViewProps {
   onIntensityChange: (intensity: number) => void;
   activeSeverities: string[];
   onToggleSeverity: (severity: string) => void;
+  liveWardHealthScore?: number;
 }
 
 export const WardView: React.FC<WardViewProps> = ({
@@ -59,6 +60,7 @@ export const WardView: React.FC<WardViewProps> = ({
   onIntensityChange,
   activeSeverities,
   onToggleSeverity,
+  liveWardHealthScore,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<keyof DepartmentPerf>("open");
@@ -66,6 +68,14 @@ export const WardView: React.FC<WardViewProps> = ({
   const [interventionFilter, setInterventionFilter] = useState("all");
   const [selectedIntervention, setSelectedIntervention] = useState<Intervention | null>(null);
   const [activeActionModal, setActiveActionModal] = useState<string | null>(null);
+
+  const liveWardCouncillor = useMemo(() => {
+    if (liveWardHealthScore === undefined) return wardCouncillor;
+    return {
+      ...wardCouncillor,
+      wardHealth: liveWardHealthScore,
+    };
+  }, [liveWardHealthScore]);
 
   const escalationTabs = useMemo(() => [
     { id: "all", label: "All" },
@@ -188,7 +198,7 @@ export const WardView: React.FC<WardViewProps> = ({
           </div>
 
           <div className="w-full xl:w-[380px] shrink-0 flex flex-col gap-3 xl:h-[954px]">
-            <CouncillorInfoCard councillor={wardCouncillor} />
+            <CouncillorInfoCard councillor={liveWardCouncillor} />
             <ActiveInterventionsPanel
               interventions={filteredInterventions}
               activeFilter={interventionFilter}
