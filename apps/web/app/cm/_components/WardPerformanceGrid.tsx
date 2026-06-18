@@ -39,9 +39,9 @@ export const WardPerformanceGrid: React.FC<WardPerformanceGridProps> = ({
   return (
     <div
       ref={containerRef}
-      className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between h-60 min-h-0 select-none"
+      className="bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex flex-col justify-between h-60 min-h-0 select-none transition-colors duration-300"
     >
-      <h3 className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-zinc-500 uppercase mb-2">
+      <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase mb-2">
         WARD PERFORMANCE
       </h3>
 
@@ -49,9 +49,9 @@ export const WardPerformanceGrid: React.FC<WardPerformanceGridProps> = ({
         {metrics.map((metric, idx) => {
           // Determine borders based on index
           const borderClasses = `
-            ${idx === 0 ? "border-r border-b border-slate-100 dark:border-zinc-800 pb-2 pr-2" : ""}
-            ${idx === 1 ? "border-b border-slate-100 dark:border-zinc-800 pb-2 pl-2" : ""}
-            ${idx === 2 ? "border-r border-slate-100 dark:border-zinc-800 pt-2 pr-2" : ""}
+            ${idx === 0 ? "border-r border-b border-theme-border pb-2 pr-2" : ""}
+            ${idx === 1 ? "border-b border-theme-border pb-2 pl-2" : ""}
+            ${idx === 2 ? "border-r border-theme-border pt-2 pr-2" : ""}
             ${idx === 3 ? "pt-2 pl-2" : ""}
           `;
 
@@ -60,14 +60,14 @@ export const WardPerformanceGrid: React.FC<WardPerformanceGridProps> = ({
               key={idx}
               className={`metric-box opacity-0 flex flex-col justify-center ${borderClasses}`}
             >
-              <p className="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase leading-tight">
+              <p className="text-[9px] font-bold text-theme-muted uppercase leading-tight">
                 {metric.label}
               </p>
               <h4
                 className={`text-base font-black mt-1 leading-none ${
                   metric.label.toLowerCase().includes("growth")
-                    ? "text-red-600 dark:text-red-500"
-                    : "text-slate-800 dark:text-white"
+                    ? "text-rose-600 dark:text-rose-400"
+                    : "text-theme-text"
                 }`}
               >
                 {metric.value}
@@ -76,10 +76,10 @@ export const WardPerformanceGrid: React.FC<WardPerformanceGridProps> = ({
                 <span
                   className={`text-[8px] font-bold mt-1.5 flex items-center gap-0.5 ${
                     metric.isPositive === undefined
-                      ? "text-slate-400 font-medium"
+                      ? "text-theme-muted font-medium"
                       : metric.isPositive
                       ? "text-emerald-600 dark:text-emerald-400"
-                      : "text-slate-400 dark:text-zinc-500 font-medium"
+                      : "text-theme-muted font-medium"
                   }`}
                 >
                   {metric.isPositive && <ArrowUpRight size={10} />}

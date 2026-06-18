@@ -25,70 +25,70 @@ export const CMHeader: React.FC<CMHeaderProps> = ({
 }) => {
   const crumb = (label: string, target: ViewLevel, active: boolean) =>
     active ? (
-      <span className="text-emerald-600 font-bold dark:text-emerald-400">{label}</span>
+      <span className="text-theme-accent font-bold">{label}</span>
     ) : (
       <button
         onClick={() => onCrumb(target)}
-        className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+        className="hover:text-theme-accent transition-colors"
       >
         {label}
       </button>
     );
 
   return (
-    <header className="sticky top-0 z-50 flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+    <header className="sticky top-0 z-50 flex shrink-0 items-center justify-between border-b border-theme-border bg-theme-card px-4 py-3 shadow-sm transition-colors duration-300">
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300">
-            <Landmark size={20} className="text-emerald-600 dark:text-emerald-500" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-theme-bg text-theme-text/80 transition-colors duration-300">
+            <Landmark size={20} className="text-theme-accent" />
           </div>
           <div>
             <h1 className="text-base font-bold leading-tight tracking-tight sm:text-lg">JanSamadhan</h1>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">CM Command Center</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-theme-muted">CM Command Center</p>
           </div>
         </div>
-        <div className="h-6 border-l border-slate-200 dark:border-zinc-800"></div>
+        <div className="h-6 border-l border-theme-border"></div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => onCrumb("delhi")}
-            className="flex items-center gap-2 rounded-md bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-all dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+            className="flex items-center gap-2 rounded-md bg-theme-bg px-3 py-1.5 text-xs font-semibold text-theme-text hover:bg-theme-bg/80 transition-all duration-300"
           >
-            <MapPin size={14} className="text-emerald-600 dark:text-emerald-400" />
+            <MapPin size={14} className="text-theme-accent" />
             <span>DELHI OVERVIEW</span>
-            <ChevronDown size={12} className="text-slate-400" />
+            <ChevronDown size={12} className="text-theme-muted" />
           </button>
         </div>
       </div>
 
       <div className="hidden flex-1 justify-center md:flex">
-        <nav aria-label="Breadcrumb" className="flex items-center text-xs font-semibold text-slate-500 dark:text-zinc-400">
+        <nav aria-label="Breadcrumb" className="flex items-center text-xs font-semibold text-theme-muted">
           {crumb("Delhi", "delhi", level === "delhi")}
           {level !== "delhi" && (
             <>
-              <ChevronRight size={10} className="mx-2 text-slate-400" />
+              <ChevronRight size={10} className="mx-2 text-theme-muted" />
               {crumb(zoneName ? `${zoneName} Zone` : "Zone", "zone", level === "zone")}
             </>
           )}
           {level === "ward" && (
             <>
-              <ChevronRight size={10} className="mx-2 text-slate-400" />
+              <ChevronRight size={10} className="mx-2 text-theme-muted" />
               {crumb(wardName ?? "Ward", "ward", true)}
             </>
           )}
         </nav>
       </div>
 
-      <div className="flex items-center gap-4 text-xs font-semibold text-slate-600 dark:text-zinc-300">
+      <div className="flex items-center gap-4 text-xs font-semibold text-theme-text/80">
         <div className="flex items-center gap-1.5">
-          <Calendar size={14} className="text-slate-400 dark:text-zinc-500" />
+          <Calendar size={14} className="text-theme-muted" />
           <span>{dateStr}</span>
         </div>
-        <div className="flex items-center gap-1.5 border-l border-slate-200 pl-4 dark:border-zinc-800">
-          <Clock size={14} className="text-slate-400 dark:text-zinc-500" />
+        <div className="flex items-center gap-1.5 border-l border-theme-border pl-4">
+          <Clock size={14} className="text-theme-muted" />
           <span className="tabular-nums">{timeStr}</span>
         </div>
-        <div className="flex items-center gap-2 border-l border-slate-200 pl-4 dark:border-zinc-800">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white shadow-sm">
+        <div className="flex items-center gap-2 border-l border-theme-border pl-4">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-theme-accent text-[10px] font-bold text-white shadow-sm">
             CM
           </div>
           <span className="hidden sm:inline">CM Delhi</span>

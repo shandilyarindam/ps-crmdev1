@@ -35,29 +35,29 @@ const iconMap: Record<string, LucideIcon> = {
 
 const colorClasses: Record<KPICardData["color"], { bg: string; text: string; stroke: string }> = {
   emerald: {
-    bg: "bg-emerald-50 dark:bg-emerald-950/20",
-    text: "text-emerald-600 dark:text-emerald-400",
-    stroke: "stroke-emerald-500",
+    bg: "bg-emerald-50/70 dark:bg-emerald-950/15",
+    text: "text-emerald-700 dark:text-emerald-300",
+    stroke: "stroke-emerald-600 dark:stroke-emerald-400",
   },
   red: {
-    bg: "bg-red-50 dark:bg-red-950/20",
-    text: "text-red-600 dark:text-red-400",
-    stroke: "stroke-red-500",
+    bg: "bg-rose-50/70 dark:bg-rose-950/15",
+    text: "text-rose-700 dark:text-rose-300",
+    stroke: "stroke-rose-600 dark:stroke-rose-400",
   },
   amber: {
-    bg: "bg-amber-50 dark:bg-amber-950/20",
-    text: "text-amber-600 dark:text-amber-400",
-    stroke: "stroke-amber-500",
+    bg: "bg-amber-50/70 dark:bg-amber-950/15",
+    text: "text-amber-700 dark:text-amber-300",
+    stroke: "stroke-amber-600 dark:stroke-amber-400",
   },
   teal: {
-    bg: "bg-teal-50 dark:bg-teal-950/20",
-    text: "text-teal-600 dark:text-teal-400",
-    stroke: "stroke-teal-500",
+    bg: "bg-teal-50/70 dark:bg-teal-950/15",
+    text: "text-teal-700 dark:text-teal-300",
+    stroke: "stroke-teal-600 dark:stroke-teal-400",
   },
   blue: {
-    bg: "bg-blue-50 dark:bg-blue-950/20",
-    text: "text-blue-600 dark:text-blue-400",
-    stroke: "stroke-blue-500",
+    bg: "bg-blue-50/70 dark:bg-blue-950/15",
+    text: "text-blue-700 dark:text-blue-300",
+    stroke: "stroke-blue-600 dark:stroke-blue-400",
   },
 };
 
@@ -112,18 +112,18 @@ export const KPIStatsRow: React.FC<KPIStatsRowProps> = ({ kpis, onCardClick }) =
           <div
             key={kpi.id}
             onClick={() => onCardClick?.(kpi.id)}
-            className="kpi-card opacity-0 relative overflow-hidden rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer dark:border-zinc-800 dark:bg-zinc-900"
+            className="kpi-card opacity-0 relative overflow-hidden rounded-xl border border-theme-border bg-theme-card p-3.5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
           >
             <div className="flex items-center gap-3">
               <div className={`flex h-10 w-10 items-center justify-center rounded-full ${color.bg} ${color.text}`}>
                 <IconComponent size={20} />
               </div>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-theme-muted">
                   {kpi.label}
                 </p>
                 <h2
-                  className={`text-2xl font-black mt-0.5 leading-none text-slate-800 dark:text-white ${
+                  className={`text-2xl font-black mt-0.5 leading-none text-theme-text ${
                     kpi.animatePulse ? "animate-pulse" : ""
                   }`}
                 >
@@ -148,7 +148,7 @@ export const KPIStatsRow: React.FC<KPIStatsRowProps> = ({ kpis, onCardClick }) =
                 {kpi.isPositive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
                 {kpi.change}
               </span>
-              <span className="text-[10px] font-medium text-slate-400 dark:text-zinc-500">
+              <span className="text-[10px] font-medium text-theme-muted">
                 {kpi.comparison}
               </span>
             </div>

@@ -30,40 +30,40 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ insights }) =>
   return (
     <div
       ref={containerRef}
-      className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 flex-1 flex flex-col min-h-0 select-none"
+      className="bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex-1 flex flex-col min-h-0 select-none transition-colors duration-300"
     >
-      <h3 className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-zinc-500 uppercase mb-3 flex items-center gap-2 shrink-0">
-        <Sparkles size={12} className="text-emerald-500 animate-pulse" /> AI INSIGHTS
+      <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase mb-3 flex items-center gap-2 shrink-0">
+        <Sparkles size={12} className="text-theme-accent animate-pulse" /> AI INSIGHTS
       </h3>
       <div className="flex-1 overflow-y-auto pr-1">
         <ul className="space-y-3">
           {insights.map((insight, idx) => (
             <li
               key={idx}
-              className="insight-item opacity-0 flex gap-2 p-2 rounded-lg bg-slate-50 dark:bg-zinc-800/40 text-[11px] leading-relaxed font-medium transition-all hover:bg-slate-100/60 dark:hover:bg-zinc-800/70"
+              className="insight-item opacity-0 flex gap-2 p-2 rounded-lg bg-theme-bg/30 text-[11px] leading-relaxed font-medium transition-all hover:bg-theme-bg/60"
             >
               <span
                 className={`h-2 w-2 rounded-full mt-1 shrink-0 ${
                   insight.type === "critical"
-                    ? "bg-red-500 animate-ping"
+                    ? "bg-theme-critical animate-ping"
                     : insight.type === "warning"
-                    ? "bg-amber-400"
-                    : "bg-emerald-500"
+                    ? "bg-theme-warning"
+                    : "bg-theme-success"
                 }`}
               ></span>
               <div>
                 <span
                   className={`text-[8px] font-bold uppercase tracking-wider block mb-0.5 ${
                     insight.type === "critical"
-                      ? "text-red-500"
+                      ? "text-theme-critical"
                       : insight.type === "warning"
-                      ? "text-amber-500"
-                      : "text-emerald-600 dark:text-emerald-400"
+                      ? "text-theme-warning"
+                      : "text-theme-success"
                   }`}
                 >
                   {insight.badge}
                 </span>
-                <p className="text-slate-600 dark:text-zinc-300">{insight.text}</p>
+                <p className="text-theme-text">{insight.text}</p>
               </div>
             </li>
           ))}

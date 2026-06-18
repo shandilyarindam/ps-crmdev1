@@ -44,56 +44,56 @@ export const DepartmentPerformanceTable: React.FC<DepartmentPerformanceTableProp
   return (
     <div
       ref={containerRef}
-      className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 flex-1 flex flex-col min-h-0 select-none"
+      className="bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex-1 flex flex-col min-h-0 select-none transition-colors duration-300"
     >
-      <h3 className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-zinc-500 uppercase mb-3 shrink-0">
+      <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase mb-3 shrink-0">
         DEPARTMENT PERFORMANCE
       </h3>
       <div className="flex-1 overflow-y-auto">
         <table className="w-full text-left text-[11px]">
           <thead>
-            <tr className="text-slate-400 border-b border-slate-100 dark:border-zinc-800 select-none">
+            <tr className="text-theme-muted border-b border-theme-border select-none">
               <th
-                className="pb-2 font-bold cursor-pointer hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+                className="pb-2 font-bold cursor-pointer hover:text-theme-text transition-colors"
                 onClick={() => onSort("name")}
               >
                 Dept{renderSortIndicator("name")}
               </th>
               <th
-                className="pb-2 font-bold text-center cursor-pointer hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+                className="pb-2 font-bold text-center cursor-pointer hover:text-theme-text transition-colors"
                 onClick={() => onSort("open")}
               >
                 Open{renderSortIndicator("open")}
               </th>
               <th
-                className="pb-2 font-bold text-center cursor-pointer hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+                className="pb-2 font-bold text-center cursor-pointer hover:text-theme-text transition-colors"
                 onClick={() => onSort("slaMissed")}
               >
                 SLA Miss{renderSortIndicator("slaMissed")}
               </th>
               <th
-                className="pb-2 font-bold text-right cursor-pointer hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+                className="pb-2 font-bold text-right cursor-pointer hover:text-theme-text transition-colors"
                 onClick={() => onSort("avgResponse")}
               >
                 Response{renderSortIndicator("avgResponse")}
               </th>
             </tr>
           </thead>
-          <tbody className="text-slate-700 dark:text-zinc-300 font-semibold divide-y divide-slate-50 dark:divide-zinc-800/50">
+          <tbody className="text-theme-text font-semibold divide-y divide-theme-border">
             {departments.map((dept) => (
               <tr
                 key={dept.id}
-                className="dept-row opacity-0 hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors"
+                className="dept-row opacity-0 hover:bg-theme-bg/40 transition-colors"
               >
                 <td className="py-2.5 flex items-center gap-1.5">
                   <span className={`h-2 w-2 rounded-full shrink-0 ${dept.color}`}></span>
                   <span className="font-bold">{dept.name}</span>
                 </td>
-                <td className="py-2.5 text-center font-bold text-slate-800 dark:text-white">
+                <td className="py-2.5 text-center font-bold text-theme-text">
                   {dept.open}
                 </td>
-                <td className="py-2.5 text-center text-red-500 font-bold">{dept.slaMissed}</td>
-                <td className="py-2.5 text-right text-slate-500 dark:text-zinc-400">
+                <td className="py-2.5 text-center text-rose-500 font-bold">{dept.slaMissed}</td>
+                <td className="py-2.5 text-right text-theme-muted">
                   {dept.avgResponse}
                 </td>
               </tr>
@@ -102,9 +102,9 @@ export const DepartmentPerformanceTable: React.FC<DepartmentPerformanceTableProp
         </table>
       </div>
       {onViewAllClick && (
-        <div className="mt-3 text-center border-t border-slate-100 pt-2.5 dark:border-zinc-800 shrink-0">
+        <div className="mt-3 text-center border-t border-theme-border pt-2.5 shrink-0">
           <a
-            className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 hover:underline dark:text-emerald-400"
+            className="text-[10px] font-bold text-theme-accent hover:opacity-85 transition-opacity"
             href="#"
             onClick={(e) => {
               e.preventDefault();

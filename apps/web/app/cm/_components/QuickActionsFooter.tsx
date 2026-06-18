@@ -42,34 +42,34 @@ const actionIcons: Record<QuickAction["icon"], LucideIcon> = {
 
 const actionColors: Record<QuickAction["color"], string> = {
   emerald:
-    "border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900 dark:text-emerald-400 dark:hover:bg-zinc-700/50",
+    "border-emerald-200/50 text-emerald-700 hover:bg-emerald-50/40 dark:border-emerald-900/40 dark:text-emerald-300",
   red:
-    "border-red-200 text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-zinc-700/50",
+    "border-rose-200/50 text-rose-700 hover:bg-rose-50/40 dark:border-rose-900/40 dark:text-rose-300",
   blue:
-    "border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-900 dark:text-blue-400 dark:hover:bg-zinc-700/50",
+    "border-blue-200/50 text-blue-700 hover:bg-blue-50/40 dark:border-blue-900/40 dark:text-blue-300",
 };
 
 const iconColors: Record<QuickAction["color"], string> = {
-  emerald: "text-emerald-500",
-  red: "text-red-500",
-  blue: "text-blue-500",
+  emerald: "text-emerald-600 dark:text-emerald-400",
+  red: "text-rose-600 dark:text-rose-400",
+  blue: "text-blue-600 dark:text-blue-400",
 };
 
 const defaultTicker: React.ReactNode[] = [
   <span key="t1">
-    • <strong className="text-slate-700 dark:text-zinc-200">142</strong> new complaints reported across zone today
+    • <strong className="text-theme-text">142</strong> new complaints reported across zone today
   </span>,
   <span key="t2">
-    • <strong className="text-slate-700 dark:text-zinc-200">Mobile Workforce:</strong> 1,254 Workers online • 71% active deployment
+    • <strong className="text-theme-text">Mobile Workforce:</strong> 1,254 Workers online • 71% active deployment
   </span>,
   <span key="t3">
-    • <strong className="text-slate-700 dark:text-zinc-200">Departments:</strong> 24 key municipal areas under active surveillance
+    • <strong className="text-theme-text">Departments:</strong> 24 key municipal areas under active surveillance
   </span>,
   <span key="t4">
-    • <strong className="text-slate-700 dark:text-zinc-200">Avg Resolution:</strong> 4h 12m response time (<span className="text-emerald-500">-11% today</span>)
+    • <strong className="text-theme-text">Avg Resolution:</strong> 4h 12m response time (<span className="text-emerald-600 dark:text-emerald-400">-11% today</span>)
   </span>,
   <span key="t5">
-    • <strong className="text-slate-700 dark:text-zinc-200">Queue backlog:</strong> reduced by 8.2% in last 24h
+    • <strong className="text-theme-text">Queue backlog:</strong> reduced by 8.2% in last 24h
   </span>,
 ];
 
@@ -96,13 +96,13 @@ export const QuickActionsFooter: React.FC<QuickActionsFooterProps> = ({
   return (
     <footer
       ref={footerRef}
-      className={cn("opacity-0 bg-white border-t border-slate-200 mt-auto sticky bottom-0 z-50 shrink-0 dark:border-zinc-800 dark:bg-zinc-900 select-none", className)}
+      className={cn("opacity-0 bg-theme-card border-t border-theme-border mt-auto sticky bottom-0 z-50 shrink-0 select-none transition-colors duration-300", className)}
     >
       {/* Quick Actions Panel — only when actions are provided */}
       {actions && actions.length > 0 && (
-        <div className="px-4 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-zinc-800">
+        <div className="px-4 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-theme-border">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest leading-none">
+            <span className="text-[10px] font-black text-theme-muted uppercase tracking-widest leading-none">
               QUICK
               <br />
               ACTIONS
@@ -116,7 +116,7 @@ export const QuickActionsFooter: React.FC<QuickActionsFooterProps> = ({
                   key={action.id}
                   onClick={() => onAction?.(action.id)}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 bg-white border rounded-lg text-xs font-semibold dark:bg-zinc-800 shadow-sm transition-all active:scale-95",
+                    "flex items-center gap-1.5 px-3 py-1.5 bg-theme-bg/60 hover:bg-theme-bg border border-theme-border rounded-lg text-xs font-semibold shadow-sm transition-all active:scale-95",
                     actionColors[action.color]
                   )}
                 >
@@ -129,21 +129,21 @@ export const QuickActionsFooter: React.FC<QuickActionsFooterProps> = ({
       )}
 
       {/* Live Ticker Marquee */}
-      <div className="bg-slate-50 dark:bg-zinc-950 py-1.5 px-4 flex items-center justify-between gap-8 overflow-hidden text-xs">
-        <div className="flex items-center gap-1.5 shrink-0 text-slate-800 dark:text-zinc-200 font-bold">
-          <Radio size={12} className="text-emerald-500 animate-pulse" />
+      <div className="bg-theme-bg/50 py-1.5 px-4 flex items-center justify-between gap-8 overflow-hidden text-xs transition-colors duration-300">
+        <div className="flex items-center gap-1.5 shrink-0 text-theme-text font-bold">
+          <Radio size={12} className="text-rose-500 animate-pulse" />
           <span>LIVE FEED</span>
         </div>
 
         {/* Marquee Body */}
         <div className="flex-1 overflow-hidden relative h-5">
-          <div className="absolute flex gap-16 whitespace-nowrap text-[10px] font-semibold text-slate-500 dark:text-zinc-400 animate-marquee">
+          <div className="absolute flex gap-16 whitespace-nowrap text-[10px] font-semibold text-theme-muted animate-marquee">
             {tickerItems}
           </div>
         </div>
 
         <div
-          className="flex items-center gap-1.5 shrink-0 cursor-pointer hover:text-emerald-600 font-bold text-[10px] dark:hover:text-emerald-400 transition-colors"
+          className="flex items-center gap-1.5 shrink-0 cursor-pointer hover:text-theme-accent font-bold text-[10px] transition-colors"
           onClick={onFiltersClick}
         >
           <Sliders size={11} />

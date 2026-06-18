@@ -232,7 +232,7 @@ export default function CMCommandCenterPage() {
   const wardPop = wardRegion?.properties.totalpop;
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-slate-50 text-slate-800 antialiased dark:bg-[#121212] dark:text-slate-100 font-sans">
+    <div className="flex h-screen flex-col overflow-hidden bg-theme-bg text-theme-text antialiased transition-colors duration-300 font-sans">
       {/* Toast Notification */}
       {actionSuccessToast && (
         <div className="fixed bottom-16 right-6 z-[9999] flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-xl animate-bounce">
@@ -306,6 +306,7 @@ export default function CMCommandCenterPage() {
             onToggleSeverity={handleToggleSeverity}
             liveWardHealthScore={selectedWardHealthScore}
             points={selectedWardNo != null ? pointsByWard.get(selectedWardNo) || [] : []}
+            wardNo={selectedWardNo}
           />
         )}
       </div>

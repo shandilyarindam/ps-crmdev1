@@ -16,8 +16,30 @@ body {
 
 /* ========== DESIGN TOKENS ========== */
 
+@theme {
+  --color-theme-bg: var(--theme-bg);
+  --color-theme-card: var(--theme-card);
+  --color-theme-border: var(--theme-border);
+  --color-theme-text: var(--theme-text);
+  --color-theme-muted: var(--theme-muted);
+  --color-theme-accent: var(--theme-accent);
+  --color-theme-critical: var(--theme-critical);
+  --color-theme-warning: var(--theme-warning);
+  --color-theme-success: var(--theme-success);
+}
+
 /* Color Variables - Light Mode */
 :root {
+  --theme-bg: #ddd1c0;
+  --theme-card: #e9ddce;
+  --theme-border: rgba(181, 168, 150, 0.4);
+  --theme-text: #4a3c31;
+  --theme-muted: #856358;
+  --theme-accent: #5a403a;
+  --theme-critical: #c85a53;
+  --theme-warning: #b45309;
+  --theme-success: #065f46;
+
   /* Semantic Colors - Status Badges */
   --color-badge-submitted-bg: #fef3c7;
   --color-badge-submitted-text: #92400e;
@@ -29,6 +51,16 @@ body {
 
 /* Dark Mode Colors */
 .dark {
+  --theme-bg: #2a221c;
+  --theme-card: #181310;
+  --theme-border: rgba(90, 64, 58, 0.4);
+  --theme-text: #e8e2d6;
+  --theme-muted: #c39a92;
+  --theme-accent: #856358;
+  --theme-critical: #c39a92;
+  --theme-warning: #d5ad77;
+  --theme-success: #8fa385;
+
   --color-badge-submitted-bg: rgba(217, 119, 6, 0.2);
   --color-badge-submitted-text: #fcd34d;
   --color-badge-assigned-bg: rgba(30, 64, 175, 0.2);

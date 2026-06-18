@@ -46,28 +46,28 @@ export const LocalityHealthTable: React.FC<LocalityHealthTableProps> = ({
   return (
     <div
       ref={containerRef}
-      className={cn("bg-white rounded-xl border border-slate-200 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 flex flex-col h-60 min-h-0 select-none", className)}
+      className={cn("bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex flex-col h-60 min-h-0 select-none transition-colors duration-300", className)}
     >
-      <h3 className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-zinc-500 uppercase mb-2 shrink-0">
+      <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase mb-2 shrink-0">
         {title}
       </h3>
       <div className="flex-1 overflow-y-auto">
         <table className="w-full text-left text-[11px]">
           <thead>
-            <tr className="text-slate-400 border-b border-slate-100 dark:border-zinc-800">
+            <tr className="text-theme-muted border-b border-theme-border">
               <th className="pb-1.5 font-bold">{rowLabel}</th>
               <th className="pb-1.5 font-bold text-center">Complaints</th>
               <th className="pb-1.5 font-bold text-right">Severity</th>
             </tr>
           </thead>
-          <tbody className="text-slate-700 dark:text-zinc-300 font-semibold divide-y divide-slate-50 dark:divide-zinc-800/30">
+          <tbody className="text-theme-text font-semibold divide-y divide-theme-border">
             {localities.map((loc, idx) => (
               <tr
                 key={idx}
-                className="locality-row opacity-0 hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors"
+                className="locality-row opacity-0 hover:bg-theme-bg/40 transition-colors"
               >
                 <td className="py-2.5 font-bold">{loc.name}</td>
-                <td className="py-2.5 text-center font-bold text-slate-800 dark:text-white">
+                <td className="py-2.5 text-center font-bold text-theme-text">
                   {loc.count}
                 </td>
                 <td className="py-2.5 text-right flex items-center justify-end gap-1.5 font-bold">
@@ -80,9 +80,9 @@ export const LocalityHealthTable: React.FC<LocalityHealthTableProps> = ({
         </table>
       </div>
       {onViewAnalyticsClick && (
-        <div className="mt-2 text-center border-t border-slate-100 pt-2 dark:border-zinc-800 shrink-0">
+        <div className="mt-2 text-center border-t border-theme-border pt-2 shrink-0">
           <a
-            className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 hover:underline dark:text-emerald-400"
+            className="text-[10px] font-bold text-theme-accent hover:opacity-85 transition-opacity"
             href="#"
             onClick={(e) => {
               e.preventDefault();

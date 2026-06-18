@@ -30,9 +30,9 @@ const defaultTeams: WorkforceTeam[] = [
 ];
 
 const defaultChartData: WorkforceStatusData[] = [
-  { name: "Active", value: 73, color: "#10b981" },
-  { name: "Busy", value: 18, color: "#fbbf24" },
-  { name: "Offline", value: 11, color: "#94a3b8" },
+  { name: "Active", value: 73, color: "#8fa385" },
+  { name: "Busy", value: 18, color: "#d5ad77" },
+  { name: "Offline", value: 11, color: "#c39a92" },
 ];
 
 export const WorkforceStatusCard: React.FC<WorkforceStatusCardProps> = ({
@@ -70,9 +70,9 @@ export const WorkforceStatusCard: React.FC<WorkforceStatusCardProps> = ({
   return (
     <div
       ref={containerRef}
-      className="opacity-0 bg-white rounded-xl border border-slate-200 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 flex flex-col h-60 min-h-0 select-none"
+      className="opacity-0 bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex flex-col h-60 min-h-0 select-none transition-colors duration-300"
     >
-      <h3 className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-zinc-500 uppercase mb-2 shrink-0">
+      <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase mb-2 shrink-0">
         WORKFORCE STATUS
       </h3>
 
@@ -84,13 +84,13 @@ export const WorkforceStatusCard: React.FC<WorkforceStatusCardProps> = ({
             return (
               <div
                 key={idx}
-                className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-zinc-300"
+                className="flex items-center justify-between text-xs font-semibold text-theme-text"
               >
                 <div className="flex items-center gap-1.5 truncate">
-                  {IconComponent && <IconComponent size={12} className="text-emerald-500 shrink-0" />}
+                  {IconComponent && <IconComponent size={12} className="text-theme-accent shrink-0" />}
                   <span className="truncate text-[11px]">{team.title}</span>
                 </div>
-                <span className="font-bold text-slate-800 dark:text-white pl-2">
+                <span className="font-bold text-theme-text pl-2">
                   {team.count}
                 </span>
               </div>
@@ -120,10 +120,10 @@ export const WorkforceStatusCard: React.FC<WorkforceStatusCardProps> = ({
             </ResponsiveContainer>
           )}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none">
-            <span className="text-[14px] font-black leading-none text-slate-800 dark:text-white">
+            <span className="text-[14px] font-black leading-none text-theme-text">
               {activePercentage}
             </span>
-            <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 font-sans">
+            <span className="text-[7px] font-bold text-theme-muted uppercase tracking-widest mt-0.5 font-sans">
               Active
             </span>
           </div>
@@ -131,7 +131,7 @@ export const WorkforceStatusCard: React.FC<WorkforceStatusCardProps> = ({
       </div>
 
       {/* Legend Footer */}
-      <div className="flex justify-between text-[9px] text-slate-400 font-bold border-t border-slate-100 pt-2 dark:border-zinc-800 shrink-0">
+      <div className="flex justify-between text-[9px] text-theme-muted font-bold border-t border-theme-border pt-2 shrink-0">
         {chartData.map((data, idx) => (
           <div key={idx} className="flex items-center gap-1">
             <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: data.color }}></span>

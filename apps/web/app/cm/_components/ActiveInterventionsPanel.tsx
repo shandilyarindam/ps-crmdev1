@@ -23,9 +23,9 @@ export interface ActiveInterventionsPanelProps {
 }
 
 const severityColors: Record<Intervention["severity"], string> = {
-  critical: "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400",
-  high: "bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-400",
-  medium: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400",
+  critical: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300",
+  high: "bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300",
+  medium: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
 };
 
 const defaultTabs: InterventionTab[] = [
@@ -67,15 +67,15 @@ export const ActiveInterventionsPanel: React.FC<ActiveInterventionsPanelProps> =
   return (
     <div
       ref={listRef}
-      className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 flex-1 flex flex-col min-h-0 select-none"
+      className="bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex-1 flex flex-col min-h-0 select-none transition-colors duration-300"
     >
       <div className="flex items-center justify-between mb-3 shrink-0">
-        <h3 className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-zinc-500 uppercase">
+        <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase">
           {title}
         </h3>
         {onViewAllClick && (
           <a
-            className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+            className="text-[10px] font-bold text-theme-accent hover:opacity-85 transition-opacity"
             href="#"
             onClick={(e) => {
               e.preventDefault();
@@ -88,7 +88,7 @@ export const ActiveInterventionsPanel: React.FC<ActiveInterventionsPanelProps> =
       </div>
 
       {/* Sub-tabs for filtering */}
-      <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2 dark:border-zinc-800 shrink-0">
+      <div className="flex flex-wrap gap-2 border-b border-theme-border pb-2 shrink-0">
         {tabs.map((tab) => {
           const count = tab.match
             ? interventions.filter(tab.match).length
@@ -100,8 +100,8 @@ export const ActiveInterventionsPanel: React.FC<ActiveInterventionsPanelProps> =
               onClick={() => onFilterChange(tab.id)}
               className={`px-2 py-1 text-[10px] font-bold rounded-md transition-all ${
                 activeFilter === tab.id
-                  ? "bg-emerald-600 text-white shadow-sm"
-                  : "text-slate-500 hover:bg-slate-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                  ? "bg-theme-accent text-white shadow-sm"
+                  : "text-theme-muted hover:bg-theme-bg/50"
               }`}
             >
               {tab.label} ({count})
@@ -115,7 +115,7 @@ export const ActiveInterventionsPanel: React.FC<ActiveInterventionsPanelProps> =
         {visibleItems.map((item) => (
           <div
             key={item.id}
-            className="intervention-item opacity-0 flex gap-3 p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/40 hover:bg-slate-100 dark:hover:bg-zinc-800/70 transition-all cursor-pointer border border-transparent hover:border-slate-200 dark:hover:border-zinc-700"
+            className="intervention-item opacity-0 flex gap-3 p-3 rounded-lg bg-theme-bg/30 hover:bg-theme-bg/60 transition-all cursor-pointer border border-transparent hover:border-theme-border"
             onClick={() => onReviewClick(item)}
           >
             <div className="flex-1 min-w-0">
@@ -128,16 +128,16 @@ export const ActiveInterventionsPanel: React.FC<ActiveInterventionsPanelProps> =
                   {item.severity}
                 </span>
                 {item.escalated && (
-                  <span className="text-[9px] font-bold text-red-500">• Escalated</span>
+                  <span className="text-[9px] font-bold text-rose-500">• Escalated</span>
                 )}
                 {item.status === "monitoring" && (
-                  <span className="text-[9px] font-bold text-slate-400">• Monitoring</span>
+                  <span className="text-[9px] font-bold text-theme-muted">• Monitoring</span>
                 )}
               </div>
-              <h4 className="text-xs font-bold text-slate-800 dark:text-white mt-1 leading-tight">
+              <h4 className="text-xs font-bold text-theme-text mt-1 leading-tight">
                 {item.title}
               </h4>
-              <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium mt-0.5 truncate">
+              <p className="text-[10px] text-theme-muted font-medium mt-0.5 truncate">
                 {item.ward ? `${item.ward}` : item.locality}
                 {item.zone ? ` • ${item.zone}` : ""}
               </p>
@@ -145,12 +145,12 @@ export const ActiveInterventionsPanel: React.FC<ActiveInterventionsPanelProps> =
                 {item.departments.map((dept, idx) => (
                   <span
                     key={idx}
-                    className="text-[9px] text-slate-400 flex items-center gap-0.5 font-bold"
+                    className="text-[9px] text-theme-muted/80 flex items-center gap-0.5 font-bold"
                   >
                     <Building2 size={10} /> {dept}
                   </span>
                 ))}
-                <span className="text-[9px] font-bold text-slate-400 flex items-center gap-0.5">
+                <span className="text-[9px] font-bold text-theme-muted/80 flex items-center gap-0.5">
                   <Clock size={10} /> {item.time}
                 </span>
               </div>
@@ -158,7 +158,7 @@ export const ActiveInterventionsPanel: React.FC<ActiveInterventionsPanelProps> =
 
             {showThumbnails && (
               <div className="flex flex-col items-end justify-between w-20 shrink-0 gap-1.5">
-                <div className="h-12 w-20 overflow-hidden rounded-md bg-slate-200 dark:bg-zinc-700">
+                <div className="h-12 w-20 overflow-hidden rounded-md bg-theme-bg">
                   {item.imageUrl && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -169,7 +169,7 @@ export const ActiveInterventionsPanel: React.FC<ActiveInterventionsPanelProps> =
                   )}
                 </div>
                 <button
-                  className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-bold rounded shadow-sm w-full leading-none transition-all active:scale-95"
+                  className="px-2 py-1 bg-theme-accent hover:opacity-90 text-white text-[9px] font-bold rounded shadow-sm w-full leading-none transition-all active:scale-95"
                   onClick={(e) => {
                     e.stopPropagation();
                     onReviewClick(item);
@@ -183,7 +183,7 @@ export const ActiveInterventionsPanel: React.FC<ActiveInterventionsPanelProps> =
             {!showThumbnails && (
               <div className="text-right flex flex-col items-end justify-end w-16 shrink-0">
                 <button
-                  className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-bold rounded shadow-sm w-full leading-none transition-all active:scale-95"
+                  className="px-2 py-1 bg-theme-accent hover:opacity-90 text-white text-[9px] font-bold rounded shadow-sm w-full leading-none transition-all active:scale-95"
                   onClick={(e) => {
                     e.stopPropagation();
                     onReviewClick(item);

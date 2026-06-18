@@ -27,7 +27,7 @@ import {
   wardPredictionData,
   wardQuickActions,
 } from "../cm-mock";
-import { ComplaintPoint, useLiveDashboardData } from "../cm-geo";
+import { ComplaintPoint, useLiveDashboardData, useLiveWardCouncillor } from "../cm-geo";
 
 export interface WardViewProps {
   onBack: () => void;
@@ -45,6 +45,7 @@ export interface WardViewProps {
   onToggleSeverity: (severity: string) => void;
   liveWardHealthScore?: number;
   points: ComplaintPoint[];
+  wardNo: number | null;
 }
 
 export const WardView: React.FC<WardViewProps> = ({
@@ -62,6 +63,7 @@ export const WardView: React.FC<WardViewProps> = ({
   onToggleSeverity,
   liveWardHealthScore,
   points,
+  wardNo,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<keyof DepartmentPerf>("open");
@@ -72,53 +74,11 @@ export const WardView: React.FC<WardViewProps> = ({
 
   const { kpis, interventions, departments } = useLiveDashboardData(points);
 
-  const [liveWardCouncillor, setLiveWardCouncillor] = useState<any>({
-    ...wardCouncillor,
-    wardHealth: liveWardHealthScore ?? 72
-  });
+  const { councillor: dbCouncillor, loading: dbCouncillorLoading } = useLiveWardCouncillor(wardNo, points, liveWardHealthScore);
 
-  useEffect(() => {
-    const wardNo = wardRegion?.properties.ward_no;
-    if (wardNo) {
-      const fetchCouncillor = async () => {
-        const { data, error } = await (supabase as any)
-          .from("ward_councillors")
-          .select("*")
-          .eq("ward_no", wardNo)
-          .maybeSingle();
-
-        if (!error && data) {
-          const partyColor = data.party?.toUpperCase() === "AAP"
-            ? "bg-blue-100 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
-            : data.party?.toUpperCase() === "BJP"
-            ? "bg-orange-100 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400"
-            : "bg-slate-100 text-slate-700 dark:bg-slate-950/20 dark:text-slate-400";
-
-          // Calculate dynamic complaints count from the points array
-          const activeComplaints = points.filter(p => !["resolved", "rejected", "spam", "pending_closure"].includes(p.status)).length;
-
-          setLiveWardCouncillor({
-            name: data.councillor_name,
-            role: "Ward Councillor",
-            body: "Delhi Municipal Corporation",
-            electionYear: "Election 2022",
-            party: data.party || "IND",
-            partyColor,
-            spouseName: "Om Prakash Yadav",
-            profession: "Social Worker",
-            age: 31,
-            voterCard: `${data.ward_no}-${data.ward_name}`,
-            complaints: activeComplaints || 142,
-            resolutionTime: "3h 45m",
-            satisfactionRate: "76%",
-            wardHealth: liveWardHealthScore ?? 72,
-            mobile: data.mobile || "",
-          });
-        }
-      };
-      fetchCouncillor();
-    }
-  }, [wardRegion?.properties.ward_no, liveWardHealthScore, points]);
+  const liveWardCouncillor = useMemo(() => {
+    return dbCouncillor;
+  }, [dbCouncillor]);
 
   const escalationTabs = useMemo(() => [
     { id: "all", label: "All" },
@@ -241,7 +201,7 @@ export const WardView: React.FC<WardViewProps> = ({
           </div>
 
           <div className="w-full xl:w-[380px] shrink-0 flex flex-col gap-3 xl:h-[954px]">
-            <CouncillorInfoCard councillor={liveWardCouncillor} />
+            <CouncillorInfoCard councillor={liveWardCouncillor} loading={dbCouncillorLoading} />
             <ActiveInterventionsPanel
               interventions={filteredInterventions}
               activeFilter={interventionFilter}
@@ -270,29 +230,29 @@ export const WardView: React.FC<WardViewProps> = ({
       />
 
       {/* ACTION MODAL: Call Councillor */}
-      {activeActionModal === "call_councillor" && (
+      {activeActionModal === "call_councillor" && liveWardCouncillor && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800">
-            <div className="flex items-start justify-between border-b border-slate-100 pb-3 dark:border-zinc-800">
-              <h3 className="text-base font-bold text-slate-800 dark:text-white">Call Councillor {liveWardCouncillor.name}</h3>
-              <button onClick={() => setActiveActionModal(null)} className="text-slate-400 hover:bg-slate-50 dark:hover:bg-zinc-800 p-1 rounded-lg">
+          <div className="w-full max-w-sm rounded-xl bg-theme-card p-5 shadow-2xl border border-theme-border transition-colors duration-300">
+            <div className="flex items-start justify-between border-b border-theme-border pb-3">
+              <h3 className="text-base font-bold text-theme-text">Call Councillor {liveWardCouncillor.name.replace(/^(SH\.|MS\.|MR\.|MRS\.)\s+/i, "")}</h3>
+              <button onClick={() => setActiveActionModal(null)} className="text-theme-muted hover:bg-theme-bg/60 p-1 rounded-lg">
                 <X size={18} />
               </button>
             </div>
             <div className="py-4 space-y-3">
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Connect directly to {wardTitle} councillor {liveWardCouncillor.name} for urgent ground support.
+              <p className="text-xs text-theme-muted leading-relaxed">
+                Connect directly to {liveWardCouncillor.voterCard ? `Ward ${liveWardCouncillor.voterCard.split("-")[0]}` : "Ward"} councillor {liveWardCouncillor.name.replace(/^(SH\.|MS\.|MR\.|MRS\.)\s+/i, "")} for urgent ground support.
               </p>
-              <div className="p-3 bg-slate-50 rounded-lg dark:bg-zinc-800/40 text-xs font-bold space-y-1">
-                <p className="text-slate-400 text-[9px] uppercase leading-none">Office Phone:</p>
-                <p className="text-slate-800 dark:text-white text-sm">{liveWardCouncillor.mobile || "+91 9810X XXXXX"}</p>
+              <div className="p-3 bg-theme-bg rounded-lg text-xs font-bold space-y-1">
+                <p className="text-theme-muted text-[9px] uppercase leading-none">Office Phone:</p>
+                <p className="text-theme-text text-sm">{liveWardCouncillor.phone || "+91 9810X XXXXX"}</p>
               </div>
             </div>
             <div className="flex gap-3 pt-1">
-              <button onClick={() => setActiveActionModal(null)} className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 animate-pulse">
+              <button onClick={() => setActiveActionModal(null)} className="flex-1 py-2 bg-theme-bg hover:bg-theme-bg/85 text-theme-text rounded-lg text-xs font-bold transition-all">
                 Cancel
               </button>
-              <button onClick={() => handleActionSubmit("Call Councillor")} className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5">
+              <button onClick={() => handleActionSubmit("Call Councillor")} className="flex-1 py-2 bg-theme-accent hover:opacity-90 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all">
                 <Phone size={12} /> Call Now
               </button>
             </div>
@@ -303,25 +263,25 @@ export const WardView: React.FC<WardViewProps> = ({
       {/* ACTION MODAL: Schedule Ward Visit */}
       {activeActionModal === "schedule_visit" && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800">
-            <div className="flex items-start justify-between border-b border-slate-100 pb-3 dark:border-zinc-800">
-              <h3 className="text-base font-bold text-slate-800 dark:text-white">Schedule CM Ward Visit</h3>
-              <button onClick={() => setActiveActionModal(null)} className="text-slate-400 hover:bg-slate-50 dark:hover:bg-zinc-800 p-1 rounded-lg">
+          <div className="w-full max-w-sm rounded-xl bg-theme-card p-5 shadow-2xl border border-theme-border transition-colors duration-300">
+            <div className="flex items-start justify-between border-b border-theme-border pb-3">
+              <h3 className="text-base font-bold text-theme-text">Schedule CM Ward Visit</h3>
+              <button onClick={() => setActiveActionModal(null)} className="text-theme-muted hover:bg-theme-bg/60 p-1 rounded-lg">
                 <X size={18} />
               </button>
             </div>
             <div className="py-4 space-y-3">
-              <p className="text-xs text-slate-500">Setup a field audit visit for Ward 11 - Najafgarh.</p>
+              <p className="text-xs text-theme-muted">Setup a field audit visit for Ward 11 - Najafgarh.</p>
               <div className="space-y-1">
-                <label className="text-[9px] font-bold uppercase text-slate-400 dark:text-zinc-500">Select Date:</label>
-                <input type="date" className="w-full p-2 border border-slate-200 rounded-md text-xs dark:bg-zinc-800 dark:border-zinc-700" />
+                <label className="text-[9px] font-bold uppercase text-theme-muted">Select Date:</label>
+                <input type="date" className="w-full p-2 border border-theme-border rounded-md text-xs bg-theme-bg text-theme-text focus:outline-none focus:ring-1 focus:ring-theme-accent" />
               </div>
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setActiveActionModal(null)} className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
+              <button onClick={() => setActiveActionModal(null)} className="flex-1 py-2 bg-theme-bg hover:bg-theme-bg/85 text-theme-text rounded-lg text-xs font-bold transition-all">
                 Cancel
               </button>
-              <button onClick={() => handleActionSubmit("Schedule Visit")} className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold">
+              <button onClick={() => handleActionSubmit("Schedule Visit")} className="flex-1 py-2 bg-theme-accent hover:opacity-90 text-white rounded-lg text-xs font-bold transition-all">
                 Confirm
               </button>
             </div>
@@ -332,23 +292,23 @@ export const WardView: React.FC<WardViewProps> = ({
       {/* ACTION MODAL: Escalate to Commissioner */}
       {activeActionModal === "escalate_commissioner" && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800">
-            <div className="flex items-start justify-between border-b border-slate-100 pb-3 dark:border-zinc-800">
-              <h3 className="text-base font-bold text-slate-800 dark:text-white">Escalate to Commissioner</h3>
-              <button onClick={() => setActiveActionModal(null)} className="text-slate-400 hover:bg-slate-50 dark:hover:bg-zinc-800 p-1 rounded-lg">
+          <div className="w-full max-w-sm rounded-xl bg-theme-card p-5 shadow-2xl border border-theme-border transition-colors duration-300">
+            <div className="flex items-start justify-between border-b border-theme-border pb-3">
+              <h3 className="text-base font-bold text-theme-text">Escalate to Commissioner</h3>
+              <button onClick={() => setActiveActionModal(null)} className="text-theme-muted hover:bg-theme-bg/60 p-1 rounded-lg">
                 <X size={18} />
               </button>
             </div>
             <div className="py-4 space-y-3">
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-theme-muted">
                 Escalate all active Ward 11 SLA breaches directly to MCD and DJB commissioners for immediate intervention.
               </p>
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setActiveActionModal(null)} className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
+              <button onClick={() => setActiveActionModal(null)} className="flex-1 py-2 bg-theme-bg hover:bg-theme-bg/85 text-theme-text rounded-lg text-xs font-bold transition-all">
                 Cancel
               </button>
-              <button onClick={() => handleActionSubmit("Escalate to Commissioner")} className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold">
+              <button onClick={() => handleActionSubmit("Escalate to Commissioner")} className="flex-1 py-2 bg-theme-accent hover:opacity-90 text-white rounded-lg text-xs font-bold transition-all">
                 Escalate Now
               </button>
             </div>
@@ -359,20 +319,20 @@ export const WardView: React.FC<WardViewProps> = ({
       {/* ACTION MODAL: Deploy Additional Staff */}
       {activeActionModal === "deploy_staff" && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800">
-            <div className="flex items-start justify-between border-b border-slate-100 pb-3 dark:border-zinc-800">
-              <h3 className="text-base font-bold text-slate-800 dark:text-white">Deploy Additional Staff</h3>
-              <button onClick={() => setActiveActionModal(null)} className="text-slate-400 hover:bg-slate-50 dark:hover:bg-zinc-800 p-1 rounded-lg">
+          <div className="w-full max-w-sm rounded-xl bg-theme-card p-5 shadow-2xl border border-theme-border transition-colors duration-300">
+            <div className="flex items-start justify-between border-b border-theme-border pb-3">
+              <h3 className="text-base font-bold text-theme-text">Deploy Additional Staff</h3>
+              <button onClick={() => setActiveActionModal(null)} className="text-theme-muted hover:bg-theme-bg/60 p-1 rounded-lg">
                 <X size={18} />
               </button>
             </div>
             <div className="py-4 space-y-3">
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-theme-muted">
                 Deploy quick response sanitation and engineering field teams to Ward 11 hotspots.
               </p>
               <div className="space-y-1">
-                <label className="text-[9px] font-bold uppercase text-slate-400 dark:text-zinc-500">Select Team size:</label>
-                <select className="w-full p-2 border border-slate-200 rounded-md text-xs dark:bg-zinc-800 dark:border-zinc-700">
+                <label className="text-[9px] font-bold uppercase text-theme-muted">Select Team size:</label>
+                <select className="w-full p-2 border border-theme-border rounded-md text-xs bg-theme-bg text-theme-text focus:outline-none focus:ring-1 focus:ring-theme-accent">
                   <option>+1 Sanitation Crew (10 workers)</option>
                   <option>+3 Sanitation Crews (30 workers)</option>
                   <option>+1 Water/Sewerage Engineering Team</option>
@@ -381,10 +341,10 @@ export const WardView: React.FC<WardViewProps> = ({
               </div>
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setActiveActionModal(null)} className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
+              <button onClick={() => setActiveActionModal(null)} className="flex-1 py-2 bg-theme-bg hover:bg-theme-bg/85 text-theme-text rounded-lg text-xs font-bold transition-all">
                 Cancel
               </button>
-              <button onClick={() => handleActionSubmit("Staff Deployment")} className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold">
+              <button onClick={() => handleActionSubmit("Staff Deployment")} className="flex-1 py-2 bg-theme-accent hover:opacity-90 text-white rounded-lg text-xs font-bold transition-all">
                 Deploy Now
               </button>
             </div>

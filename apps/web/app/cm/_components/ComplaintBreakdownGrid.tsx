@@ -22,12 +22,12 @@ const iconMap: Record<ComplaintCategory["iconName"], LucideIcon> = {
 };
 
 const defaultCategories: ComplaintCategory[] = [
-  { name: "Garbage", count: 56, iconName: "garbage", colorClass: "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 dark:text-emerald-400" },
-  { name: "Water", count: 32, iconName: "water", colorClass: "text-blue-600 bg-blue-50 dark:bg-blue-950/20 dark:text-blue-400" },
-  { name: "Roads", count: 18, iconName: "roads", colorClass: "text-indigo-600 bg-indigo-50 dark:bg-indigo-950/20 dark:text-indigo-400" },
-  { name: "Streetlights", count: 14, iconName: "streetlights", colorClass: "text-amber-600 bg-amber-50 dark:bg-amber-950/20 dark:text-amber-400" },
-  { name: "Sewage", count: 12, iconName: "sewage", colorClass: "text-orange-600 bg-orange-50 dark:bg-orange-950/20 dark:text-orange-400" },
-  { name: "Others", count: 10, iconName: "others", colorClass: "text-slate-600 bg-slate-50 dark:bg-zinc-800/40 dark:text-slate-400" },
+  { name: "Garbage", count: 56, iconName: "garbage", colorClass: "text-emerald-700 bg-emerald-50/70 dark:bg-emerald-950/15 dark:text-emerald-300" },
+  { name: "Water", count: 32, iconName: "water", colorClass: "text-blue-700 bg-blue-50/70 dark:bg-blue-950/15 dark:text-blue-300" },
+  { name: "Roads", count: 18, iconName: "roads", colorClass: "text-indigo-700 bg-indigo-50/70 dark:bg-indigo-950/15 dark:text-indigo-300" },
+  { name: "Streetlights", count: 14, iconName: "streetlights", colorClass: "text-amber-700 bg-amber-50/70 dark:bg-amber-950/15 dark:text-amber-300" },
+  { name: "Sewage", count: 12, iconName: "sewage", colorClass: "text-orange-700 bg-orange-50/70 dark:bg-orange-950/15 dark:text-orange-300" },
+  { name: "Others", count: 10, iconName: "others", colorClass: "text-theme-muted bg-theme-bg/40" },
 ];
 
 export const ComplaintBreakdownGrid: React.FC<ComplaintBreakdownGridProps> = ({
@@ -50,9 +50,9 @@ export const ComplaintBreakdownGrid: React.FC<ComplaintBreakdownGridProps> = ({
   return (
     <div
       ref={containerRef}
-      className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 flex flex-col h-60 min-h-0 select-none"
+      className="bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex flex-col h-60 min-h-0 select-none transition-colors duration-300"
     >
-      <h3 className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-zinc-500 uppercase mb-3 shrink-0">
+      <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase mb-3 shrink-0">
         COMPLAINT BREAKDOWN
       </h3>
 
@@ -63,7 +63,7 @@ export const ComplaintBreakdownGrid: React.FC<ComplaintBreakdownGridProps> = ({
           return (
             <div
               key={idx}
-              className="category-item opacity-0 flex flex-col justify-between p-2.5 rounded-lg border border-slate-100 hover:border-slate-200 dark:border-zinc-800/50 dark:hover:border-zinc-700 bg-slate-50/50 hover:bg-slate-50 dark:bg-zinc-900/30 dark:hover:bg-zinc-800/20 transition-all cursor-pointer"
+              className="category-item opacity-0 flex flex-col justify-between p-2.5 rounded-lg border border-theme-border/40 hover:border-theme-border bg-theme-bg/30 hover:bg-theme-bg/60 transition-all cursor-pointer"
             >
               <div className="flex items-center justify-between">
                 <div className={`h-7 w-7 rounded-lg flex items-center justify-center ${cat.colorClass}`}>
@@ -71,10 +71,10 @@ export const ComplaintBreakdownGrid: React.FC<ComplaintBreakdownGridProps> = ({
                 </div>
               </div>
               <div className="mt-2.5">
-                <p className="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase leading-none">
+                <p className="text-[9px] font-bold text-theme-muted uppercase leading-none">
                   {cat.name}
                 </p>
-                <h4 className="text-base font-black text-slate-800 dark:text-white mt-1 leading-none">
+                <h4 className="text-base font-black text-theme-text mt-1 leading-none">
                   {cat.count}
                 </h4>
               </div>

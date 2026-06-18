@@ -105,13 +105,13 @@ export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
       <aside
         ref={panelRef}
         className={cn(
-          "opacity-0 select-none flex flex-col gap-2 w-56 pointer-events-none",
+          "opacity-0 select-none flex flex-col gap-2 w-56 pointer-events-none transition-colors duration-300",
           className
         )}
       >
         {/* Map Layers Section */}
-        <div className="rounded-xl border border-slate-200/80 bg-white/95 dark:border-zinc-800/80 dark:bg-zinc-900/95 p-2.5 shadow-lg backdrop-blur-md pointer-events-auto">
-          <h3 className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-zinc-500 uppercase flex items-center gap-2 mb-2">
+        <div className="rounded-xl border border-theme-border bg-theme-card/95 p-2.5 shadow-lg backdrop-blur-md pointer-events-auto">
+          <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase flex items-center gap-2 mb-2">
             <Layers size={12} /> MAP LAYERS
           </h3>
           <ul className="space-y-1">
@@ -125,8 +125,8 @@ export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
                   onClick={() => onLayerChange(layer.id)}
                   className={`flex items-center justify-between rounded-lg px-2 py-1 text-xs font-semibold cursor-pointer transition-all ${
                     isSelected
-                      ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-400 font-bold"
-                      : "text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800"
+                      ? "bg-theme-bg/60 text-theme-accent font-bold"
+                      : "text-theme-text/80 hover:bg-theme-bg/40"
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -138,7 +138,7 @@ export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
                     name="map_layer_group"
                     checked={isSelected}
                     onChange={() => onLayerChange(layer.id)}
-                    className="h-3 w-3 accent-emerald-600 cursor-pointer"
+                    className="h-3 w-3 accent-theme-accent cursor-pointer"
                   />
                 </li>
               );
@@ -147,10 +147,10 @@ export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
         </div>
 
         {/* Legend & Slider Section */}
-        <div className="rounded-xl border border-slate-200/80 bg-white/95 dark:border-zinc-800/80 dark:bg-zinc-900/95 p-2.5 shadow-lg backdrop-blur-md pointer-events-auto">
+        <div className="rounded-xl border border-theme-border bg-theme-card/95 p-2.5 shadow-lg backdrop-blur-md pointer-events-auto">
           {/* Legend Section */}
           <div>
-            <h3 className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-zinc-500 uppercase mb-1.5">
+            <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase mb-1.5">
               SEVERITY LEGEND
             </h3>
             <ul className="space-y-1">
@@ -162,11 +162,11 @@ export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
                     onClick={() => onToggleSeverity?.(item.label)}
                     className={`flex items-center gap-2 text-xs cursor-pointer select-none transition-all ${
                       isSelected
-                        ? "text-slate-600 dark:text-zinc-300 opacity-100 font-semibold"
-                        : "text-slate-400 dark:text-zinc-500 opacity-40 hover:opacity-65"
+                        ? "text-theme-text opacity-100 font-semibold"
+                        : "text-theme-muted opacity-40 hover:opacity-65"
                     }`}
                   >
-                    <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${item.colorClass} ${!isSelected && "bg-slate-300 dark:bg-zinc-700"}`}></span>
+                    <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${item.colorClass} ${!isSelected && "bg-theme-bg/60"}`}></span>
                     <span className="text-[11px] truncate">{item.label}</span>
                   </li>
                 );
@@ -174,24 +174,24 @@ export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
             </ul>
           </div>
 
-          <div className="border-t border-slate-100 dark:border-zinc-800/50 my-2" />
+          <div className="border-t border-theme-border/50 my-2" />
 
           {/* Slider Section */}
           <div>
-            <h4 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 mb-1 uppercase">
+            <h4 className="text-[10px] font-bold text-theme-muted mb-1 uppercase">
               Heatmap Intensity
             </h4>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-[10px] text-slate-400 font-bold">-</span>
+              <span className="text-[10px] text-theme-muted font-bold">-</span>
               <input
                 type="range"
                 min="10"
                 max="100"
                 value={intensity}
                 onChange={(e) => onIntensityChange(Number(e.target.value))}
-                className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600 dark:bg-zinc-800"
+                className="w-full h-1 bg-theme-bg rounded-lg appearance-none cursor-pointer accent-theme-accent"
               />
-              <span className="text-[10px] text-slate-400 font-bold">+</span>
+              <span className="text-[10px] text-theme-muted font-bold">+</span>
             </div>
           </div>
         </div>
@@ -202,12 +202,12 @@ export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
   return (
     <aside
       ref={panelRef}
-      className={cn("opacity-0 w-full xl:w-56 shrink-0 flex flex-row xl:flex-col gap-2.5 select-none", className)}
+      className={cn("opacity-0 w-full xl:w-56 shrink-0 flex flex-row xl:flex-col gap-2.5 select-none transition-colors duration-300", className)}
     >
       {/* Map Layers Section */}
-      <div className="flex-1 rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between">
+      <div className="flex-1 rounded-xl border border-theme-border bg-theme-card p-3.5 shadow-sm flex flex-col justify-between">
         <div>
-          <h3 className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-zinc-500 uppercase flex items-center gap-2 mb-3">
+          <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase flex items-center gap-2 mb-3">
             <Layers size={12} /> MAP LAYERS
           </h3>
           <ul className="space-y-1 sm:space-y-2">
@@ -221,8 +221,8 @@ export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
                   onClick={() => onLayerChange(layer.id)}
                   className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-semibold cursor-pointer transition-all ${
                     isSelected
-                      ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-400 font-bold"
-                      : "text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800"
+                      ? "bg-theme-bg/60 text-theme-accent font-bold"
+                      : "text-theme-text/80 hover:bg-theme-bg/40"
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -234,7 +234,7 @@ export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
                     name="map_layer_group"
                     checked={isSelected}
                     onChange={() => onLayerChange(layer.id)}
-                    className="h-3 w-3 accent-emerald-600 cursor-pointer"
+                    className="h-3 w-3 accent-theme-accent cursor-pointer"
                   />
                 </li>
               );
@@ -244,8 +244,8 @@ export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
       </div>
 
       {/* Legend & Slider Section */}
-      <div className="flex-1 xl:flex-none rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-center">
-        <h3 className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-zinc-500 uppercase mb-2">
+      <div className="flex-1 xl:flex-none rounded-xl border border-theme-border bg-theme-card p-3.5 shadow-sm flex flex-col justify-center">
+        <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase mb-2">
           SEVERITY LEGEND
         </h3>
         <ul className="grid grid-cols-2 xl:grid-cols-1 gap-1.5">
@@ -257,11 +257,11 @@ export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
                 onClick={() => onToggleSeverity?.(item.label)}
                 className={`flex items-center gap-2 text-xs cursor-pointer select-none transition-all ${
                   isSelected
-                    ? "text-slate-600 dark:text-zinc-450 opacity-100 font-semibold"
-                    : "text-slate-400 dark:text-zinc-500 opacity-40 hover:opacity-65"
+                    ? "text-theme-text opacity-100 font-semibold"
+                    : "text-theme-muted opacity-40 hover:opacity-65"
                 }`}
               >
-                <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${item.colorClass} ${!isSelected && "bg-slate-300 dark:bg-zinc-700"}`}></span>
+                <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${item.colorClass} ${!isSelected && "bg-theme-bg/60"}`}></span>
                 <span className="text-[11px] truncate">{item.label}</span>
               </li>
             );
@@ -269,21 +269,21 @@ export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
         </ul>
 
         {/* Heatmap Intensity Slider */}
-        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-zinc-800">
-          <h4 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 mb-1.5 uppercase">
+        <div className="mt-4 pt-3 border-t border-theme-border">
+          <h4 className="text-[10px] font-bold text-theme-muted mb-1.5 uppercase">
             Heatmap Intensity
           </h4>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-slate-400 font-bold">-</span>
+            <span className="text-[10px] text-theme-muted font-bold">-</span>
             <input
               type="range"
               min="10"
               max="100"
               value={intensity}
               onChange={(e) => onIntensityChange(Number(e.target.value))}
-              className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600 dark:bg-zinc-800"
+              className="w-full h-1 bg-theme-bg rounded-lg appearance-none cursor-pointer accent-theme-accent"
             />
-            <span className="text-[10px] text-slate-400 font-bold">+</span>
+            <span className="text-[10px] text-theme-muted font-bold">+</span>
           </div>
         </div>
       </div>

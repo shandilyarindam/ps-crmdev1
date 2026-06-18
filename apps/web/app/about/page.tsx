@@ -16,7 +16,6 @@ if (typeof window !== 'undefined') {
 
 const teamMembers = [
   { name: 'Shrey', role: 'Full Stack Developer' },
-  { name: 'Pranika', role: 'UI/UX Designer' },
   { name: 'Shreyas', role: 'Frontend Developer' },
   { name: 'Prakhar', role: 'Backend Developer' },
   { name: 'Medhansh', role: 'Project Manager' },
