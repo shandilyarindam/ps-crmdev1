@@ -545,7 +545,12 @@ function FitBounds({
     if (!features.length) return;
     try {
       const bounds = L.geoJSON({ type: "FeatureCollection", features }).getBounds();
-      if (bounds.isValid()) map.fitBounds(bounds, { padding: [20, 20] });
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { 
+          paddingTopLeft: [320, 20],
+          paddingBottomRight: [20, 20] 
+        });
+      }
     } catch {
       /* ignore fit errors */
     }
@@ -625,7 +630,11 @@ function RecenterButton({ show, regions, fitToRegionId }: { show: boolean, regio
           e.preventDefault();
           e.stopPropagation();
           if (initialBounds) {
-            map.fitBounds(initialBounds, { padding: [20, 20], animate: true });
+            map.fitBounds(initialBounds, { 
+              paddingTopLeft: [320, 20],
+              paddingBottomRight: [20, 20], 
+              animate: true 
+            });
           } else {
             // Fallback for overview if no regions
             map.setView(DEFAULT_CENTER, 10.5, { animate: true });

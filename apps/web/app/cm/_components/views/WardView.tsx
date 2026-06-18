@@ -147,7 +147,7 @@ export const WardView: React.FC<WardViewProps> = ({
 
         <div className="flex flex-col xl:flex-row gap-3">
           <div className="flex-1 flex flex-col gap-3">
-            <div className="flex flex-col xl:flex-row gap-3 xl:h-[450px] shrink-0">
+            <div className="flex flex-col xl:flex-row gap-3 xl:h-[650px] shrink-0">
               <MapSection
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
@@ -200,7 +200,7 @@ export const WardView: React.FC<WardViewProps> = ({
             </div>
           </div>
 
-          <div className="w-full xl:w-[380px] shrink-0 flex flex-col gap-3 xl:h-[954px]">
+          <div className="w-full xl:w-[380px] shrink-0 flex flex-col gap-3 xl:h-[1154px]">
             <CouncillorInfoCard councillor={liveWardCouncillor} loading={dbCouncillorLoading} />
             <ActiveInterventionsPanel
               interventions={filteredInterventions}
