@@ -191,7 +191,7 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
                 rowLabel="Ward"
                 actionLabel="View Ward Analytics"
                 onViewAnalyticsClick={() => triggerToast("Opening ward analytics breakdown...")}
-                className="xl:h-full"
+                className="xl:h-[320px]"
               />
               <PredictiveOutlookCard
                 data={zonePredictionData}
@@ -199,6 +199,7 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
                 estimatedSlaMisses={11}
                 highRiskHotspots={["Connaught Place", "Karol Bagh", "Paharganj"]}
                 isDark={isDark}
+                className="xl:h-[320px]"
               />
             </div>
           </div>
