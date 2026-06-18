@@ -135,10 +135,10 @@ export const DelhiOverviewView: React.FC<DelhiOverviewViewProps> = ({
           </div>
         </div>
 
-        <DelhiHealthScoreBar 
-          overall={overallScore} 
-          trend={trendStr} 
-          zones={liveZoneScores && liveZoneScores.length > 0 ? liveZoneScores : delhiZoneScores} 
+        <DelhiHealthScoreBar
+          overall={overallScore}
+          trend={trendStr}
+          zones={liveZoneScores && liveZoneScores.length > 0 ? liveZoneScores : delhiZoneScores}
           isLoading={isLoading}
         />
       </main>

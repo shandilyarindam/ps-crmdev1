@@ -87,7 +87,7 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
         name: `Ward ${wardNo} - ${wardName}`,
         count: stats.activeComplaints,
         sev: `${stats.score}%`,
-        color: stats.score >= 85 ? "bg-emerald-500" : stats.score >= 70 ? "bg-amber-400" : "bg-red-600",
+        color: stats.score >= 85 ? "bg-[#C9A84C]" : stats.score >= 70 ? "bg-amber-400" : "bg-red-600",
       };
     });
   }, [wardRegions, liveWardScores]);
