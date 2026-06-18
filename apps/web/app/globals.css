@@ -51,15 +51,15 @@ body {
 
 /* Dark Mode Colors */
 .dark {
-  --theme-bg: #2a221c;
-  --theme-card: #181310;
-  --theme-border: rgba(90, 64, 58, 0.4);
-  --theme-text: #e8e2d6;
-  --theme-muted: #c39a92;
-  --theme-accent: #856358;
-  --theme-critical: #c39a92;
-  --theme-warning: #d5ad77;
-  --theme-success: #8fa385;
+  --theme-bg: #161616;
+  --theme-card: #1e1e1e;
+  --theme-border: #2a2a2a;
+  --theme-text: #f3f4f6;
+  --theme-muted: #9ca3af;
+  --theme-accent: #C9A84C;
+  --theme-critical: #ef4444;
+  --theme-warning: #f59e0b;
+  --theme-success: #10b981;
 
   --color-badge-submitted-bg: rgba(217, 119, 6, 0.2);
   --color-badge-submitted-text: #fcd34d;

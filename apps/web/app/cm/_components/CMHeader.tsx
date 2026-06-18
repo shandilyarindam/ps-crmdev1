@@ -1,7 +1,9 @@
 "use client";
 
 import React from "react";
-import { Landmark, MapPin, ChevronDown, ChevronRight, Calendar, Clock } from "lucide-react";
+import { MapPin, ChevronDown, ChevronRight, Calendar, Clock, Sun, Moon, Landmark } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
+import Link from "next/link";
 
 export type ViewLevel = "delhi" | "zone" | "ward";
 
@@ -23,6 +25,8 @@ export const CMHeader: React.FC<CMHeaderProps> = ({
   timeStr,
   onCrumb,
 }) => {
+  const { theme, toggleTheme } = useTheme();
+
   const crumb = (label: string, target: ViewLevel, active: boolean) =>
     active ? (
       <span className="text-theme-accent font-bold">{label}</span>
@@ -39,9 +43,19 @@ export const CMHeader: React.FC<CMHeaderProps> = ({
     <header className="sticky top-0 z-50 flex shrink-0 items-center justify-between border-b border-theme-border bg-theme-card px-4 py-3 shadow-sm transition-colors duration-300">
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-theme-bg text-theme-text/80 transition-colors duration-300">
-            <Landmark size={20} className="text-theme-accent" />
-          </div>
+          <div
+            className="w-9 h-9 bg-[#C9A84C] shrink-0"
+            style={{
+              WebkitMaskImage: 'url(/Emblem.svg)',
+              WebkitMaskSize: 'contain',
+              WebkitMaskRepeat: 'no-repeat',
+              WebkitMaskPosition: 'center',
+              maskImage: 'url(/Emblem.svg)',
+              maskSize: 'contain',
+              maskRepeat: 'no-repeat',
+              maskPosition: 'center',
+            }}
+          />
           <div>
             <h1 className="text-base font-bold leading-tight tracking-tight sm:text-lg">JanSamadhan</h1>
             <p className="text-[10px] font-bold uppercase tracking-wider text-theme-muted">CM Command Center</p>
@@ -87,12 +101,19 @@ export const CMHeader: React.FC<CMHeaderProps> = ({
           <Clock size={14} className="text-theme-muted" />
           <span className="tabular-nums">{timeStr}</span>
         </div>
-        <div className="flex items-center gap-2 border-l border-theme-border pl-4">
+        <Link href="/cm/profile" className="flex items-center gap-2 border-l border-theme-border pl-4">
           <div className="flex h-7 w-7 items-center justify-center rounded-full bg-theme-accent text-[10px] font-bold text-white shadow-sm">
             CM
           </div>
-          <span className="hidden sm:inline">CM Delhi</span>
-        </div>
+          <span className="hidden sm:inline text-slate-700 dark:text-[#C9A84C] font-bold">CM Delhi</span>
+        </Link>
+        <button
+          onClick={toggleTheme}
+          aria-label="Toggle theme"
+          className="ml-1 flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-all hover:bg-slate-50 dark:border-[#C9A84C]/40 dark:bg-transparent dark:text-[#C9A84C] dark:hover:bg-[#C9A84C]/10"
+        >
+          {theme === "dark" ? <Moon size={16} strokeWidth={2.5} /> : <Sun size={16} strokeWidth={2.5} />}
+        </button>
       </div>
     </header>
   );

@@ -235,7 +235,7 @@ export default function CMCommandCenterPage() {
     <div className="flex h-screen flex-col overflow-hidden bg-theme-bg text-theme-text antialiased transition-colors duration-300 font-sans">
       {/* Toast Notification */}
       {actionSuccessToast && (
-        <div className="fixed bottom-16 right-6 z-[9999] flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-xl animate-bounce">
+        <div className="fixed bottom-16 right-6 z-[9999] flex items-center gap-2 rounded-lg bg-[#b8993f] px-4 py-3 text-sm font-semibold text-white shadow-xl animate-bounce">
           <CheckCircle2 size={18} />
           <span>{actionSuccessToast}</span>
         </div>
