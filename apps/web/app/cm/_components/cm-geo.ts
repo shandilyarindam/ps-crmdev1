@@ -14,7 +14,7 @@ import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import type { Feature, MultiPolygon, Polygon, Position } from "geojson";
 import { supabase } from "@/src/lib/supabase";
 import { parseLocationToLatLng } from "@/lib/parse-location";
-import { ZONE_BY_ID, type ZoneId, zoneIdForAc } from "./ward-zone-map";
+import { ZONE_BY_ID, type ZoneId, zoneIdForWard } from "./ward-zone-map";
 
 export interface WardProps {
   ward_no: number;
@@ -91,7 +91,7 @@ export function useWardGeoJSON(enabled: boolean = true): { wards: WardFeature[];
               wardname: f.properties.WardName ?? "",
               ac_name: f.properties.AC_Name ?? null,
               totalpop: f.properties.TotalPop ?? null,
-              zoneId: zoneIdForAc(f.properties.AC_Name),
+              zoneId: zoneIdForWard(f.properties.Ward_No),
             },
           }));
         setWards(feats);

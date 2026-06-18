@@ -1,31 +1,19 @@
-// Curated ward -> MCD zone mapping for the CM dashboard map.
-//
-// The database (`ward_geojson` / `ward_features` views) has 251 ward polygons but
-// NO zone geometry and NO ward->zone column. The only grouping field on a ward is
-// `ac_name` (Assembly Constituency). Delhi's unified MCD has 12 administrative
-// zones, so we map each AC -> one zone here and every ward inherits its zone from
-// its `ac_name`. Zone polygons are then built by unioning member-ward geometries
-// (see cm-geo.ts `buildZoneRegions`).
-//
-// NOTE: This AC->zone mapping is a best-effort approximation of real MCD zone
-// boundaries (which don't align perfectly with assembly constituencies). It is the
-// single place to correct assignments, or to later migrate to a server-side
-// `zone_geojson` view (ST_Union grouped by zone). Any AC not listed (e.g. the one
-// ward with a blank ac_name) falls back to UNZONED and renders neutral/non-clickable.
+// Curated zone metadata configuration for the CM dashboard map.
+// Sourced from official MCD 2022 zone administrative setup.
 
 export type ZoneId =
+  | "central"
   | "city-sp"
-  | "karol-bagh"
   | "civil-lines"
+  | "najafgarh"
+  | "karol-bagh"
+  | "keshav-puram"
   | "narela"
   | "rohini"
-  | "keshav-puram"
-  | "najafgarh"
-  | "west"
-  | "south"
-  | "central"
   | "shahdara-north"
   | "shahdara-south"
+  | "south"
+  | "west"
   | "unzoned";
 
 export interface ZoneDef {
@@ -37,18 +25,18 @@ export interface ZoneDef {
 }
 
 export const ZONES: ZoneDef[] = [
+  { id: "central", name: "Central", color: "#6366f1" },
   { id: "city-sp", name: "City-SP", color: "#ef4444" },
-  { id: "karol-bagh", name: "Karol Bagh", color: "#f97316" },
   { id: "civil-lines", name: "Civil Lines", color: "#f59e0b" },
+  { id: "najafgarh", name: "Najafgarh", color: "#14b8a6" },
+  { id: "karol-bagh", name: "Karol Bagh", color: "#f97316" },
+  { id: "keshav-puram", name: "Keshav Puram", color: "#10b981" },
   { id: "narela", name: "Narela", color: "#84cc16" },
   { id: "rohini", name: "Rohini", color: "#22c55e" },
-  { id: "keshav-puram", name: "Keshav Puram", color: "#10b981" },
-  { id: "najafgarh", name: "Najafgarh", color: "#14b8a6" },
-  { id: "west", name: "West", color: "#06b6d4" },
+  { id: "shahdara-north", name: "North Shahdara", color: "#a855f7" },
+  { id: "shahdara-south", name: "South Shahdara", color: "#ec4899" },
   { id: "south", name: "South", color: "#3b82f6" },
-  { id: "central", name: "Central", color: "#6366f1" },
-  { id: "shahdara-north", name: "Shahdara North", color: "#a855f7" },
-  { id: "shahdara-south", name: "Shahdara South", color: "#ec4899" },
+  { id: "west", name: "West", color: "#06b6d4" },
 ];
 
 export const UNZONED: ZoneDef = { id: "unzoned", name: "Unzoned", color: "#94a3b8" };
@@ -57,106 +45,260 @@ export const ZONE_BY_ID: Record<string, ZoneDef> = Object.fromEntries(
   [...ZONES, UNZONED].map((z) => [z.id, z])
 );
 
-/**
- * Assembly Constituency (ac_name, upper-cased) -> MCD zone.
- * Covers all 68 named ACs across the 251 wards.
- */
-export const AC_ZONE: Record<string, ZoneId> = {
-  // --- City-SP (old Delhi core) ---
-  "CHANDNI CHOWK": "city-sp",
-  "BALLIMARAN": "city-sp",
-  "MATIA MAHAL": "city-sp",
-  "SADAR BAZAR": "city-sp",
-
-  // --- Karol Bagh ---
-  "KAROL BAGH": "karol-bagh",
-  "PATEL NAGAR": "karol-bagh",
-  "RAJINDER NAGAR": "karol-bagh",
-  "MOTI NAGAR": "karol-bagh",
-
-  // --- Civil Lines (north-central) ---
-  "TIMARPUR": "civil-lines",
-  "ADARSH NAGAR": "civil-lines",
-  "MODEL TOWN": "civil-lines",
-  "BURARI": "civil-lines",
-
-  // --- Narela (far north-west) ---
-  "NARELA": "narela",
-  "BAWANA": "narela",
-  "MUNDKA": "narela",
-
-  // --- Rohini ---
-  "ROHINI": "rohini",
-  "RITHALA": "rohini",
-  "BADLI": "rohini",
-  "KIRARI": "rohini",
-  "MANGOL PURI": "rohini",
-  "SULTANPUR MAJRA": "rohini",
-
-  // --- Keshav Puram ---
-  "SHALIMAR BAGH": "keshav-puram",
-  "SHAKUR BASTI": "keshav-puram",
-  "WAZIRPUR": "keshav-puram",
-  "TRI NAGAR": "keshav-puram",
-
-  // --- Najafgarh (south-west) ---
-  "NAJAFGARH": "najafgarh",
-  "BIJWASAN": "najafgarh",
-  "MATIALA": "najafgarh",
-  "DWARKA": "najafgarh",
-  "PALAM": "najafgarh",
-  "NANGLOI JAT": "najafgarh",
-
-  // --- West ---
-  "HARI NAGAR": "west",
-  "TILAK NAGAR": "west",
-  "JANAKPURI": "west",
-  "VIKASPURI": "west",
-  "RAJOURI GARDEN": "west",
-  "MADIPUR": "west",
-  "UTTAM NAGAR": "west",
-
-  // --- South ---
-  "MEHRAULI": "south",
-  "CHHATARPUR": "south",
-  "MALVIYA NAGAR": "south",
-  "R K PURAM": "south",
-  "GREATER KAILASH": "south",
-  "KALKAJI": "south",
-  "DEOLI": "south",
-  "AMBEDKAR NAGAR": "south",
-  "SANGAM VIHAR": "south",
-  "BADARPUR": "south",
-  "TUGHLAKABAD": "south",
-
-  // --- Central (south-central / trans-Yamuna-adjacent) ---
-  "KASTURBA NAGAR": "central",
-  "JANGPURA": "central",
-  "OKHLA": "central",
-
-  // --- Shahdara North (north trans-Yamuna) ---
-  "KARAWAL NAGAR": "shahdara-north",
-  "MUSTAFABAD": "shahdara-north",
-  "GHONDA": "shahdara-north",
-  "BABARPUR": "shahdara-north",
-  "GOKALPUR": "shahdara-north",
-  "SEELAMPUR": "shahdara-north",
-  "SEEMA PURI": "shahdara-north",
-  "ROHTAS NAGAR": "shahdara-north",
-
-  // --- Shahdara South (south trans-Yamuna) ---
-  "SHAHDARA": "shahdara-south",
-  "VISHWAS NAGAR": "shahdara-south",
-  "KRISHNA NAGAR": "shahdara-south",
-  "GANDHI NAGAR": "shahdara-south",
-  "LAXMI NAGAR": "shahdara-south",
-  "PATPARGANJ": "shahdara-south",
-  "TRILOKPURI": "shahdara-south",
-  "KONDLI": "shahdara-south",
+export const WARD_ZONE_MAP: Record<number, ZoneId> = {
+  1: "narela",
+  2: "narela",
+  3: "narela",
+  4: "narela",
+  5: "narela",
+  6: "civil-lines",
+  7: "civil-lines",
+  8: "civil-lines",
+  9: "civil-lines",
+  10: "civil-lines",
+  11: "civil-lines",
+  12: "civil-lines",
+  13: "civil-lines",
+  14: "civil-lines",
+  15: "civil-lines",
+  16: "civil-lines",
+  17: "civil-lines",
+  18: "civil-lines",
+  19: "civil-lines",
+  20: "civil-lines",
+  21: "rohini",
+  22: "rohini",
+  23: "rohini",
+  24: "rohini",
+  25: "rohini",
+  26: "narela",
+  27: "narela",
+  28: "narela",
+  29: "narela",
+  30: "narela",
+  31: "narela",
+  32: "narela",
+  33: "narela",
+  34: "narela",
+  35: "narela",
+  36: "narela",
+  37: "rohini",
+  38: "rohini",
+  39: "rohini",
+  40: "rohini",
+  41: "rohini",
+  42: "rohini",
+  43: "rohini",
+  44: "rohini",
+  45: "rohini",
+  46: "rohini",
+  47: "rohini",
+  48: "rohini",
+  49: "rohini",
+  50: "rohini",
+  51: "rohini",
+  52: "rohini",
+  53: "rohini",
+  54: "rohini",
+  55: "keshav-puram",
+  56: "keshav-puram",
+  57: "keshav-puram",
+  58: "keshav-puram",
+  59: "keshav-puram",
+  60: "keshav-puram",
+  61: "keshav-puram",
+  62: "keshav-puram",
+  63: "keshav-puram",
+  64: "keshav-puram",
+  65: "keshav-puram",
+  66: "keshav-puram",
+  67: "keshav-puram",
+  68: "keshav-puram",
+  69: "keshav-puram",
+  70: "city-sp",
+  71: "city-sp",
+  72: "city-sp",
+  73: "civil-lines",
+  74: "city-sp",
+  75: "city-sp",
+  76: "city-sp",
+  77: "city-sp",
+  78: "city-sp",
+  79: "city-sp",
+  80: "city-sp",
+  81: "city-sp",
+  82: "karol-bagh",
+  83: "karol-bagh",
+  84: "karol-bagh",
+  85: "karol-bagh",
+  86: "karol-bagh",
+  87: "karol-bagh",
+  88: "karol-bagh",
+  89: "karol-bagh",
+  90: "karol-bagh",
+  91: "karol-bagh",
+  92: "west",
+  93: "west",
+  94: "west",
+  95: "west",
+  96: "west",
+  97: "west",
+  98: "west",
+  99: "west",
+  100: "west",
+  101: "west",
+  102: "west",
+  103: "west",
+  104: "west",
+  105: "west",
+  106: "west",
+  107: "west",
+  108: "west",
+  109: "west",
+  110: "west",
+  111: "west",
+  112: "west",
+  113: "west",
+  114: "west",
+  115: "west",
+  116: "west",
+  117: "najafgarh",
+  118: "najafgarh",
+  119: "najafgarh",
+  120: "najafgarh",
+  121: "najafgarh",
+  122: "najafgarh",
+  123: "najafgarh",
+  124: "najafgarh",
+  125: "najafgarh",
+  126: "najafgarh",
+  127: "najafgarh",
+  128: "najafgarh",
+  129: "najafgarh",
+  130: "najafgarh",
+  131: "najafgarh",
+  132: "najafgarh",
+  133: "najafgarh",
+  134: "najafgarh",
+  135: "najafgarh",
+  136: "najafgarh",
+  137: "najafgarh",
+  138: "najafgarh",
+  139: "karol-bagh",
+  140: "karol-bagh",
+  141: "karol-bagh",
+  142: "central",
+  143: "central",
+  144: "central",
+  145: "central",
+  146: "central",
+  147: "central",
+  148: "south",
+  149: "south",
+  150: "south",
+  151: "south",
+  152: "south",
+  153: "south",
+  154: "south",
+  155: "south",
+  156: "south",
+  157: "south",
+  158: "south",
+  159: "south",
+  160: "south",
+  161: "south",
+  162: "south",
+  163: "south",
+  164: "south",
+  165: "south",
+  166: "south",
+  167: "south",
+  168: "central",
+  169: "central",
+  170: "central",
+  171: "south",
+  172: "south",
+  173: "south",
+  174: "central",
+  175: "central",
+  176: "central",
+  177: "central",
+  178: "central",
+  179: "central",
+  180: "central",
+  181: "central",
+  182: "central",
+  183: "central",
+  184: "central",
+  185: "central",
+  186: "central",
+  187: "central",
+  188: "central",
+  189: "central",
+  190: "shahdara-south",
+  191: "shahdara-south",
+  192: "shahdara-south",
+  193: "shahdara-south",
+  194: "shahdara-south",
+  195: "shahdara-south",
+  196: "shahdara-south",
+  197: "shahdara-south",
+  198: "shahdara-south",
+  199: "shahdara-south",
+  200: "shahdara-south",
+  201: "shahdara-south",
+  202: "shahdara-south",
+  203: "shahdara-south",
+  204: "shahdara-south",
+  205: "shahdara-south",
+  206: "shahdara-south",
+  207: "shahdara-south",
+  208: "shahdara-south",
+  209: "shahdara-south",
+  210: "shahdara-south",
+  211: "shahdara-south",
+  212: "shahdara-south",
+  213: "shahdara-south",
+  214: "shahdara-south",
+  215: "shahdara-south",
+  216: "shahdara-south",
+  217: "shahdara-south",
+  218: "shahdara-north",
+  219: "shahdara-north",
+  220: "shahdara-north",
+  221: "shahdara-north",
+  222: "shahdara-north",
+  223: "shahdara-north",
+  224: "shahdara-north",
+  225: "shahdara-north",
+  226: "shahdara-north",
+  227: "shahdara-north",
+  228: "shahdara-north",
+  229: "shahdara-north",
+  230: "shahdara-north",
+  231: "shahdara-north",
+  232: "shahdara-north",
+  233: "shahdara-north",
+  234: "shahdara-north",
+  235: "shahdara-north",
+  236: "shahdara-north",
+  237: "shahdara-north",
+  238: "shahdara-north",
+  239: "shahdara-north",
+  240: "shahdara-north",
+  241: "shahdara-north",
+  242: "shahdara-north",
+  243: "shahdara-north",
+  244: "shahdara-north",
+  245: "shahdara-north",
+  246: "shahdara-north",
+  247: "shahdara-north",
+  248: "shahdara-north",
+  249: "shahdara-north",
+  250: "shahdara-north"
 };
 
-/** Resolve a ward's zone from its ac_name. Unknown/blank -> "unzoned". */
-export function zoneIdForAc(acName: string | null | undefined): ZoneId {
-  if (!acName) return "unzoned";
-  return AC_ZONE[acName.trim().toUpperCase()] ?? "unzoned";
+export function zoneIdForWard(wardNo: number | null | undefined): ZoneId {
+  if (wardNo == null) return "unzoned";
+  return WARD_ZONE_MAP[wardNo] ?? "unzoned";
 }
