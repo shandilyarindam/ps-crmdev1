@@ -98,7 +98,7 @@ export const DelhiOverviewView: React.FC<DelhiOverviewViewProps> = ({
         <KPIStatsRow kpis={kpis} onCardClick={(id) => triggerToast(`Navigating to details for KPI card: ${id}`)} />
 
         <div className="flex flex-col xl:flex-row gap-3">
-          <div className="flex-1 flex flex-col min-h-[450px] xl:h-[560px]">
+          <div className="flex-1 flex flex-col min-h-[450px] xl:h-[650px]">
             <MapSection
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
@@ -121,7 +121,7 @@ export const DelhiOverviewView: React.FC<DelhiOverviewViewProps> = ({
             />
           </div>
 
-          <div className="w-full xl:w-[380px] shrink-0 flex flex-col gap-3 xl:h-[560px]">
+          <div className="w-full xl:w-[380px] shrink-0 flex flex-col gap-3 xl:h-[650px]">
             <ActiveInterventionsPanel
               interventions={filteredInterventions}
               activeFilter={interventionFilter}
