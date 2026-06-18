@@ -316,12 +316,12 @@ const Sidebar: React.FC<SidebarConfig> = ({
           {bottomNavigation.map((item) => {
             const classes = `menu-item flex items-center ${expanded ? "justify-start px-4 gap-4" : "justify-center px-2 gap-0"} py-3 rounded-xl font-medium transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${colors.textMuted} ${colors.textHover} ${colors.bgHover}`;
 
-            if (item.onClick) {
+            if (item.onClick || item.id === "logout") {
               return (
                 <button
                   key={item.id}
                   type="button"
-                  onClick={item.onClick}
+                  onClick={item.onClick ?? (item.id === "logout" ? onLogout : undefined)}
                   className={`${classes} w-full text-left`}
                   title={!expanded ? item.name : undefined}
                 >
