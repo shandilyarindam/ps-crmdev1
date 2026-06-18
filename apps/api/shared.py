@@ -574,6 +574,16 @@ def reverse_geocode_from_coordinates(latitude: float, longitude: float) -> Dict[
         "state": "",
         "formatted_address": "",
         "digipin": "",
+        "ward_no": "",
+        "councillor_name": "",
+        "councillor_party": "",
+        "councillor_mobile": "",
+        "mla_name": "",
+        "mla_party": "",
+        "mla_phone_number_1": "",
+        "mla_phone_number_2": "",
+        "mla_email_id": "",
+        "mla_address": "",
     }
 
     if MAPPLS_API_KEY:
@@ -654,6 +664,36 @@ def reverse_geocode_from_coordinates(latitude: float, longitude: float) -> Dict[
         location["digipin"] = _compute_digipin(latitude, longitude)
     except Exception:
         location["digipin"] = _fallback_digipin_raw(latitude, longitude)
+
+    # Try fetching official ward name and number from spatial_wards
+    db_ward_name = ""
+    db_ward_no = ""
+    try:
+        rpc_res = supabase.rpc(
+            "get_ward_from_coords",
+            {"p_lat": latitude, "p_lng": longitude}
+        ).execute()
+        if rpc_res.data and len(rpc_res.data) > 0:
+            first_row = rpc_res.data[0]
+            db_ward_name = first_row.get("wardname", "")
+            db_ward_no = str(first_row.get("ward_no") or "")
+            
+            # Map representative info
+            location["councillor_name"] = first_row.get("councillor_name") or ""
+            location["councillor_party"] = first_row.get("councillor_party") or ""
+            location["councillor_mobile"] = first_row.get("councillor_mobile") or ""
+            location["mla_name"] = first_row.get("mla_name") or ""
+            location["mla_party"] = first_row.get("mla_party") or ""
+            location["mla_phone_number_1"] = first_row.get("mla_phone_number_1") or ""
+            location["mla_phone_number_2"] = first_row.get("mla_phone_number_2") or ""
+            location["mla_email_id"] = first_row.get("mla_email_id") or ""
+            location["mla_address"] = first_row.get("mla_address") or ""
+    except Exception as e:
+        print(f"Error querying get_ward_from_coords: {e}")
+
+    if db_ward_name:
+        location["locality"] = db_ward_name
+    location["ward_no"] = db_ward_no
 
     if len(REVERSE_GEOCODE_CACHE) >= 500:
         first_key = next(iter(REVERSE_GEOCODE_CACHE))

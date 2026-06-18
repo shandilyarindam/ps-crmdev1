@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      additional_commissioners: {
+        Row: {
+          created_at: string
+          departments: string | null
+          designation: string | null
+          id: number
+          landline: string | null
+          name: string
+          serial_no: number | null
+          zones: string | null
+        }
+        Insert: {
+          created_at?: string
+          departments?: string | null
+          designation?: string | null
+          id?: number
+          landline?: string | null
+          name: string
+          serial_no?: number | null
+          zones?: string | null
+        }
+        Update: {
+          created_at?: string
+          departments?: string | null
+          designation?: string | null
+          id?: number
+          landline?: string | null
+          name?: string
+          serial_no?: number | null
+          zones?: string | null
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           authority_code: string | null
@@ -139,6 +172,39 @@ export type Database = {
           verified_at?: string | null
           verified_by?: string | null
           video_url?: string | null
+        }
+        Relationships: []
+      }
+      commissioners: {
+        Row: {
+          created_at: string
+          designation: string | null
+          email: string | null
+          id: number
+          landline: string | null
+          mobile: string | null
+          name: string
+          serial_no: number | null
+        }
+        Insert: {
+          created_at?: string
+          designation?: string | null
+          email?: string | null
+          id?: number
+          landline?: string | null
+          mobile?: string | null
+          name: string
+          serial_no?: number | null
+        }
+        Update: {
+          created_at?: string
+          designation?: string | null
+          email?: string | null
+          id?: number
+          landline?: string | null
+          mobile?: string | null
+          name?: string
+          serial_no?: number | null
         }
         Relationships: []
       }
@@ -301,6 +367,54 @@ export type Database = {
           },
         ]
       }
+      delhi_mlas: {
+        Row: {
+          ac_name: string
+          ac_no: number
+          address: string | null
+          assets: string | null
+          created_at: string
+          criminal_cases: number | null
+          education: string | null
+          email_id: string | null
+          liabilities: string | null
+          mla_name: string
+          party: string
+          phone_number_1: string | null
+          phone_number_2: string | null
+        }
+        Insert: {
+          ac_name: string
+          ac_no: number
+          address?: string | null
+          assets?: string | null
+          created_at?: string
+          criminal_cases?: number | null
+          education?: string | null
+          email_id?: string | null
+          liabilities?: string | null
+          mla_name: string
+          party: string
+          phone_number_1?: string | null
+          phone_number_2?: string | null
+        }
+        Update: {
+          ac_name?: string
+          ac_no?: number
+          address?: string | null
+          assets?: string | null
+          created_at?: string
+          criminal_cases?: number | null
+          education?: string | null
+          email_id?: string | null
+          liabilities?: string | null
+          mla_name?: string
+          party?: string
+          phone_number_1?: string | null
+          phone_number_2?: string | null
+        }
+        Relationships: []
+      }
       detections_telemetry: {
         Row: {
           camera_id: string | null
@@ -364,6 +478,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      heads_of_department: {
+        Row: {
+          created_at: string
+          department: string | null
+          designation: string | null
+          email: string | null
+          id: number
+          landline: string | null
+          mobile: string | null
+          name: string
+          serial_no: number | null
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          designation?: string | null
+          email?: string | null
+          id?: number
+          landline?: string | null
+          mobile?: string | null
+          name: string
+          serial_no?: number | null
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          designation?: string | null
+          email?: string | null
+          id?: number
+          landline?: string | null
+          mobile?: string | null
+          name?: string
+          serial_no?: number | null
+        }
+        Relationships: []
+      }
+      holidays: {
+        Row: {
+          created_at: string
+          date_text: string | null
+          day_of_week: string | null
+          holiday_name: string
+          holiday_type: string
+          id: number
+          year: number | null
+        }
+        Insert: {
+          created_at?: string
+          date_text?: string | null
+          day_of_week?: string | null
+          holiday_name: string
+          holiday_type: string
+          id?: number
+          year?: number | null
+        }
+        Update: {
+          created_at?: string
+          date_text?: string | null
+          day_of_week?: string | null
+          holiday_name?: string
+          holiday_type?: string
+          id?: number
+          year?: number | null
+        }
+        Relationships: []
       }
       learning_collector_samples: {
         Row: {
@@ -446,6 +626,20 @@ export type Database = {
             referencedRelation: "complaints"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "learning_collector_samples_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints_with_councillor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_collector_samples_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints_with_mla_councillor"
+            referencedColumns: ["id"]
+          },
         ]
       }
       material_requests: {
@@ -491,6 +685,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "material_requests_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints_with_councillor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_requests_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints_with_mla_councillor"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "material_requests_material_id_fkey"
             columns: ["material_id"]
             isOneToOne: false
@@ -505,6 +713,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      mayors: {
+        Row: {
+          created_at: string
+          designation: string | null
+          email: string | null
+          id: number
+          landline: string | null
+          mobile: string | null
+          name: string
+          serial_no: number | null
+        }
+        Insert: {
+          created_at?: string
+          designation?: string | null
+          email?: string | null
+          id?: number
+          landline?: string | null
+          mobile?: string | null
+          name: string
+          serial_no?: number | null
+        }
+        Update: {
+          created_at?: string
+          designation?: string | null
+          email?: string | null
+          id?: number
+          landline?: string | null
+          mobile?: string | null
+          name?: string
+          serial_no?: number | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -601,6 +842,20 @@ export type Database = {
             columns: ["complaint_id"]
             isOneToOne: true
             referencedRelation: "complaints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: true
+            referencedRelation: "complaints_with_councillor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: true
+            referencedRelation: "complaints_with_mla_councillor"
             referencedColumns: ["id"]
           },
           {
@@ -789,7 +1044,22 @@ export type Database = {
           zone_id?: string | null
           zone_name?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_spatial_wards_ac_no"
+            columns: ["ac_no"]
+            isOneToOne: false
+            referencedRelation: "delhi_mlas"
+            referencedColumns: ["ac_no"]
+          },
+          {
+            foreignKeyName: "fk_spatial_wards_ward_no"
+            columns: ["ward_no"]
+            isOneToOne: false
+            referencedRelation: "ward_councillors"
+            referencedColumns: ["ward_no"]
+          },
+        ]
       }
       suspected_incidents: {
         Row: {
@@ -875,6 +1145,20 @@ export type Database = {
             referencedRelation: "complaints"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ticket_history_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints_with_councillor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_history_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints_with_mla_councillor"
+            referencedColumns: ["id"]
+          },
         ]
       }
       upvotes: {
@@ -911,6 +1195,20 @@ export type Database = {
             referencedRelation: "complaints"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "upvotes_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints_with_councillor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upvotes_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints_with_mla_councillor"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_mapping: {
@@ -928,6 +1226,45 @@ export type Database = {
           email?: string
           new_id?: string | null
           old_id?: string | null
+        }
+        Relationships: []
+      }
+      ward_councillors: {
+        Row: {
+          assets: string | null
+          councillor_name: string
+          created_at: string
+          criminal_cases: number | null
+          education: string | null
+          liabilities: string | null
+          mobile: string | null
+          party: string
+          ward_name: string
+          ward_no: number
+        }
+        Insert: {
+          assets?: string | null
+          councillor_name: string
+          created_at?: string
+          criminal_cases?: number | null
+          education?: string | null
+          liabilities?: string | null
+          mobile?: string | null
+          party: string
+          ward_name: string
+          ward_no: number
+        }
+        Update: {
+          assets?: string | null
+          councillor_name?: string
+          created_at?: string
+          criminal_cases?: number | null
+          education?: string | null
+          liabilities?: string | null
+          mobile?: string | null
+          party?: string
+          ward_name?: string
+          ward_no?: number
         }
         Relationships: []
       }
@@ -1007,6 +1344,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "worker_profiles_current_complaint_id_fkey"
+            columns: ["current_complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints_with_councillor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "worker_profiles_current_complaint_id_fkey"
+            columns: ["current_complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints_with_mla_councillor"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "worker_profiles_worker_id_fkey"
             columns: ["worker_id"]
             isOneToOne: true
@@ -1015,8 +1366,103 @@ export type Database = {
           },
         ]
       }
+      zone_additional_commissioner: {
+        Row: {
+          additional_commissioner_id: number | null
+          id: number
+          zone_name: string
+        }
+        Insert: {
+          additional_commissioner_id?: number | null
+          id?: number
+          zone_name: string
+        }
+        Update: {
+          additional_commissioner_id?: number | null
+          id?: number
+          zone_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zone_additional_commissioner_additional_commissioner_id_fkey"
+            columns: ["additional_commissioner_id"]
+            isOneToOne: false
+            referencedRelation: "additional_commissioners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
+      complaints_with_councillor: {
+        Row: {
+          assigned_department: string | null
+          complaint_ward_name: string | null
+          councillor_assets: string | null
+          councillor_education: string | null
+          councillor_liabilities: string | null
+          councillor_mobile: string | null
+          councillor_name: string | null
+          councillor_party: string | null
+          created_at: string | null
+          description: string | null
+          effective_severity:
+            | Database["public"]["Enums"]["severity_level"]
+            | null
+          escalation_level: number | null
+          id: string | null
+          location: unknown
+          resolved_ward_name: string | null
+          resolved_ward_no: number | null
+          severity: Database["public"]["Enums"]["severity_level"] | null
+          sla_breached: boolean | null
+          sla_deadline: string | null
+          status: Database["public"]["Enums"]["complaint_status"] | null
+          ticket_id: string | null
+          title: string | null
+        }
+        Relationships: []
+      }
+      complaints_with_mla_councillor: {
+        Row: {
+          assigned_department: string | null
+          complaint_ward_name: string | null
+          councillor_assets: string | null
+          councillor_education: string | null
+          councillor_liabilities: string | null
+          councillor_mobile: string | null
+          councillor_name: string | null
+          councillor_party: string | null
+          created_at: string | null
+          description: string | null
+          effective_severity:
+            | Database["public"]["Enums"]["severity_level"]
+            | null
+          escalation_level: number | null
+          id: string | null
+          location: unknown
+          mla_address: string | null
+          mla_assets: string | null
+          mla_education: string | null
+          mla_email_id: string | null
+          mla_liabilities: string | null
+          mla_name: string | null
+          mla_party: string | null
+          mla_phone_number_1: string | null
+          mla_phone_number_2: string | null
+          resolved_ac_name: string | null
+          resolved_ac_no: number | null
+          resolved_ward_name: string | null
+          resolved_ward_no: number | null
+          severity: Database["public"]["Enums"]["severity_level"] | null
+          sla_breached: boolean | null
+          sla_deadline: string | null
+          status: Database["public"]["Enums"]["complaint_status"] | null
+          ticket_id: string | null
+          title: string | null
+        }
+        Relationships: []
+      }
       leaderboard_all_time: {
         Row: {
           avatar_url: string | null
@@ -1075,7 +1521,15 @@ export type Database = {
           zone_id?: string | null
           zone_name?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_spatial_wards_ward_no"
+            columns: ["ward_no"]
+            isOneToOne: false
+            referencedRelation: "ward_councillors"
+            referencedColumns: ["ward_no"]
+          },
+        ]
       }
     }
     Functions: {
@@ -1219,6 +1673,22 @@ export type Database = {
               upvote_count: number
             }[]
           }
+      get_ward_from_coords: {
+        Args: { p_lat: number; p_lng: number }
+        Returns: {
+          councillor_mobile: string
+          councillor_name: string
+          councillor_party: string
+          mla_address: string
+          mla_email_id: string
+          mla_name: string
+          mla_party: string
+          mla_phone_number_1: string
+          mla_phone_number_2: string
+          ward_no: number
+          wardname: string
+        }[]
+      }
       increment_upvote_count: {
         Args: { p_complaint_id: string }
         Returns: undefined

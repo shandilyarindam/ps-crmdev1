@@ -102,8 +102,8 @@ LOCALIZED_STRINGS = {
         "not_civic_issue": "❌ *Not a Civic Issue*\n\n{reason}\n\nPlease send a clear photo of a civic problem (pothole, garbage, broken street light, etc.).\n\nSend *hi* to start again.",
         "issue_detected": "✅ *Issue detected:* {issue_name}\n📋 *{title}*\n🔴 Severity: {severity}{warning}\n\n📍 Please tap *Send Location* below to complete your ticket.\n(Or reply *No* to cancel report)",
         "photo_req": "📸 *Important:* I've summarized the issue, but I need a photo to proceed with the official report. Please send one now.",
-        "ticket_preview": "📋 *Ticket Preview*\n━━━━━━━━━━━━━━━━━\n🔖 Issue: {issue_name}\n📌 Title: {title}\n🏛 Authority: {authority}\n🔴 Severity: {severity}\n📍 Location: {address}\n━━━━━━━━━━━━━━━━━\n\nPlease tap a button below to proceed:",
-        "ticket_success": "✅ *Complaint Submitted Successfully!*\n\n🎫 Ticket ID: *{ticket_id}*\n🏛 Assigned to: {authority}\n📍 {address}\n\nYou can track your complaint at:\n🔗 {url}\n\nThank you for helping improve your city! 🙏",
+        "ticket_preview": "📋 *Ticket Preview*\n━━━━━━━━━━━━━━━━━\n🔖 Issue: {issue_name}\n📌 Title: {title}\n🏛 Authority: {authority}\n👤 Councillor: {councillor}\n👤 MLA: {mla}\n🔴 Severity: {severity}\n📍 Location: {address}\n━━━━━━━━━━━━━━━━━\n\nPlease tap a button below to proceed:",
+        "ticket_success": "✅ *Complaint Submitted Successfully!*\n\n🎫 Ticket ID: *{ticket_id}*\n🏛 Assigned to: {authority}\n👤 Councillor: {councillor}\n👤 MLA: {mla}\n📍 {address}\n\nYou can track your complaint at:\n🔗 {url}\n\nThank you for helping improve your city! 🙏",
         "upvote_detected": "⚠️ *Duplicate Detected*\n━━━━━━━━━━━━━━━━━\nA similar complaint already exists nearby:\n\n🎫 Ticket: *{ticket_id}*\n📍 Distance: {distance}m away\n🔄 Status: *{status}*\n\nYou can *upvote* the existing ticket to increase its priority, or *submit anyway* to create a new one.",
         "upvote_btn": "👍 Upvote",
         "submit_anyway_btn": "📝 Submit Anyway",
@@ -148,8 +148,8 @@ LOCALIZED_STRINGS = {
         "not_civic_issue": "❌ *नागरिक समस्या नहीं है*\n\n{reason}\n\nकृपया किसी नागरिक समस्या (गड्ढा, कचरा, टूटी स्ट्रीट लाइट, आदि) की स्पष्ट तस्वीर भेजें।\n\nफिर से शुरू करने के लिए *hi* भेजें।",
         "issue_detected": "✅ *समस्या की पहचान:* {issue_name}\n📋 *{title}*\n🔴 गंभीरता: {severity}{warning}\n\n📍 अपना टिकट पूरा करने के लिए नीचे *स्थान साझा करें* पर टैप करें।\n(या रद्द करने के लिए *No* भेजें)",
         "photo_req": "📸 *महत्वपूर्ण:* मैंने समस्या का सारांश तैयार कर लिया है, लेकिन मुझे आधिकारिक रिपोर्ट दर्ज करने के लिए एक फोटो की आवश्यकता है। कृपया अब एक भेजें।",
-        "ticket_preview": "📋 *टिकट पूर्वावलोकन*\n━━━━━━━━━━━━━━━━━\n🔖 समस्या: {issue_name}\n📌 शीर्षक: {title}\n🏛 विभाग: {authority}\n🔴 गंभीरता: {severity}\n📍 स्थान: {address}\n━━━━━━━━━━━━━━━━━\n\nकृपया आगे बढ़ने के लिए नीचे दिए गए बटन पर टैप करें:",
-        "ticket_success": "✅ *शिकायत सफलतापूर्वक दर्ज की गई!*\n\n🎫 टिकट आईडी: *{ticket_id}*\n🏛 विभाग: {authority}\n📍 {address}\n\nआप अपनी शिकायत को यहाँ ट्रैक कर सकते हैं:\n🔗 {url}\n\nशहर को बेहतर बनाने में मदद करने के लिए धन्यवाद! 🙏",
+        "ticket_preview": "📋 *टिकट पूर्वावलोकन*\n━━━━━━━━━━━━━━━━━\n🔖 समस्या: {issue_name}\n📌 शीर्षक: {title}\n🏛 विभाग: {authority}\n👤 पार्षद: {councillor}\n👤 विधायक: {mla}\n🔴 गंभीरता: {severity}\n📍 स्थान: {address}\n━━━━━━━━━━━━━━━━━\n\nकृपया आगे बढ़ने के लिए नीचे दिए गए बटन पर टैप करें:",
+        "ticket_success": "✅ *शिकायत सफलतापूर्वक दर्ज की गई!*\n\n🎫 टिकट आईडी: *{ticket_id}*\n🏛 विभाग: {authority}\n👤 पार्षद: {councillor}\n👤 विधायक: {mla}\n📍 {address}\n\nआप अपनी शिकायत को यहाँ ट्रैक कर सकते हैं:\n🔗 {url}\n\nशहर को बेहतर बनाने में मदद करने के लिए धन्यवाद! 🙏",
         "upvote_detected": "⚠️ *समान शिकायत मिली*\n━━━━━━━━━━━━━━━━━\nपास में ही एक समान शिकायत पहले से मौजूद है:\n\n🎫 टिकट: *{ticket_id}*\n📍 दूरी: {distance}m दूर\n🔄 स्थिति: *{status}*\n\nआप प्राथमिकता बढ़ाने के लिए मौजूदा टिकट का *समर्थन (Upvote)* कर सकते हैं, या नई शिकायत बनाने के लिए *वैसे भी सबमिट करें*।",
         "upvote_btn": "👍 समर्थन करें",
         "submit_anyway_btn": "📝 वैसे भी सबमिट करें",
@@ -939,10 +939,20 @@ async def handle_location(phone: str, lat: float, lng: float):
             "Critical": "गंभीर"
         }.get(severity_lbl, severity_lbl)
 
+    councillor_name = location.get("councillor_name", "")
+    councillor_party = location.get("councillor_party", "")
+    councillor_str = f"{councillor_name} ({councillor_party})" if councillor_name else "Not Available"
+
+    mla_name = location.get("mla_name", "")
+    mla_party = location.get("mla_party", "")
+    mla_str = f"{mla_name} ({mla_party})" if mla_name else "Not Available"
+
     preview_body = strings["ticket_preview"].format(
         issue_name=result['issue_name'],
         title=result['title'],
         authority=routed_authority,
+        councillor=councillor_str,
+        mla=mla_str,
         severity=severity_lbl,
         address=address_short
     )
@@ -1073,9 +1083,19 @@ async def confirm_ticket(phone: str, session: dict):
 
     await delete_session(phone)   # clear session
 
+    councillor_name = location.get("councillor_name", "")
+    councillor_party = location.get("councillor_party", "")
+    councillor_str = f"{councillor_name} ({councillor_party})" if councillor_name else "Not Available"
+
+    mla_name = location.get("mla_name", "")
+    mla_party = location.get("mla_party", "")
+    mla_str = f"{mla_name} ({mla_party})" if mla_name else "Not Available"
+
     success_body = strings["ticket_success"].format(
         ticket_id=ticket_id,
         authority=routed_authority,
+        councillor=councillor_str,
+        mla=mla_str,
         address=address_text[:80],
         url=ticket_details_url
     )

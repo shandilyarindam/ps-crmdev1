@@ -199,6 +199,11 @@ class TicketPreview(BaseModel):
     decision: str = "valid_issue"  # valid_issue | explicit_blocked | non_civic_rejected | low_confidence
     decision_reason: Optional[str] = None
     reason_code: Optional[str] = "VALID_ISSUE"
+    councillor_name: Optional[str] = None
+    councillor_party: Optional[str] = None
+    councillor_mobile: Optional[str] = None
+    mla_name: Optional[str] = None
+    mla_party: Optional[str] = None
 
 
 class TicketCreated(BaseModel):
@@ -220,6 +225,7 @@ class TicketCreated(BaseModel):
     accuracy: float
     timestamp: str
     image_metadata: Optional[Dict[str, str]] = None
+    ward_no: Optional[int] = None
 
 
 class ReviewSubmission(BaseModel):
@@ -1017,6 +1023,11 @@ async def analyze(
             confirm_prompt="⚠️ We're not confident enough about this classification. Please take a clearer photo or describe the issue in more detail.",
             decision=DECISION_LOW_CONFIDENCE,
             decision_reason=f"Confidence {confidence:.2f} is below threshold {CONFIDENCE_THRESHOLD}.",
+            councillor_name=location.get("councillor_name"),
+            councillor_party=location.get("councillor_party"),
+            councillor_mobile=location.get("councillor_mobile"),
+            mla_name=location.get("mla_name"),
+            mla_party=location.get("mla_party"),
         )
 
     return TicketPreview(
@@ -1046,6 +1057,11 @@ async def analyze(
         confirm_prompt="✅ Ticket preview ready. Type \"confirm\" or \"submit\" to raise this ticket, or describe the issue differently to re-analyse.",
         decision=DECISION_VALID,
         reason_code="VALID_ISSUE",
+        councillor_name=location.get("councillor_name"),
+        councillor_party=location.get("councillor_party"),
+        councillor_mobile=location.get("councillor_mobile"),
+        mla_name=location.get("mla_name"),
+        mla_party=location.get("mla_party"),
     )
 
 
@@ -1236,6 +1252,7 @@ async def confirm(
         accuracy=accuracy,
         timestamp=timestamp,
         image_metadata=img_metadata,
+        ward_no=int(location["ward_no"]) if location.get("ward_no") else None,
     )
 
     # --- Background Email Notification ---
@@ -3232,8 +3249,111 @@ async def notify_closure_confirmation(
 
 
 # =========================================================
+# CM DASHBOARD — REFERENCE DATA ENDPOINTS
+# =========================================================
+
+@app.get("/api/cm/mayors")
+async def get_mayors():
+    """Return all mayor office staff."""
+    try:
+        res = await asyncio.to_thread(
+            lambda: supabase.table("mayors")
+            .select("id, serial_no, name, designation, landline, mobile, email")
+            .order("serial_no")
+            .execute()
+        )
+        return {"data": res.data or [], "count": len(res.data or [])}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch mayors: {str(e)}")
+
+
+@app.get("/api/cm/commissioners")
+async def get_commissioners():
+    """Return all commissioner office staff."""
+    try:
+        res = await asyncio.to_thread(
+            lambda: supabase.table("commissioners")
+            .select("id, serial_no, name, designation, landline, mobile, email")
+            .order("serial_no")
+            .execute()
+        )
+        return {"data": res.data or [], "count": len(res.data or [])}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch commissioners: {str(e)}")
+
+
+@app.get("/api/cm/additional-commissioners")
+async def get_additional_commissioners():
+    """Return all additional commissioners with their assigned zone names."""
+    try:
+        # Fetch additional commissioners
+        ac_res = await asyncio.to_thread(
+            lambda: supabase.table("additional_commissioners")
+            .select("id, serial_no, name, designation, departments, zones, landline")
+            .order("serial_no")
+            .execute()
+        )
+        commissioners = ac_res.data or []
+
+        # Fetch zone mappings
+        zone_res = await asyncio.to_thread(
+            lambda: supabase.table("zone_additional_commissioner")
+            .select("zone_name, additional_commissioner_id")
+            .execute()
+        )
+        zone_mappings = zone_res.data or []
+
+        # Build a lookup: commissioner_id → list of zone names
+        zone_lookup: Dict[int, List[str]] = {}
+        for zm in zone_mappings:
+            ac_id = zm["additional_commissioner_id"]
+            zone_lookup.setdefault(ac_id, []).append(zm["zone_name"])
+
+        # Enrich each commissioner with their assigned zone names
+        for ac in commissioners:
+            ac["assigned_zones"] = sorted(zone_lookup.get(ac["id"], []))
+
+        return {"data": commissioners, "count": len(commissioners)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch additional commissioners: {str(e)}")
+
+
+@app.get("/api/cm/hods")
+async def get_heads_of_department():
+    """Return all heads of department."""
+    try:
+        res = await asyncio.to_thread(
+            lambda: supabase.table("heads_of_department")
+            .select("id, serial_no, department, name, designation, landline, mobile, email")
+            .order("serial_no")
+            .execute()
+        )
+        return {"data": res.data or [], "count": len(res.data or [])}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch HODs: {str(e)}")
+
+
+@app.get("/api/cm/holidays")
+async def get_holidays(holiday_type: Optional[str] = None):
+    """Return holidays list. Optional filter: ?holiday_type=gazetted or ?holiday_type=restricted"""
+    try:
+        query = supabase.table("holidays").select(
+            "id, date_text, day_of_week, holiday_name, holiday_type, year"
+        )
+        if holiday_type and holiday_type in ("gazetted", "restricted"):
+            query = query.eq("holiday_type", holiday_type)
+        query = query.order("id")
+
+        res = await asyncio.to_thread(lambda: query.execute())
+        return {"data": res.data or [], "count": len(res.data or [])}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch holidays: {str(e)}")
+
+
+# =========================================================
 # 9. ROOT MESSAGE
 # =========================================================
+
 
 @app.get("/")
 def home():

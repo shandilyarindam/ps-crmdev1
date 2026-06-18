@@ -219,6 +219,8 @@ export default function ManualReportForm() {
   const [success, setSuccess] = useState<{
     ticketId: string;
     complaintId: string;
+    wardName?: string;
+    wardNo?: number;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -525,6 +527,8 @@ export default function ManualReportForm() {
         setSuccess({
           ticketId: complaint.ticket_id || ticketId,
           complaintId: complaint.id,
+          wardName: complaint.ward_name,
+          wardNo: complaint.ward_no,
         });
 
       } catch (err) {
@@ -555,6 +559,25 @@ export default function ManualReportForm() {
             {success.ticketId}
           </span>
         </p>
+
+        {success.wardName && (
+          <div className="mx-auto mt-6 max-w-sm rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+              Assigned Jurisdiction
+            </p>
+            <div className="mt-2 flex flex-col items-center justify-center gap-1.5">
+              <span className="text-base font-bold text-gray-800 dark:text-gray-200">
+                {success.wardName}
+              </span>
+              {success.wardNo && (
+                <span className="inline-flex items-center rounded-full bg-[#C9A84C]/10 px-2.5 py-0.5 text-xs font-semibold text-[#C9A84C] border border-[#C9A84C]/20">
+                  Ward No: {success.wardNo}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
         <button
           type="button"
           onClick={() => router.push("/citizen/tickets")}

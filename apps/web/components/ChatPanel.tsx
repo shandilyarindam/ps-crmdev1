@@ -58,6 +58,10 @@ interface GeoDetails {
   state: string;
   formatted_address: string;
   digipin: string;
+  councillor_name?: string;
+  councillor_party?: string;
+  mla_name?: string;
+  mla_party?: string;
 }
 
 /** Shape of the /analyze response from FastAPI */
@@ -86,6 +90,10 @@ interface ImageTicketPreview {
   confidence: number;
   user_text: string;
   confirm_prompt: string;
+  councillor_name?: string;
+  councillor_party?: string;
+  mla_name?: string;
+  mla_party?: string;
 }
 
 interface DuplicateMatch {
@@ -1714,6 +1722,18 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
                       [t(selectedLanguage, "tbl_issue"), msg.extracted.issue_type],
                       [t(selectedLanguage, "tbl_severity"), msg.extracted.severity],
                       [t(selectedLanguage, "tbl_location"), msg.geoDetails?.formatted_address || t(selectedLanguage, "detecting")],
+                      [
+                        getLabel(selectedLanguage, "councillor"),
+                        msg.geoDetails?.councillor_name
+                          ? `${msg.geoDetails.councillor_name} (${msg.geoDetails.councillor_party || "N/A"})`
+                          : (msg.geoDetails ? "Not Available" : t(selectedLanguage, "detecting"))
+                      ],
+                      [
+                        getLabel(selectedLanguage, "mla"),
+                        msg.geoDetails?.mla_name
+                          ? `${msg.geoDetails.mla_name} (${msg.geoDetails.mla_party || "N/A"})`
+                          : (msg.geoDetails ? "Not Available" : t(selectedLanguage, "detecting"))
+                      ],
                       [t(selectedLanguage, "tbl_desc"), msg.extracted.description],
                       [t(selectedLanguage, "tbl_digipin"), msg.geoDetails?.digipin || t(selectedLanguage, "detecting")],
                     ] as [string, string][]).map(([label, value]) => (
@@ -1730,7 +1750,7 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
             {msg.candidates && msg.candidates.length > 0 && isDisambiguating && (
               <div className="mt-3 space-y-2">
                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400 italic">
-                  I'm a bit unsure about the category. Please select the most accurate one:
+                  I&apos;m a bit unsure about the category. Please select the most accurate one:
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {msg.candidates.map((catId) => {
@@ -1783,6 +1803,18 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
                         [t(selectedLanguage, "tbl_issue"), msg.imagePreview.issue_name],
                         [t(selectedLanguage, "tbl_severity"), `${msg.imagePreview.severity} (${msg.imagePreview.severity_db})`],
                         [t(selectedLanguage, "tbl_location"), msg.imagePreview.formatted_address],
+                        [
+                          getLabel(selectedLanguage, "councillor"),
+                          msg.imagePreview.councillor_name
+                            ? `${msg.imagePreview.councillor_name} (${msg.imagePreview.councillor_party || "N/A"})`
+                            : "Not Available"
+                        ],
+                        [
+                          getLabel(selectedLanguage, "mla"),
+                          msg.imagePreview.mla_name
+                            ? `${msg.imagePreview.mla_name} (${msg.imagePreview.mla_party || "N/A"})`
+                            : "Not Available"
+                        ],
                         [t(selectedLanguage, "tbl_desc"), msg.imagePreview.description],
                         [t(selectedLanguage, "tbl_digipin"), msg.imagePreview.digipin],
                       ].map(([label, value]) => {
@@ -1951,6 +1983,14 @@ export default function ChatPanel({ onClose: _onClose }: { onClose?: () => void 
 /* ------------------------------------------------------------------ */
 /*  Very lightweight Markdown renderer (bold only)                     */
 /* ------------------------------------------------------------------ */
+
+function getLabel(selectedLanguage: string | null, key: string): string {
+  const labels: Record<string, Record<string, string>> = {
+    "en-US": { councillor: "Councillor", mla: "MLA" },
+    "hi-IN": { councillor: "पार्षद", mla: "विधायक" }
+  };
+  return labels[selectedLanguage ?? "en-US"]?.[key] || (key === "councillor" ? "Councillor" : "MLA");
+}
 
 function renderMarkdown(text: string) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);

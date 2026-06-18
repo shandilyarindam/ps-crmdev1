@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { X, Phone } from "lucide-react";
+import { supabase } from "@/src/lib/supabase";
 
 import { KPIStatsRow } from "../KPIStatsRow";
 import { MapSection } from "../MapSection";
@@ -231,20 +232,20 @@ export const WardView: React.FC<WardViewProps> = ({
       {/* ACTION MODAL: Call Councillor */}
       {activeActionModal === "call_councillor" && liveWardCouncillor && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl bg-theme-card p-5 shadow-2xl border border-theme-border transition-colors duration-300">
-            <div className="flex items-start justify-between border-b border-theme-border pb-3">
-              <h3 className="text-base font-bold text-theme-text">Call Councillor {liveWardCouncillor.name.replace(/^(SH\.|MS\.|MR\.|MRS\.)\s+/i, "")}</h3>
-              <button onClick={() => setActiveActionModal(null)} className="text-theme-muted hover:bg-theme-bg/60 p-1 rounded-lg">
+          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800">
+            <div className="flex items-start justify-between border-b border-slate-100 pb-3 dark:border-zinc-800">
+              <h3 className="text-base font-bold text-slate-800 dark:text-white">Call Councillor Shashi Yadav</h3>
+              <button onClick={() => setActiveActionModal(null)} className="text-slate-400 hover:bg-slate-50 dark:hover:bg-zinc-800 p-1 rounded-lg">
                 <X size={18} />
               </button>
             </div>
             <div className="py-4 space-y-3">
-              <p className="text-xs text-theme-muted leading-relaxed">
-                Connect directly to {liveWardCouncillor.voterCard ? `Ward ${liveWardCouncillor.voterCard.split("-")[0]}` : "Ward"} councillor {liveWardCouncillor.name.replace(/^(SH\.|MS\.|MR\.|MRS\.)\s+/i, "")} for urgent ground support.
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Connect directly to Ward 11 councillor Shashi Yadav for urgent ground support.
               </p>
-              <div className="p-3 bg-theme-bg rounded-lg text-xs font-bold space-y-1">
-                <p className="text-theme-muted text-[9px] uppercase leading-none">Office Phone:</p>
-                <p className="text-theme-text text-sm">{liveWardCouncillor.phone || "+91 9810X XXXXX"}</p>
+              <div className="p-3 bg-slate-50 rounded-lg dark:bg-zinc-800/40 text-xs font-bold space-y-1">
+                <p className="text-slate-400 text-[9px] uppercase leading-none">Office Phone:</p>
+                <p className="text-slate-800 dark:text-white text-sm">+91 9810X XXXXX</p>
               </div>
             </div>
             <div className="flex gap-3 pt-1">

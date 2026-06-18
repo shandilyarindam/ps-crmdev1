@@ -174,6 +174,7 @@ interface ReverseGeo {
   state: string;
   formattedAddress: string;
   digipin: string;
+  ward_no?: number;
 }
 
 interface DuplicateMatch {
@@ -305,6 +306,26 @@ async function reverseGeocode(latitude: number, longitude: number): Promise<Reve
   if (!location.pincode) location.pincode = "000000";
   if (!location.formattedAddress) location.formattedAddress = `Lat ${latitude.toFixed(6)}, Lng ${longitude.toFixed(6)}`;
   if (!location.digipin) location.digipin = fallbackDigipin(latitude, longitude);
+
+  // Try fetching official ward name and number from spatial_wards via Supabase get_ward_from_coords RPC
+  try {
+    const { data: rpcData, error: rpcError } = await (getAdminClient() as any).rpc(
+      "get_ward_from_coords",
+      { p_lat: latitude, p_lng: longitude }
+    );
+    if (rpcData && Array.isArray(rpcData) && rpcData.length > 0) {
+      const dbWardName = rpcData[0].wardname || "";
+      const dbWardNo = rpcData[0].ward_no;
+      if (dbWardName) {
+        location.locality = dbWardName;
+      }
+      if (dbWardNo != null) {
+        location.ward_no = dbWardNo;
+      }
+    }
+  } catch (e) {
+    console.error("Error calling get_ward_from_coords:", e);
+  }
 
   if (reverseGeocodeCache.size >= 500) {
     const oldestKey = reverseGeocodeCache.keys().next().value as string | undefined;
@@ -571,6 +592,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const resolvedWardNo = resolved.ward_no;
+
   const { data, error } = await getAdminClient()
     .from("complaints")
     .insert({
@@ -591,7 +614,7 @@ export async function POST(req: NextRequest) {
       city: canonicalComplaint.city,
       possible_duplicate: Boolean(duplicate),
     })
-    .select("id, ticket_id, title, status, created_at")
+    .select("id, ticket_id, title, status, created_at, ward_name")
     .single();
 
   if (error) {
@@ -618,7 +641,13 @@ export async function POST(req: NextRequest) {
     console.error("[API/Complaints] Failed to award points for ticket creation:", err);
   }
 
-  const responseBody = { success: true, complaint: data };
+  const responseBody = { 
+    success: true, 
+    complaint: {
+      ...data,
+      ward_no: resolvedWardNo
+    }
+  };
 
   // Cache successful result for idempotency
   if (idempotencyKey) {
