@@ -150,7 +150,7 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
 
         <div className="flex flex-col xl:flex-row gap-3">
           <div className="flex-1 flex flex-col gap-3">
-            <div className="flex flex-col xl:flex-row gap-3 xl:h-[450px] shrink-0">
+            <div className="flex flex-col xl:flex-row gap-3 xl:h-[650px] shrink-0">
               <MapSection
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
@@ -203,7 +203,7 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
             </div>
           </div>
 
-          <div className="w-full xl:w-[380px] shrink-0 flex flex-col gap-3 xl:h-[760px]">
+          <div className="w-full xl:w-[380px] shrink-0 flex flex-col gap-3 xl:h-[960px]">
             <CouncillorInfoCard
               councillor={zoneCommissioner}
               title={`${zoneName.toUpperCase()} ZONE COMMAND CENTER`}
