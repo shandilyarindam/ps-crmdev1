@@ -67,6 +67,7 @@ export interface MapSectionProps {
   /** Show the complaint marker/heatmap layer (ward level). Default true. */
   showComplaints?: boolean;
   className?: string;
+  complaints?: any[];
 
   // Integrated map layers panel props
   activeLayer?: string;
@@ -94,6 +95,7 @@ export const MapSection: React.FC<MapSectionProps> = ({
   choropleth,
   showComplaints,
   className,
+  complaints,
   activeLayer,
   onLayerChange,
   intensity,
@@ -169,6 +171,7 @@ export const MapSection: React.FC<MapSectionProps> = ({
           activeLayer={activeLayer}
           intensity={intensity}
           showRecenterButton={true}
+          complaints={complaints}
         />
 
         {activeLayer !== undefined && onLayerChange && intensity !== undefined && onIntensityChange && (

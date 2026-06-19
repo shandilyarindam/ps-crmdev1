@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 
-import { KPIStatsRow } from "../KPIStatsRow";
 import { MapSection } from "../MapSection";
 import { AIInsightsPanel } from "../AIInsightsPanel";
 import { DepartmentPerformanceTable } from "../DepartmentPerformanceTable";
@@ -78,7 +77,11 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
   const [highRiskHotspots, setHighRiskHotspots] = useState(["Connaught Place", "Karol Bagh", "Paharganj"]);
   const [commissioner, setCommissioner] = useState<any | null>(null);
 
-  const { kpis, interventions, departments } = useLiveDashboardData(points);
+  const { interventions, departments } = useLiveDashboardData(points);
+
+  const activeComplaintsCount = useMemo(() => {
+    return points.filter(p => !["resolved", "rejected", "spam", "pending_closure"].includes(p.status)).length;
+  }, [points]);
 
   useEffect(() => {
     let active = true;
@@ -126,7 +129,7 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
               profession: "",
               age: 0,
               voterCard: "",
-              complaints: kpis.find(k => k.id === "active")?.value || 312,
+              complaints: activeComplaintsCount || 312,
               resolutionTime: "4h 20m",
               satisfactionRate: "72%",
               wardHealth: zoneHealthScore ?? 76,
@@ -139,7 +142,7 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
     return () => {
       active = false;
     };
-  }, [zoneId, zoneName, kpis, zoneHealthScore]);
+  }, [zoneId, zoneName, activeComplaintsCount, zoneHealthScore]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<keyof DepartmentPerf>("open");
@@ -214,12 +217,10 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
 
   return (
     <>
-      <main className="flex-1 overflow-y-auto p-3 flex flex-col gap-3 min-h-0">
-        <KPIStatsRow kpis={kpis} onCardClick={(id) => triggerToast(`Navigating to details for KPI card: ${id}`)} />
-
-        <div className="flex flex-col xl:flex-row gap-3">
-          <div className="flex-1 flex flex-col gap-3">
-            <div className="flex flex-col xl:flex-row gap-3 xl:h-[650px] shrink-0">
+      <main className="flex-1 p-3 flex flex-col gap-3 min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col xl:flex-row gap-3 min-h-0">
+          <div className="flex-grow-[3] flex flex-col gap-3 min-h-0">
+            <div className="flex flex-col xl:flex-row gap-3 flex-[5] min-h-0">
               <MapSection
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
@@ -233,15 +234,16 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
                 onRegionClick={onRegionClick}
                 choropleth
                 showComplaints={false}
-                className="xl:h-full"
+                className="h-full"
                 activeLayer={activeLayer}
                 onLayerChange={onLayerChange}
                 intensity={intensity}
                 onIntensityChange={onIntensityChange}
                 activeSeverities={activeSeverities}
                 onToggleSeverity={onToggleSeverity}
+                complaints={points}
               />
-              <div className="w-full xl:w-80 shrink-0 flex flex-col gap-3 xl:h-full">
+              <div className="w-full xl:w-[18%] shrink-0 flex flex-col gap-3 h-full min-h-0">
                 <AIInsightsPanel insights={insights || []} loading={insights === null} />
                 <DepartmentPerformanceTable
                   departments={sortedDepartments}
@@ -253,14 +255,14 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 shrink-0">
+            <div className="flex-[3] grid grid-cols-1 md:grid-cols-2 gap-3 min-h-0">
               <LocalityHealthTable
                 localities={liveWardHealthRows}
                 title="WARD HEALTH SUMMARY"
                 rowLabel="Ward"
                 actionLabel="View Ward Analytics"
                 onViewAnalyticsClick={() => triggerToast("Opening ward analytics breakdown...")}
-                className="xl:h-[320px]"
+                className="h-full min-h-0"
                 loading={!liveWardScores || Object.keys(liveWardScores).length === 0}
               />
               <PredictiveOutlookCard
@@ -269,13 +271,13 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
                 estimatedSlaMisses={estimatedSlaMisses}
                 highRiskHotspots={highRiskHotspots}
                 isDark={isDark}
-                className="xl:h-[320px]"
+                className="h-full min-h-0"
                 loading={predictionData === null}
               />
             </div>
           </div>
 
-          <div className="w-full xl:w-[380px] shrink-0 flex flex-col gap-3 xl:h-[960px]">
+          <div className="w-full xl:w-[22%] shrink-0 flex flex-col gap-3 min-h-0">
             <CouncillorInfoCard
               councillor={commissioner}
               loading={commissioner === null}

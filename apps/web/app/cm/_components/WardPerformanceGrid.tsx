@@ -9,9 +9,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 gsap.registerPlugin(useGSAP);
 
+import { cn } from "@/src/lib/utils";
+
 export interface WardPerformanceGridProps {
   metrics?: WardMetric[];
   loading?: boolean;
+  className?: string;
 }
 
 const defaultMetrics: WardMetric[] = [
@@ -24,6 +27,7 @@ const defaultMetrics: WardMetric[] = [
 export const WardPerformanceGrid: React.FC<WardPerformanceGridProps> = ({
   metrics = defaultMetrics,
   loading = false,
+  className,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -44,7 +48,7 @@ export const WardPerformanceGrid: React.FC<WardPerformanceGridProps> = ({
   if (loading) {
     return (
       <div
-        className="bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex flex-col justify-between h-60 min-h-0 select-none transition-colors duration-300"
+        className={cn("bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex flex-col justify-between min-h-0 select-none transition-colors duration-300", className || "h-60")}
       >
         <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase mb-2">
           WARD PERFORMANCE
@@ -74,7 +78,7 @@ export const WardPerformanceGrid: React.FC<WardPerformanceGridProps> = ({
   return (
     <div
       ref={containerRef}
-      className="bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex flex-col justify-between h-60 min-h-0 select-none transition-colors duration-300"
+      className={cn("bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex flex-col justify-between min-h-0 select-none transition-colors duration-300", className || "h-60")}
     >
       <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase mb-2">
         WARD PERFORMANCE

@@ -66,7 +66,7 @@ export const KPIStatsRow: React.FC<KPIStatsRowProps> = ({ kpis, onCardClick }) =
 
   useGSAP(
     () => {
-      // Entry Animation: Cards fade & slide up
+      // Entry Animation: Cards fade & slide up - runs only once on mount
       gsap.fromTo(
         ".kpi-card",
         { y: 30, opacity: 0 },
@@ -78,16 +78,26 @@ export const KPIStatsRow: React.FC<KPIStatsRowProps> = ({ kpis, onCardClick }) =
           ease: "power2.out",
         }
       );
+    },
+    { dependencies: [], scope: containerRef }
+  );
 
-      // Count Up Animation for the number displays
-      const countElements = document.querySelectorAll(".kpi-count-up");
+  useGSAP(
+    () => {
+      // Smooth Transition for values
+      const countElements = containerRef.current?.querySelectorAll(".kpi-count-up");
+      if (!countElements) return;
+
       countElements.forEach((el) => {
         const targetVal = parseFloat(el.getAttribute("data-target") || "0");
         const suffix = el.getAttribute("data-suffix") || "";
-        const obj = { val: 0 };
+        const currentText = el.innerHTML.replace(suffix, "").replace(/,/g, "").trim();
+        const startVal = parseFloat(currentText) || 0;
+
+        const obj = { val: startVal };
         gsap.to(obj, {
           val: targetVal,
-          duration: 1.5,
+          duration: 1.0,
           ease: "power2.out",
           onUpdate: () => {
             el.innerHTML = Math.floor(obj.val).toLocaleString() + suffix;

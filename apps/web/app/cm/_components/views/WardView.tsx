@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import { X, Phone } from "lucide-react";
 import { supabase } from "@/src/lib/supabase";
 
-import { KPIStatsRow } from "../KPIStatsRow";
 import { MapSection } from "../MapSection";
 import { AIInsightsPanel } from "../AIInsightsPanel";
 import { DepartmentPerformanceTable } from "../DepartmentPerformanceTable";
@@ -72,7 +71,7 @@ export const WardView: React.FC<WardViewProps> = ({
   const [selectedIntervention, setSelectedIntervention] = useState<Intervention | null>(null);
   const [activeActionModal, setActiveActionModal] = useState<string | null>(null);
 
-  const { kpis, interventions, departments } = useLiveDashboardData(points);
+  const { interventions, departments } = useLiveDashboardData(points);
 
   const [localities, setLocalities] = useState<any[] | null>(null);
   const [predictionData, setPredictionData] = useState<any[] | null>(null);
@@ -248,12 +247,10 @@ export const WardView: React.FC<WardViewProps> = ({
 
   return (
     <>
-      <main className="flex-1 overflow-y-auto p-3 flex flex-col gap-3 min-h-0">
-        <KPIStatsRow kpis={kpis} onCardClick={(id) => triggerToast(`Navigating to details for KPI card: ${id}`)} />
-
-        <div className="flex flex-col xl:flex-row gap-3">
-          <div className="flex-1 flex flex-col gap-3">
-            <div className="flex flex-col xl:flex-row gap-3 xl:h-[650px] shrink-0">
+      <main className="flex-1 p-3 flex flex-col gap-3 min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col xl:flex-row gap-3 min-h-0">
+          <div className="flex-1 flex flex-col gap-3 min-h-0">
+            <div className="flex flex-col xl:flex-row gap-3 flex-[5] min-h-0">
               <MapSection
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
@@ -263,15 +260,16 @@ export const WardView: React.FC<WardViewProps> = ({
                 searchPlaceholder="Search location in Ward..."
                 onBack={onBack}
                 regions={wardRegion ? [wardRegion] : undefined}
-                className="xl:h-full"
+                className="h-full"
                 activeLayer={activeLayer}
                 onLayerChange={onLayerChange}
                 intensity={intensity}
                 onIntensityChange={onIntensityChange}
                 activeSeverities={activeSeverities}
                 onToggleSeverity={onToggleSeverity}
+                complaints={points}
               />
-              <div className="w-full xl:w-80 shrink-0 flex flex-col gap-3 xl:h-full">
+              <div className="w-full xl:w-[18%] shrink-0 flex flex-col gap-3 h-full min-h-0">
                 <AIInsightsPanel insights={insights || []} loading={insights === null} />
                 <DepartmentPerformanceTable
                   departments={sortedDepartments}
@@ -283,18 +281,18 @@ export const WardView: React.FC<WardViewProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 shrink-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 flex-[4] min-h-0">
               <LocalityHealthTable
                 localities={localities || []}
                 onViewAnalyticsClick={() => triggerToast("Redirecting to detailed location breakdown...")}
-                className="xl:h-full"
+                className="h-full min-h-0"
                 loading={localities === null}
               />
-              <div className="flex flex-col gap-3">
-                <ComplaintBreakdownGrid categories={liveCategories} />
-                <WorkforceStatusCard teams={workforceTeams || []} chartData={workforceChartData || []} activePercentage={workforceActivePct} loading={workforceTeams === null} />
+              <div className="flex flex-col gap-3 h-full min-h-0">
+                <ComplaintBreakdownGrid categories={liveCategories} className="flex-1 min-h-0" />
+                <WorkforceStatusCard teams={workforceTeams || []} chartData={workforceChartData || []} activePercentage={workforceActivePct} loading={workforceTeams === null} className="flex-1 min-h-0" />
               </div>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3 h-full min-h-0">
                 <PredictiveOutlookCard
                   data={predictionData || []}
                   expectedGrowth={expectedGrowth}
@@ -302,13 +300,14 @@ export const WardView: React.FC<WardViewProps> = ({
                   highRiskHotspots={highRiskHotspots}
                   isDark={isDark}
                   loading={predictionData === null}
+                  className="flex-1 min-h-0"
                 />
-                <WardPerformanceGrid metrics={performanceMetrics || []} loading={performanceMetrics === null} />
+                <WardPerformanceGrid metrics={performanceMetrics || []} loading={performanceMetrics === null} className="flex-1 min-h-0" />
               </div>
             </div>
           </div>
 
-          <div className="w-full xl:w-[380px] shrink-0 flex flex-col gap-3 xl:h-[1154px]">
+          <div className="w-full xl:w-[22%] shrink-0 flex flex-col gap-3 min-h-0">
             <CouncillorInfoCard councillor={liveWardCouncillor} loading={dbCouncillorLoading} />
             <ActiveInterventionsPanel
               interventions={filteredInterventions}

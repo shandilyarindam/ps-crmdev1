@@ -8,12 +8,15 @@ import { useGSAP } from "@gsap/react";
 import { WorkforceTeam, WorkforceStatusData } from "./cm-types";
 import { Skeleton } from "@/components/ui/skeleton";
 
+import { cn } from "@/src/lib/utils";
+
 gsap.registerPlugin(useGSAP);
 
 export interface WorkforceStatusCardProps {
   teams?: WorkforceTeam[];
   chartData?: WorkforceStatusData[];
   activePercentage?: string;
+  className?: string;
   loading?: boolean;
 }
 
@@ -41,6 +44,7 @@ export const WorkforceStatusCard: React.FC<WorkforceStatusCardProps> = ({
   teams = defaultTeams,
   chartData = defaultChartData,
   activePercentage = "71%",
+  className,
   loading = false,
 }) => {
   const [mounted, setMounted] = useState(false);
@@ -76,7 +80,10 @@ export const WorkforceStatusCard: React.FC<WorkforceStatusCardProps> = ({
   if (loading) {
     return (
       <div
-        className="bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex flex-col h-60 min-h-0 select-none transition-colors duration-300"
+        className={cn(
+          "bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex flex-col min-h-0 select-none transition-colors duration-300",
+          className || "h-60"
+        )}
       >
         <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase mb-2 shrink-0">
           WORKFORCE STATUS
@@ -106,7 +113,10 @@ export const WorkforceStatusCard: React.FC<WorkforceStatusCardProps> = ({
   return (
     <div
       ref={containerRef}
-      className="opacity-0 bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex flex-col h-60 min-h-0 select-none transition-colors duration-300"
+      className={cn(
+        "opacity-0 bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex flex-col min-h-0 select-none transition-colors duration-300",
+        className || "h-60"
+      )}
     >
       <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase mb-2 shrink-0">
         WORKFORCE STATUS

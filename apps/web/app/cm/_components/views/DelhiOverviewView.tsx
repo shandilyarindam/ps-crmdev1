@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from "react";
 
-import { KPIStatsRow } from "../KPIStatsRow";
 import { MapSection } from "../MapSection";
 import { ActiveInterventionsPanel } from "../ActiveInterventionsPanel";
 import { DelhiHealthScoreBar } from "../DelhiHealthScoreBar";
@@ -70,7 +69,7 @@ export const DelhiOverviewView: React.FC<DelhiOverviewViewProps> = ({
     );
   }, [zoneRegions, searchQuery]);
 
-  const { kpis, interventions } = useLiveDashboardData(points);
+  const { interventions } = useLiveDashboardData(points);
 
   // Search & tab filters for interventions
   const filteredInterventions = useMemo(() => {
@@ -94,11 +93,9 @@ export const DelhiOverviewView: React.FC<DelhiOverviewViewProps> = ({
 
   return (
     <>
-      <main className="flex-1 overflow-y-auto p-3 flex flex-col gap-3 min-h-0">
-        <KPIStatsRow kpis={kpis} onCardClick={(id) => triggerToast(`Navigating to details for KPI card: ${id}`)} />
-
-        <div className="flex flex-col xl:flex-row gap-3">
-          <div className="flex-1 flex flex-col min-h-[450px] xl:h-[650px]">
+      <main className="flex-1 p-3 flex flex-col gap-3 min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col xl:flex-row gap-3 min-h-0">
+          <div className="flex-grow-[3] flex flex-col min-h-0">
             <MapSection
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
@@ -111,17 +108,18 @@ export const DelhiOverviewView: React.FC<DelhiOverviewViewProps> = ({
               onRegionClick={onRegionClick}
               choropleth
               showComplaints={false}
-              className="xl:h-full"
+              className="h-full"
               activeLayer={activeLayer}
               onLayerChange={onLayerChange}
               intensity={intensity}
               onIntensityChange={onIntensityChange}
               activeSeverities={activeSeverities}
               onToggleSeverity={onToggleSeverity}
+              complaints={points}
             />
           </div>
 
-          <div className="w-full xl:w-[380px] shrink-0 flex flex-col gap-3 xl:h-[650px]">
+          <div className="w-full xl:w-[22%] shrink-0 flex flex-col gap-3 min-h-0">
             <ActiveInterventionsPanel
               interventions={filteredInterventions}
               activeFilter={interventionFilter}

@@ -8,8 +8,11 @@ import { ComplaintCategory } from "./cm-types";
 
 gsap.registerPlugin(useGSAP);
 
+import { cn } from "@/src/lib/utils";
+
 export interface ComplaintBreakdownGridProps {
   categories?: ComplaintCategory[];
+  className?: string;
 }
 
 const iconMap: Record<ComplaintCategory["iconName"], LucideIcon> = {
@@ -32,6 +35,7 @@ const defaultCategories: ComplaintCategory[] = [
 
 export const ComplaintBreakdownGrid: React.FC<ComplaintBreakdownGridProps> = ({
   categories = defaultCategories,
+  className,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -50,7 +54,7 @@ export const ComplaintBreakdownGrid: React.FC<ComplaintBreakdownGridProps> = ({
   return (
     <div
       ref={containerRef}
-      className="bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex flex-col h-60 min-h-0 select-none transition-colors duration-300"
+      className={cn("bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex flex-col min-h-0 select-none transition-colors duration-300", className || "h-60")}
     >
       <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase mb-3 shrink-0">
         COMPLAINT BREAKDOWN
