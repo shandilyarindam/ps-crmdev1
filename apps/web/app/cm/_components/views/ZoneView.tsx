@@ -71,12 +71,12 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
   points,
 }) => {
   const zoneId = wardRegions[0]?.properties.zoneId || "central";
-  const [insights, setInsights] = useState(zoneInsights);
-  const [predictionData, setPredictionData] = useState(zonePredictionData);
+  const [insights, setInsights] = useState<any[] | null>(null);
+  const [predictionData, setPredictionData] = useState<any[] | null>(null);
   const [expectedGrowth, setExpectedGrowth] = useState("+14%");
   const [estimatedSlaMisses, setEstimatedSlaMisses] = useState(11);
   const [highRiskHotspots, setHighRiskHotspots] = useState(["Connaught Place", "Karol Bagh", "Paharganj"]);
-  const [commissioner, setCommissioner] = useState(zoneCommissioner);
+  const [commissioner, setCommissioner] = useState<any | null>(null);
 
   const { kpis, interventions, departments } = useLiveDashboardData(points);
 
@@ -242,7 +242,7 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
                 onToggleSeverity={onToggleSeverity}
               />
               <div className="w-full xl:w-80 shrink-0 flex flex-col gap-3 xl:h-full">
-                <AIInsightsPanel insights={insights} />
+                <AIInsightsPanel insights={insights || []} loading={insights === null} />
                 <DepartmentPerformanceTable
                   departments={sortedDepartments}
                   sortField={sortField}
@@ -261,14 +261,16 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
                 actionLabel="View Ward Analytics"
                 onViewAnalyticsClick={() => triggerToast("Opening ward analytics breakdown...")}
                 className="xl:h-[320px]"
+                loading={!liveWardScores || Object.keys(liveWardScores).length === 0}
               />
               <PredictiveOutlookCard
-                data={predictionData}
+                data={predictionData || []}
                 expectedGrowth={expectedGrowth}
                 estimatedSlaMisses={estimatedSlaMisses}
                 highRiskHotspots={highRiskHotspots}
                 isDark={isDark}
                 className="xl:h-[320px]"
+                loading={predictionData === null}
               />
             </div>
           </div>
@@ -276,6 +278,7 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
           <div className="w-full xl:w-[380px] shrink-0 flex flex-col gap-3 xl:h-[960px]">
             <CouncillorInfoCard
               councillor={commissioner}
+              loading={commissioner === null}
               title={`${zoneName.toUpperCase()} ZONE COMMAND CENTER`}
               showAbout={false}
               showParty={false}

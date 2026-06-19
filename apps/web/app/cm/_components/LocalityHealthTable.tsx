@@ -4,6 +4,7 @@ import React, { useRef, useState, useMemo } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { LocalityHealth } from "./cm-types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 gsap.registerPlugin(useGSAP);
 
@@ -19,6 +20,7 @@ export interface LocalityHealthTableProps {
   rowLabel?: string;
   /** Link text for the footer action. Defaults to "View Locality Analytics". */
   actionLabel?: string;
+  loading?: boolean;
 }
 
 export const LocalityHealthTable: React.FC<LocalityHealthTableProps> = ({
@@ -28,26 +30,58 @@ export const LocalityHealthTable: React.FC<LocalityHealthTableProps> = ({
   title = "LOCALITY HEALTH OVERVIEW",
   rowLabel = "Locality",
   actionLabel = "View Locality Analytics",
+  loading = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [search, setSearch] = useState("");
 
   const filteredLocalities = useMemo(() => {
-    if (!search) return localities;
+    if (!search || !localities) return localities || [];
     return localities.filter(loc => loc.name.toLowerCase().includes(search.toLowerCase()));
   }, [localities, search]);
 
   useGSAP(
     () => {
-      // Row entry transition
-      gsap.fromTo(
-        ".locality-row",
-        { opacity: 0, x: -10 },
-        { opacity: 1, x: 0, duration: 0.4, stagger: 0.05, ease: "power1.out" }
-      );
+      if (!loading && filteredLocalities.length > 0) {
+        // Row entry transition
+        gsap.fromTo(
+          ".locality-row",
+          { opacity: 0, x: -10 },
+          { opacity: 1, x: 0, duration: 0.4, stagger: 0.05, ease: "power1.out" }
+        );
+      }
     },
-    { scope: containerRef }
+    { dependencies: [loading, filteredLocalities], scope: containerRef }
   );
+
+  if (loading) {
+    return (
+      <div
+        className={cn("bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex flex-col h-60 min-h-0 select-none transition-colors duration-300", className)}
+      >
+        <div className="flex items-center justify-between mb-2 shrink-0 gap-3">
+          <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase">
+            {title}
+          </h3>
+          <Skeleton className="h-6 w-28 md:w-36" />
+        </div>
+        <div className="flex-1 space-y-3 mt-2">
+          <div className="flex justify-between border-b border-theme-border pb-1.5">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-3 w-12" />
+            <Skeleton className="h-3 w-10" />
+          </div>
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex justify-between items-center py-1">
+              <Skeleton className="h-3.5 w-24" />
+              <Skeleton className="h-3.5 w-8" />
+              <Skeleton className="h-3.5 w-12" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

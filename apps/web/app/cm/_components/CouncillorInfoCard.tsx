@@ -160,7 +160,7 @@ export const CouncillorInfoCard: React.FC<CouncillorInfoCardProps> = ({
         {/* Right Side Info */}
         <div className="flex-1 min-w-0">
           <span className="text-[9px] font-bold text-theme-muted uppercase tracking-wider block leading-none">
-            Councillor
+            {councillor.role || "Councillor"}
           </span>
           <h4 className="text-lg font-black text-theme-text mt-1 leading-tight truncate">
             {cleanName}
@@ -185,7 +185,7 @@ export const CouncillorInfoCard: React.FC<CouncillorInfoCardProps> = ({
       {showAbout && (
         <div className="p-3 bg-theme-bg/30 rounded-lg border border-theme-border/50">
           <h5 className="text-[10px] font-bold text-theme-muted mb-2 uppercase tracking-wider">
-            About Councillor
+            About {councillor.role || "Councillor"}
           </h5>
           <div className="space-y-2 text-[10px] text-theme-text font-semibold">
             {councillor.age ? (

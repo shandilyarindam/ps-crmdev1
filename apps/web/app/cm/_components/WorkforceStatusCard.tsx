@@ -6,6 +6,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { WorkforceTeam, WorkforceStatusData } from "./cm-types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 gsap.registerPlugin(useGSAP);
 
@@ -13,6 +14,7 @@ export interface WorkforceStatusCardProps {
   teams?: WorkforceTeam[];
   chartData?: WorkforceStatusData[];
   activePercentage?: string;
+  loading?: boolean;
 }
 
 const iconMap: Record<WorkforceTeam["iconName"], LucideIcon> = {
@@ -39,9 +41,11 @@ export const WorkforceStatusCard: React.FC<WorkforceStatusCardProps> = ({
   teams = defaultTeams,
   chartData = defaultChartData,
   activePercentage = "71%",
+  loading = false,
 }) => {
   const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -50,22 +54,54 @@ export const WorkforceStatusCard: React.FC<WorkforceStatusCardProps> = ({
 
   useGSAP(
     () => {
-      // Entry slide transition
-      gsap.fromTo(
-        containerRef.current,
-        { opacity: 0, scale: 0.98 },
-        { opacity: 1, scale: 1, duration: 0.5, ease: "power2.out" }
-      );
+      if (!loading) {
+        // Entry slide transition
+        gsap.fromTo(
+          containerRef.current,
+          { opacity: 0, scale: 0.98 },
+          { opacity: 1, scale: 1, duration: 0.5, ease: "power2.out" }
+        );
 
-      // Donut scale pop
-      gsap.fromTo(
-        ".donut-container",
-        { scale: 0.8, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 0.8, delay: 0.2, ease: "back.out(1.7)" }
-      );
+        // Donut scale pop
+        gsap.fromTo(
+          ".donut-container",
+          { scale: 0.8, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.8, delay: 0.2, ease: "back.out(1.7)" }
+        );
+      }
     },
-    { scope: containerRef }
+    { dependencies: [loading], scope: containerRef }
   );
+
+  if (loading) {
+    return (
+      <div
+        className="bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex flex-col h-60 min-h-0 select-none transition-colors duration-300"
+      >
+        <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase mb-2 shrink-0">
+          WORKFORCE STATUS
+        </h3>
+        <div className="flex-1 flex gap-3 items-center min-h-0">
+          <div className="flex-1 space-y-2.5">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex justify-between items-center text-xs">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-3 w-6" />
+              </div>
+            ))}
+          </div>
+          <div className="h-28 w-28 shrink-0 relative flex items-center justify-center">
+            <Skeleton className="h-20 w-20 rounded-full" />
+          </div>
+        </div>
+        <div className="flex justify-between border-t border-theme-border pt-2 shrink-0">
+          <Skeleton className="h-2.5 w-12" />
+          <Skeleton className="h-2.5 w-12" />
+          <Skeleton className="h-2.5 w-12" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

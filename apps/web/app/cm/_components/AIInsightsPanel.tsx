@@ -5,27 +5,52 @@ import { Sparkles } from "lucide-react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { AIInsightItem } from "./cm-types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 gsap.registerPlugin(useGSAP);
 
 export interface AIInsightsPanelProps {
   insights: AIInsightItem[];
+  loading?: boolean;
 }
 
-export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ insights }) => {
+export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ insights, loading = false }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
-      // Slide up/fade in each insight list item
-      gsap.fromTo(
-        ".insight-item",
-        { y: 15, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.5, stagger: 0.08, ease: "power2.out" }
-      );
+      if (!loading && insights.length > 0) {
+        // Slide up/fade in each insight list item
+        gsap.fromTo(
+          ".insight-item",
+          { y: 15, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.5, stagger: 0.08, ease: "power2.out" }
+        );
+      }
     },
-    { scope: containerRef }
+    { dependencies: [loading, insights], scope: containerRef }
   );
+
+  if (loading) {
+    return (
+      <div className="bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex-1 flex flex-col min-h-0 select-none transition-colors duration-300">
+        <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase mb-3 flex items-center gap-2 shrink-0">
+          <Sparkles size={12} className="text-theme-muted" /> AI INSIGHTS
+        </h3>
+        <div className="flex-1 space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex gap-2 p-2 rounded-lg bg-theme-bg/30">
+              <Skeleton className="h-2 w-2 rounded-full mt-1 shrink-0 bg-theme-border/50" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-2 w-12 rounded bg-theme-border/50" />
+                <Skeleton className="h-3 w-full rounded bg-theme-border/50" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

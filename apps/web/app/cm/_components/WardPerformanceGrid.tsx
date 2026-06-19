@@ -5,11 +5,13 @@ import { ArrowUpRight } from "lucide-react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { WardMetric } from "./cm-types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 gsap.registerPlugin(useGSAP);
 
 export interface WardPerformanceGridProps {
   metrics?: WardMetric[];
+  loading?: boolean;
 }
 
 const defaultMetrics: WardMetric[] = [
@@ -21,20 +23,53 @@ const defaultMetrics: WardMetric[] = [
 
 export const WardPerformanceGrid: React.FC<WardPerformanceGridProps> = ({
   metrics = defaultMetrics,
+  loading = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
-      // Entry slide transition
-      gsap.fromTo(
-        ".metric-box",
-        { opacity: 0, y: 15 },
-        { opacity: 1, y: 0, duration: 0.4, stagger: 0.06, ease: "power1.out" }
-      );
+      if (!loading) {
+        // Entry slide transition
+        gsap.fromTo(
+          ".metric-box",
+          { opacity: 0, y: 15 },
+          { opacity: 1, y: 0, duration: 0.4, stagger: 0.06, ease: "power1.out" }
+        );
+      }
     },
-    { scope: containerRef }
+    { dependencies: [loading], scope: containerRef }
   );
+
+  if (loading) {
+    return (
+      <div
+        className="bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex flex-col justify-between h-60 min-h-0 select-none transition-colors duration-300"
+      >
+        <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase mb-2">
+          WARD PERFORMANCE
+        </h3>
+
+        <div className="grid grid-cols-2 gap-3 flex-1 mt-2">
+          {[0, 1, 2, 3].map((i) => {
+            const borderClasses = `
+              ${i === 0 ? "border-r border-b border-theme-border pb-2 pr-2" : ""}
+              ${i === 1 ? "border-b border-theme-border pb-2 pl-2" : ""}
+              ${i === 2 ? "border-r border-theme-border pt-2 pr-2" : ""}
+              ${i === 3 ? "pt-2 pl-2" : ""}
+            `;
+            return (
+              <div key={i} className={`flex flex-col justify-center ${borderClasses} space-y-1.5`}>
+                <Skeleton className="h-2 w-16" />
+                <Skeleton className="h-4.5 w-12" />
+                <Skeleton className="h-2.5 w-20" />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

@@ -74,16 +74,16 @@ export const WardView: React.FC<WardViewProps> = ({
 
   const { kpis, interventions, departments } = useLiveDashboardData(points);
 
-  const [localities, setLocalities] = useState(wardLocalities);
-  const [predictionData, setPredictionData] = useState(wardPredictionData);
+  const [localities, setLocalities] = useState<any[] | null>(null);
+  const [predictionData, setPredictionData] = useState<any[] | null>(null);
   const [expectedGrowth, setExpectedGrowth] = useState("+12%");
   const [estimatedSlaMisses, setEstimatedSlaMisses] = useState(6);
   const [highRiskHotspots, setHighRiskHotspots] = useState(["Roshampura", "Najafgarh Rd", "Jharoda Kalan"]);
-  const [insights, setInsights] = useState(wardInsights);
-  const [performanceMetrics, setPerformanceMetrics] = useState<any>(undefined);
+  const [insights, setInsights] = useState<any[] | null>(null);
+  const [performanceMetrics, setPerformanceMetrics] = useState<any>(null);
 
-  const [workforceTeams, setWorkforceTeams] = useState<any>(undefined);
-  const [workforceChartData, setWorkforceChartData] = useState<any>(undefined);
+  const [workforceTeams, setWorkforceTeams] = useState<any>(null);
+  const [workforceChartData, setWorkforceChartData] = useState<any>(null);
   const [workforceActivePct, setWorkforceActivePct] = useState("71%");
 
   const liveCategories = useMemo(() => {
@@ -272,7 +272,7 @@ export const WardView: React.FC<WardViewProps> = ({
                 onToggleSeverity={onToggleSeverity}
               />
               <div className="w-full xl:w-80 shrink-0 flex flex-col gap-3 xl:h-full">
-                <AIInsightsPanel insights={insights} />
+                <AIInsightsPanel insights={insights || []} loading={insights === null} />
                 <DepartmentPerformanceTable
                   departments={sortedDepartments}
                   sortField={sortField}
@@ -285,23 +285,25 @@ export const WardView: React.FC<WardViewProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 shrink-0">
               <LocalityHealthTable
-                localities={localities}
+                localities={localities || []}
                 onViewAnalyticsClick={() => triggerToast("Redirecting to detailed location breakdown...")}
                 className="xl:h-full"
+                loading={localities === null}
               />
               <div className="flex flex-col gap-3">
                 <ComplaintBreakdownGrid categories={liveCategories} />
-                <WorkforceStatusCard teams={workforceTeams} chartData={workforceChartData} activePercentage={workforceActivePct} />
+                <WorkforceStatusCard teams={workforceTeams || []} chartData={workforceChartData || []} activePercentage={workforceActivePct} loading={workforceTeams === null} />
               </div>
               <div className="flex flex-col gap-3">
                 <PredictiveOutlookCard
-                  data={predictionData}
+                  data={predictionData || []}
                   expectedGrowth={expectedGrowth}
                   estimatedSlaMisses={estimatedSlaMisses}
                   highRiskHotspots={highRiskHotspots}
                   isDark={isDark}
+                  loading={predictionData === null}
                 />
-                <WardPerformanceGrid metrics={performanceMetrics} />
+                <WardPerformanceGrid metrics={performanceMetrics || []} loading={performanceMetrics === null} />
               </div>
             </div>
           </div>

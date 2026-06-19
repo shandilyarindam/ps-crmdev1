@@ -6,6 +6,7 @@ import { ResponsiveContainer, AreaChart, Area, Tooltip as RechartsTooltip } from
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { cn } from "@/src/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 gsap.registerPlugin(useGSAP);
 
@@ -21,6 +22,7 @@ export interface PredictiveOutlookCardProps {
   highRiskHotspots: string[];
   isDark?: boolean;
   className?: string;
+  loading?: boolean;
 }
 
 export const PredictiveOutlookCard: React.FC<PredictiveOutlookCardProps> = ({
@@ -30,6 +32,7 @@ export const PredictiveOutlookCard: React.FC<PredictiveOutlookCardProps> = ({
   highRiskHotspots,
   isDark = false,
   className,
+  loading = false,
 }) => {
   const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -41,14 +44,53 @@ export const PredictiveOutlookCard: React.FC<PredictiveOutlookCardProps> = ({
 
   useGSAP(
     () => {
-      gsap.fromTo(
-        containerRef.current,
-        { opacity: 0, scale: 0.97 },
-        { opacity: 1, scale: 1, duration: 0.5, ease: "power2.out" }
-      );
+      if (!loading) {
+        gsap.fromTo(
+          containerRef.current,
+          { opacity: 0, scale: 0.97 },
+          { opacity: 1, scale: 1, duration: 0.5, ease: "power2.out" }
+        );
+      }
     },
-    { scope: containerRef }
+    { dependencies: [loading], scope: containerRef }
   );
+
+  if (loading) {
+    return (
+      <div
+        className={cn(
+          "bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex flex-col min-h-0 select-none transition-colors duration-300",
+          className || "h-60"
+        )}
+      >
+        <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase mb-2">
+          PREDICTIVE OUTLOOK <span className="font-semibold normal-case">(Next 48 Hours)</span>
+        </h3>
+        <div className="flex-1 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1.5">
+              <Skeleton className="h-2.5 w-16" />
+              <Skeleton className="h-5 w-12" />
+            </div>
+            <div className="text-right space-y-1.5">
+              <Skeleton className="h-2.5 w-16 ml-auto" />
+              <Skeleton className="h-5 w-8 ml-auto" />
+            </div>
+          </div>
+          <div className="h-20 w-full mt-2 relative flex items-end">
+            <Skeleton className="h-10 w-full rounded" />
+          </div>
+          <div className="mt-2 pt-2 border-t border-theme-border space-y-1.5">
+            <Skeleton className="h-2.5 w-24" />
+            <div className="flex gap-1.5">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
