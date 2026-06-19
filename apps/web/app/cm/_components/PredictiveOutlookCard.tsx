@@ -5,6 +5,7 @@ import { TrendingUp } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, Tooltip as RechartsTooltip } from "recharts";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import { cn } from "@/src/lib/utils";
 
 gsap.registerPlugin(useGSAP);
 
@@ -19,6 +20,7 @@ export interface PredictiveOutlookCardProps {
   estimatedSlaMisses: number;
   highRiskHotspots: string[];
   isDark?: boolean;
+  className?: string;
 }
 
 export const PredictiveOutlookCard: React.FC<PredictiveOutlookCardProps> = ({
@@ -27,6 +29,7 @@ export const PredictiveOutlookCard: React.FC<PredictiveOutlookCardProps> = ({
   estimatedSlaMisses,
   highRiskHotspots,
   isDark = false,
+  className,
 }) => {
   const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -50,7 +53,10 @@ export const PredictiveOutlookCard: React.FC<PredictiveOutlookCardProps> = ({
   return (
     <div
       ref={containerRef}
-      className="opacity-0 bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex flex-col h-60 min-h-0 select-none transition-colors duration-300"
+      className={cn(
+        "opacity-0 bg-theme-card rounded-xl border border-theme-border p-4 shadow-sm flex flex-col min-h-0 select-none transition-colors duration-300",
+        className || "h-60"
+      )}
     >
       <h3 className="text-[10px] font-bold tracking-wider text-theme-muted uppercase mb-2">
         PREDICTIVE OUTLOOK <span className="font-semibold normal-case">(Next 48 Hours)</span>
