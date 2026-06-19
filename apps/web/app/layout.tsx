@@ -121,7 +121,10 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} antialiased`}
+        suppressHydrationWarning
+      >
         <ThemeProvider>
           {children}
         </ThemeProvider>
