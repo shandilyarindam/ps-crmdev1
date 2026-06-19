@@ -55,6 +55,7 @@
 18. [Security Design](#-security-design)
 19. [Compatibility](#-compatibility)
 20. [Roadmap](#-roadmap)
+21. [License](#-license)
 
 ---
 
@@ -958,6 +959,16 @@ JanSamadhan is designed from day one for national scale. The Delhi pilot covers 
 | **Phase 4** | WhatsApp integration — webhook + closure confirmation + guided submission flows | ✅ Live (v1) |
 | **Phase 5** | CPGRAMS bridge — API integration for cross-jurisdiction escalation | 🔄 Planned |
 | **Phase 6** | Official DIGIPIN REST API (India Post v2, expected 2027) | 🔄 Planned | 
+
+---
+
+## 📄 License
+
+This project is licensed under the **Apache License 2.0**.
+
+Under this license, you own the rights to the software, and anyone who uses, modifies, or distributes this code **must provide attribution** to you by retaining the copyright notice and the `LICENSE` and `NOTICE` files.
+
+For full license details, see the [LICENSE](./LICENSE) and [NOTICE](./NOTICE) files.
 
 ---
 
