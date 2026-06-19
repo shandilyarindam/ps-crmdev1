@@ -274,6 +274,8 @@ export function useComplaintPoints(): { points: ComplaintPoint[]; loaded: boolea
   return { points, loaded };
 }
 
+const councillorCache = new Map<number, any>();
+
 /** Hook to fetch live ward councillor information and calculate their performance KPIs. */
 export function useLiveWardCouncillor(wardNo: number | null, points: ComplaintPoint[], liveHealthScore?: number) {
   const [councillorData, setCouncillorData] = useState<any>(null);
@@ -282,6 +284,11 @@ export function useLiveWardCouncillor(wardNo: number | null, points: ComplaintPo
   useEffect(() => {
     if (wardNo === null) {
       setCouncillorData(null);
+      return;
+    }
+
+    if (councillorCache.has(wardNo)) {
+      setCouncillorData(councillorCache.get(wardNo));
       return;
     }
 
@@ -299,6 +306,7 @@ export function useLiveWardCouncillor(wardNo: number | null, points: ComplaintPo
         if (!alive) return;
 
         if (data) {
+          councillorCache.set(wardNo, data);
           setCouncillorData(data);
         }
       } catch (err) {

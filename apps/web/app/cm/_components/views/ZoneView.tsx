@@ -51,6 +51,8 @@ const escalationTabs: InterventionTab[] = [
   { id: "escalated", label: "Escalated", match: (i) => !!i.escalated },
 ];
 
+let cachedCommissioners: any[] | null = null;
+
 export const ZoneView: React.FC<ZoneViewProps> = ({
   zoneName,
   onBack,
@@ -109,35 +111,44 @@ export const ZoneView: React.FC<ZoneViewProps> = ({
       .catch(err => console.error("Error fetching zone outlook:", err));
 
     // Fetch Commissioner Card
-    fetch(`${apiUrl}/api/cm/additional-commissioners`)
-      .then(res => res.json())
-      .then(data => {
-        if (active && data.data) {
-          const targetZone = zoneName.replace(" Zone", "").trim().toLowerCase();
-          const ac = data.data.find((c: any) => 
-            c.assigned_zones.some((z: string) => z.toLowerCase().includes(targetZone))
-          );
-          if (ac) {
-            setCommissioner({
-              name: ac.name,
-              role: ac.designation || "Zone Commissioner",
-              body: `MCD — ${zoneName}`,
-              electionYear: "Since 2021",
-              party: "",
-              partyColor: "",
-              spouseName: "",
-              profession: "",
-              age: 0,
-              voterCard: "",
-              complaints: activeComplaintsCount || 312,
-              resolutionTime: "4h 20m",
-              satisfactionRate: "72%",
-              wardHealth: zoneHealthScore ?? 76,
-            });
+    const loadCommissioner = (commissionersList: any[]) => {
+      const targetZone = zoneName.replace(" Zone", "").trim().toLowerCase();
+      const ac = commissionersList.find((c: any) =>
+        c.assigned_zones.some((z: string) => z.toLowerCase().includes(targetZone))
+      );
+      if (ac) {
+        setCommissioner({
+          name: ac.name,
+          role: ac.designation || "Zone Commissioner",
+          body: `MCD — ${zoneName}`,
+          electionYear: "Since 2021",
+          party: "",
+          partyColor: "",
+          spouseName: "",
+          profession: "",
+          age: 0,
+          voterCard: "",
+          complaints: activeComplaintsCount || 312,
+          resolutionTime: "4h 20m",
+          satisfactionRate: "72%",
+          wardHealth: zoneHealthScore ?? 76,
+        });
+      }
+    };
+
+    if (cachedCommissioners) {
+      loadCommissioner(cachedCommissioners);
+    } else {
+      fetch(`${apiUrl}/api/cm/additional-commissioners`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.data) {
+            cachedCommissioners = data.data;
+            if (active) loadCommissioner(data.data);
           }
-        }
-      })
-      .catch(err => console.error("Error fetching zone commissioner:", err));
+        })
+        .catch(err => console.error("Error fetching zone commissioner:", err));
+    }
 
     return () => {
       active = false;

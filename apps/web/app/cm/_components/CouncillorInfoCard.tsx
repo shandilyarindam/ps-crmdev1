@@ -55,7 +55,7 @@ export const CouncillorInfoCard: React.FC<CouncillorInfoCardProps> = ({
         );
       }
     },
-    { dependencies: [loading, councillor], scope: cardRef }
+    { dependencies: [loading, councillor?.name, councillor?.voterCard], scope: cardRef }
   );
 
   // If loading or councillor details are not yet available, render the pulsing skeleton loader

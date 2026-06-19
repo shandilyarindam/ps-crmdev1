@@ -25,6 +25,8 @@ import { ZONE_BY_ID, type ZoneId } from "./_components/ward-zone-map";
 
 gsap.registerPlugin(useGSAP);
 
+const EMPTY_ARRAY: ComplaintPoint[] = [];
+
 /** "FATEH NAGAR" -> "Fateh Nagar" */
 function titleCase(s: string): string {
   return s
@@ -320,7 +322,7 @@ export default function CMCommandCenterPage() {
             onToggleSeverity={handleToggleSeverity}
             liveWardScores={liveWardScores}
             zoneHealthScore={selectedZoneHealthScore}
-            points={selectedZoneId ? pointsByZone.get(selectedZoneId) || [] : []}
+            points={selectedZoneId ? pointsByZone.get(selectedZoneId) || EMPTY_ARRAY : EMPTY_ARRAY}
           />
         )}
         {view === "ward" && (
@@ -338,7 +340,7 @@ export default function CMCommandCenterPage() {
             activeSeverities={activeSeverities}
             onToggleSeverity={handleToggleSeverity}
             liveWardHealthScore={selectedWardHealthScore}
-            points={selectedWardNo != null ? pointsByWard.get(selectedWardNo) || [] : []}
+            points={selectedWardNo != null ? pointsByWard.get(selectedWardNo) || EMPTY_ARRAY : EMPTY_ARRAY}
             wardNo={selectedWardNo}
           />
         )}
