@@ -1,71 +1,54 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
-import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
-import type { LatLngExpression } from "leaflet";
-import L from "leaflet";
+import { useEffect, useRef } from "react";
+import Map, { Marker } from "react-map-gl/maplibre";
+import type { MapRef } from "react-map-gl/maplibre";
 import { useTheme } from "@/components/ThemeProvider";
-import { getMapTileLayerConfig } from "@/lib/map-tiles";
+import { getMapStyle } from "@/lib/map-tiles";
 
 type Props = {
   lat: number;
   lng: number;
   onPinMove: (lat: number, lng: number) => void;
-  highQuality?: boolean;
 };
 
-function RecenterMap({ center }: { center: LatLngExpression }) {
-  const map = useMap();
-
-  useEffect(() => {
-    map.flyTo(center, 15, { duration: 1.5 });
-  }, [map, center]);
-
-  return null;
-}
-
-export default function LocationPinPicker({ lat, lng, onPinMove, highQuality = true }: Props) {
+export default function LocationPinPicker({ lat, lng, onPinMove }: Props) {
   const { theme } = useTheme();
-  const tileConfig = useMemo(
-    () => getMapTileLayerConfig({ theme, highQuality }),
-    [highQuality, theme]
-  );
+  const mapRef = useRef<MapRef>(null);
 
+  const mapStyle = getMapStyle(theme);
+
+  // Recenter/fly-to on external coordinate changes
   useEffect(() => {
-    // Ensure marker icons work correctly in Next.js runtime.
-    delete (L.Icon.Default.prototype as { _getIconUrl?: () => string })._getIconUrl;
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-      iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-      shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+    mapRef.current?.flyTo({
+      center: [lng, lat],
+      zoom: 15,
+      duration: 1500,
     });
-  }, []);
-
-  const center = useMemo<LatLngExpression>(() => [lat, lng], [lat, lng]);
+  }, [lat, lng]);
 
   return (
     <div className="h-40 w-full overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-      <MapContainer center={center} zoom={15} style={{ height: "100%", width: "100%" }}>
-        <TileLayer
-          attribution={tileConfig.attribution}
-          url={tileConfig.url}
-          detectRetina={tileConfig.detectRetina}
-          maxNativeZoom={tileConfig.maxNativeZoom}
-          subdomains={tileConfig.subdomains}
-        />
-        <RecenterMap center={center} />
+      <Map
+        ref={mapRef}
+        initialViewState={{
+          longitude: lng,
+          latitude: lat,
+          zoom: 15,
+        }}
+        style={{ height: "100%", width: "100%" }}
+        mapStyle={mapStyle}
+        scrollZoom={true}
+      >
         <Marker
-          position={center}
+          longitude={lng}
+          latitude={lat}
           draggable
-          eventHandlers={{
-            dragend: (event) => {
-              const marker = event.target as L.Marker;
-              const pos = marker.getLatLng();
-              onPinMove(pos.lat, pos.lng);
-            },
+          onDragEnd={(event) => {
+            onPinMove(event.lngLat.lat, event.lngLat.lng);
           }}
         />
-      </MapContainer>
+      </Map>
     </div>
   );
 }

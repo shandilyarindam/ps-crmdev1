@@ -26,7 +26,7 @@ export default function DashboardHotspotsMap() {
       </div>
 
       <div className="flex-1 w-full overflow-hidden rounded-b-2xl">
-        <MapComponent highQuality={false} />
+        <MapComponent />
       </div>
     </section>
   )

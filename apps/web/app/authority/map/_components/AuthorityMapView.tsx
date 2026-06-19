@@ -3,13 +3,8 @@
 "use client"
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  useMap,
-} from "react-leaflet"
-import dynamic from "next/dynamic"
+import Map, { Source, Layer } from "react-map-gl/maplibre"
+import type { MapRef } from "react-map-gl/maplibre"
 import {
   ChevronDown,
   CheckCheck,
@@ -22,17 +17,7 @@ import {
 } from "lucide-react"
 import { supabase } from "@/src/lib/supabase"
 import { useTheme } from "@/components/ThemeProvider"
-import { getMapTileLayerConfig } from "@/lib/map-tiles"
-
-// Dynamically import MarkerClusterGroup with no SSR
-const MarkerClusterGroup = dynamic(
-  () =>
-    import("react-leaflet-markercluster").then(mod => {
-      // Handle both default and named exports
-      return mod.default ?? (mod as any).MarkerClusterGroup ?? mod
-    }),
-  { ssr: false }
-) as React.ComponentType<{ children: React.ReactNode }>
+import { getMapStyle } from "@/lib/map-tiles"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -182,58 +167,6 @@ const STATUS_LABEL: Record<ComplaintStatus, string> = {
   reopened:     "Reopened",
   pending_closure: "Pending Verification",
   spam:         "Spam",
-}
-
-// ─── Heatmap layer ────────────────────────────────────────────────────────────
-
-function HeatmapLayer({ tickets }: { tickets: MapTicket[] }) {
-  const map = useMap()
-
-  useEffect(() => {
-    if (typeof window === "undefined") return
-
-    let layer: any = null
-
-    // Dynamically import leaflet and leaflet.heat to avoid SSR issues
-    const loadHeatmap = async () => {
-      try {
-        const L = await import("leaflet")
-        await import("leaflet.heat")
-
-        layer = (L as any).heatLayer(
-          tickets.map(t => [t.lat, t.lng, SEV_INTENSITY[t.effective_severity]]),
-          {
-            radius: 28,
-            blur: 20,
-            minOpacity: 0.35,
-            gradient: {
-              0.25: "#60a5fa",
-              0.5:  "#fbbf24",
-              0.75: "#f97316",
-              1.0:  "#ef4444",
-            },
-          }
-        )
-        layer.addTo(map)
-      } catch (err) {
-        console.warn("Heatmap load failed:", err)
-      }
-    }
-
-    void loadHeatmap()
-
-    return () => {
-      if (layer) {
-        try {
-          map.removeLayer(layer)
-        } catch {
-          // ignore cleanup errors
-        }
-      }
-    }
-  }, [tickets, map])
-
-  return null
 }
 
 // ─── Assign worker dropdown ───────────────────────────────────────────────────
@@ -536,9 +469,9 @@ const SEV_OPTIONS: { value: SeverityLevel | "all"; label: string }[] = [
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function AuthorityMapView({ highQuality = true }: { highQuality?: boolean }) {
+export default function AuthorityMapView() {
   const { theme } = useTheme()
-  const [leafletLib,     setLeafletLib]     = useState<any>(null)
+  const mapRef = useRef<MapRef>(null)
   const [tickets,        setTickets]        = useState<MapTicket[]>([])
   const [workers,        setWorkers]        = useState<WorkerOption[]>([])
   const [loading,        setLoading]        = useState(true)
@@ -548,29 +481,8 @@ export default function AuthorityMapView({ highQuality = true }: { highQuality?:
   const [statusFilter,   setStatusFilter]   = useState<ComplaintStatus | "all">("all")
   const [sevFilter,      setSevFilter]      = useState<SeverityLevel | "all">("all")
   const [department,     setDepartment]     = useState("")
-  const tileConfig = useMemo(
-    () => getMapTileLayerConfig({ theme, highQuality }),
-    [highQuality, theme]
-  )
 
-  // ── Init Leaflet ─────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    import("leaflet").then(L => {
-      // Fix default marker icon paths broken by webpack
-      const iconDefault = L.Icon.Default.prototype as any
-      delete iconDefault._getIconUrl
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-        iconUrl:       "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-        shadowUrl:     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-      })
-      setLeafletLib(L)
-    })
-
-    // Load markercluster CSS safely
-    import("leaflet/dist/leaflet.css").catch(() => {})
-  }, [])
+  const mapStyle = getMapStyle(theme)
 
   // ── Fetch data ───────────────────────────────────────────────────────────
 
@@ -656,31 +568,32 @@ export default function AuthorityMapView({ highQuality = true }: { highQuality?:
 
   // ── Filtered tickets ─────────────────────────────────────────────────────
 
-  const visible = tickets.filter(t => {
-    if (statusFilter !== "all" && t.status             !== statusFilter) return false
-    if (sevFilter    !== "all" && t.effective_severity !== sevFilter)    return false
-    return true
-  })
-
-  // ── Severity icon ────────────────────────────────────────────────────────
-
-  function getSevIcon(sev: SeverityLevel, L: any, isSelected: boolean) {
-    const color = SEV_COLOR[sev]
-    const size  = isSelected ? 22 : 16
-    return new L.DivIcon({
-      html: `<div style="
-        background:${color};
-        width:${size}px;height:${size}px;
-        border-radius:50%;
-        border:2.5px solid white;
-        box-shadow:0 0 ${isSelected ? 10 : 5}px ${color}99;
-        transition:all .15s;
-      "></div>`,
-      className:  "",
-      iconSize:   [size, size],
-      iconAnchor: [size / 2, size / 2],
+  const visible = useMemo(() => {
+    return tickets.filter(t => {
+      if (statusFilter !== "all" && t.status             !== statusFilter) return false
+      if (sevFilter    !== "all" && t.effective_severity !== sevFilter)    return false
+      return true
     })
-  }
+  }, [tickets, statusFilter, sevFilter])
+
+  // Fly to selected ticket when it changes
+  useEffect(() => {
+    if (selectedTicket && mapRef.current) {
+      mapRef.current.flyTo({
+        center: [selectedTicket.lng, selectedTicket.lat],
+        zoom: 15,
+        duration: 1000,
+      })
+    }
+  }, [selectedTicket])
+
+  // Center map on initial load based on visible tickets
+  const initialCenter = useMemo(() => {
+    if (visible.length > 0) {
+      return { lng: visible[0].lng, lat: visible[0].lat }
+    }
+    return { lng: 77.209, lat: 28.6139 }
+  }, [visible])
 
   function handleAssigned(ticketId: string, workerId: string) {
     setTickets(prev =>
@@ -718,10 +631,46 @@ export default function AuthorityMapView({ highQuality = true }: { highQuality?:
     )
   }
 
-  const mapCenter: [number, number] =
-    visible.length > 0
-      ? [visible[0].lat, visible[0].lng]
-      : [28.6139, 77.209] // default: New Delhi
+  // Ticket GeoJSON source for clustering and heatmaps
+  const ticketGeoJSON = {
+    type: "FeatureCollection" as const,
+    features: visible.map(t => ({
+      type: "Feature" as const,
+      geometry: {
+        type: "Point" as const,
+        coordinates: [t.lng, t.lat],
+      },
+      properties: {
+        id: t.id,
+        severity: t.effective_severity,
+        intensity: SEV_INTENSITY[t.effective_severity],
+      },
+    })),
+  }
+
+  const onMapClick = async (event: any) => {
+    const feature = event.features?.[0]
+    if (!feature) return
+
+    if (feature.layer.id === "clusters") {
+      const clusterId = feature.properties?.cluster_id
+      if (clusterId) {
+        const source = mapRef.current?.getSource("tickets-source") as any
+        const zoom = await source.getClusterExpansionZoom(clusterId)
+        mapRef.current?.easeTo({
+          center: feature.geometry.coordinates,
+          zoom: Math.min(zoom, 18),
+          duration: 500,
+        })
+      }
+    } else if (feature.layer.id === "unclustered-point") {
+      const ticketId = feature.properties?.id
+      const ticket = visible.find(t => t.id === ticketId)
+      if (ticket) {
+        setSelectedTicket(ticket)
+      }
+    }
+  }
 
   return (
     <div className="flex h-[calc(100vh-88px)] flex-col gap-0 overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-950">
@@ -809,42 +758,124 @@ export default function AuthorityMapView({ highQuality = true }: { highQuality?:
             selectedTicket ? "mr-[320px]" : ""
           }`}
         >
-          {/* Only render MapContainer once Leaflet is loaded */}
-          {leafletLib && (
-            <MapContainer
-              key={mapCenter.join(",")}
-              center={mapCenter}
-              zoom={12}
-              style={{ height: "100%", width: "100%" }}
+          <Map
+            ref={mapRef}
+            initialViewState={{
+              longitude: initialCenter.lng,
+              latitude: initialCenter.lat,
+              zoom: 12,
+            }}
+            style={{ height: "100%", width: "100%" }}
+            mapStyle={mapStyle}
+            scrollZoom={true}
+            interactiveLayerIds={showHeatmap ? [] : ["clusters", "unclustered-point"]}
+            onClick={onMapClick}
+          >
+            <Source
+              key={showHeatmap ? "heatmap" : "clustered"}
+              id="tickets-source"
+              type="geojson"
+              data={ticketGeoJSON}
+              cluster={!showHeatmap}
+              clusterMaxZoom={14}
+              clusterRadius={50}
             >
-              <TileLayer
-                attribution={tileConfig.attribution}
-                url={tileConfig.url}
-                detectRetina={tileConfig.detectRetina}
-                maxNativeZoom={tileConfig.maxNativeZoom}
-                subdomains={tileConfig.subdomains}
-              />
-
-              {showHeatmap && <HeatmapLayer tickets={visible} />}
-
-              {!showHeatmap && (
-                <MarkerClusterGroup>
-                  {visible.map(t => (
-                    <Marker
-                      key={t.id}
-                      position={[t.lat, t.lng]}
-                      icon={getSevIcon(
-                        t.effective_severity,
-                        leafletLib,
-                        selectedTicket?.id === t.id
-                      )}
-                      eventHandlers={{ click: () => setSelectedTicket(t) }}
-                    />
-                  ))}
-                </MarkerClusterGroup>
+              {showHeatmap ? (
+                <Layer
+                  id="heatmap-layer"
+                  type="heatmap"
+                  paint={{
+                    "heatmap-weight": ["get", "intensity"],
+                    "heatmap-intensity": 0.8,
+                    "heatmap-radius": 28,
+                    "heatmap-opacity": 0.85,
+                    "heatmap-color": [
+                      "interpolate",
+                      ["linear"],
+                      ["heatmap-density"],
+                      0,
+                      "rgba(0,0,0,0)",
+                      0.25,
+                      "#60a5fa",
+                      0.5,
+                      "#fbbf24",
+                      0.75,
+                      "#f97316",
+                      1.0,
+                      "#ef4444",
+                    ],
+                  }}
+                />
+              ) : (
+                <>
+                  <Layer
+                    id="clusters"
+                    type="circle"
+                    filter={["has", "point_count"]}
+                    paint={{
+                      "circle-color": [
+                        "step",
+                        ["get", "point_count"],
+                        "rgba(180, 114, 90, 0.6)",
+                        10,
+                        "rgba(180, 114, 90, 0.75)",
+                        50,
+                        "rgba(180, 114, 90, 0.9)",
+                      ],
+                      "circle-radius": [
+                        "step",
+                        ["get", "point_count"],
+                        20,
+                        10,
+                        25,
+                        50,
+                        30,
+                      ],
+                      "circle-stroke-width": 2,
+                      "circle-stroke-color": "#fff",
+                    }}
+                  />
+                  <Layer
+                    id="cluster-count"
+                    type="symbol"
+                    filter={["has", "point_count"]}
+                    layout={{
+                      "text-field": "{point_count_abbreviated}",
+                      "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
+                      "text-size": 12,
+                    }}
+                    paint={{
+                      "text-color": "#ffffff",
+                    }}
+                  />
+                  <Layer
+                    id="unclustered-point"
+                    type="circle"
+                    filter={["!", ["has", "point_count"]]}
+                    paint={{
+                      "circle-color": [
+                        "match",
+                        ["get", "severity"],
+                        "L1", SEV_COLOR.L1,
+                        "L2", SEV_COLOR.L2,
+                        "L3", SEV_COLOR.L3,
+                        "L4", SEV_COLOR.L4,
+                        "#94a3b8",
+                      ],
+                      "circle-radius": [
+                        "case",
+                        ["==", ["get", "id"], selectedTicket?.id ?? ""],
+                        11,
+                        8,
+                      ],
+                      "circle-stroke-width": 2.5,
+                      "circle-stroke-color": "#ffffff",
+                    }}
+                  />
+                </>
               )}
-            </MapContainer>
-          )}
+            </Source>
+          </Map>
 
           {/* Legend */}
           <div className="absolute bottom-4 left-4 z-[1000] rounded-xl border border-gray-100 bg-white/95 px-3 py-2.5 shadow-lg backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/95">

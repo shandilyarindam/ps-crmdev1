@@ -1,15 +1,15 @@
 "use client"
 
-import { useEffect, useId, useMemo, useState } from "react"
-import L from "leaflet"
-import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet"
+import { useEffect, useMemo, useState, useRef } from "react"
+import Map, { Marker, Popup } from "react-map-gl/maplibre"
+import type { MapRef } from "react-map-gl/maplibre"
 import {
   markerColor,
   severityClass,
   type DashboardTask,
 } from "@/components/worker-dashboard/dashboard-types"
 import { useTheme } from "@/components/ThemeProvider"
-import { getMapTileLayerConfig } from "@/lib/map-tiles"
+import { getMapStyle } from "@/lib/map-tiles"
 
 type WorkerTaskMapPanelProps = {
   tasks: DashboardTask[]
@@ -17,90 +17,6 @@ type WorkerTaskMapPanelProps = {
   loading: boolean
   error: string | null
   onSelectTask?: (taskId: string) => void
-  highQuality?: boolean
-}
-
-function createMarkerIcon(color: string, highlighted = false): L.DivIcon {
-  const size = highlighted ? 22 : 18
-  const border = highlighted ? 4 : 3
-  const shadow = highlighted ? "0 0 0 3px rgba(180,114,90,0.25), 0 0 8px rgba(0,0,0,0.3)" : "0 0 6px rgba(0,0,0,0.25)"
-  return new L.DivIcon({
-    className: "",
-    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:${border}px solid #fff;box-shadow:${shadow};"></div>`,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-  })
-}
-
-function FitMapToMarkers({ points }: { points: Array<{ lat: number; lng: number }> }) {
-  const map = useMap()
-
-  useEffect(() => {
-    if (points.length === 0) return
-    if (points.length === 1) {
-      map.setView([points[0].lat, points[0].lng], 14, { animate: false })
-      return
-    }
-    const bounds = L.latLngBounds(points.map((point) => [point.lat, point.lng]))
-    map.fitBounds(bounds, { padding: [8, 8], maxZoom: 16 })
-  }, [map, points])
-
-  return null
-}
-
-function KeepMapSized({ resizeTrigger }: { resizeTrigger: number }) {
-  const map = useMap()
-
-  useEffect(() => {
-    const container = map.getContainer()
-    const invalidate = () => map.invalidateSize({ pan: false })
-
-    const frameId = window.requestAnimationFrame(invalidate)
-    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(invalidate) : null
-    observer?.observe(container)
-    window.addEventListener("resize", invalidate)
-
-    return () => {
-      window.cancelAnimationFrame(frameId)
-      observer?.disconnect()
-      window.removeEventListener("resize", invalidate)
-    }
-  }, [map, resizeTrigger])
-
-  return null
-}
-
-function ZoomToHighlightedTask({
-  task,
-}: {
-  task: { lat: number; lng: number } | null
-}) {
-  const map = useMap()
-
-  useEffect(() => {
-    if (!task) return
-    map.setView([task.lat, task.lng], 15, { animate: true })
-  }, [map, task])
-
-  return null
-}
-
-function ResetToTaskBounds({
-  points,
-  recenterTrigger,
-}: {
-  points: Array<{ lat: number; lng: number }>
-  recenterTrigger: number
-}) {
-  const map = useMap()
-
-  useEffect(() => {
-    if (recenterTrigger === 0 || points.length === 0) return
-    const bounds = L.latLngBounds(points.map((point) => [point.lat, point.lng]))
-    map.fitBounds(bounds, { padding: [20, 20], maxZoom: 15 })
-  }, [map, points, recenterTrigger])
-
-  return null
 }
 
 export default function WorkerTaskMapPanel({
@@ -109,35 +25,18 @@ export default function WorkerTaskMapPanel({
   loading,
   error,
   onSelectTask,
-  highQuality = true,
 }: WorkerTaskMapPanelProps) {
   const { theme } = useTheme()
-  const [isClientReady, setIsClientReady] = useState(false)
+  const mapRef = useRef<MapRef>(null)
   const [recenterTrigger, setRecenterTrigger] = useState(0)
-  const tileConfig = useMemo(
-    () => getMapTileLayerConfig({ theme, highQuality }),
-    [highQuality, theme],
-  )
-  // Ensure each component mount gets a fresh Leaflet container identity.
-  const mapSessionKey = useId()
+  const [activePopupTask, setActivePopupTask] = useState<DashboardTask | null>(null)
 
-  useEffect(() => {
-    setIsClientReady(true)
-  }, [])
+  const mapStyle = getMapStyle(theme)
 
   const mappableTasks = useMemo(
     () => tasks.filter((task) => task.latitude != null && task.longitude != null),
     [tasks],
   )
-
-  const markerIcons = useMemo(() => {
-    return new Map(
-      mappableTasks.map((task) => [
-        task.id,
-        createMarkerIcon(markerColor(task.severity), task.id === highlightedTaskId),
-      ]),
-    )
-  }, [highlightedTaskId, mappableTasks])
 
   const highlightedPoint = useMemo(() => {
     if (!highlightedTaskId) return null
@@ -150,6 +49,78 @@ export default function WorkerTaskMapPanel({
     () => mappableTasks.map((task) => ({ lat: task.latitude as number, lng: task.longitude as number })),
     [mappableTasks],
   )
+
+  // Fit bounds to show all tasks initially
+  useEffect(() => {
+    if (mappableTasks.length === 0) return
+
+    // Allow the map to load its style/container before fitting bounds
+    const timer = setTimeout(() => {
+      if (!mapRef.current) return
+      if (mappableTasks.length === 1) {
+        mapRef.current.easeTo({
+          center: [mappableTasks[0].longitude as number, mappableTasks[0].latitude as number],
+          zoom: 14,
+          duration: 1000,
+        })
+        return
+      }
+      let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity
+      for (const t of mappableTasks) {
+        const lng = t.longitude as number
+        const lat = t.latitude as number
+        if (lng < minLng) minLng = lng
+        if (lat < minLat) minLat = lat
+        if (lng > maxLng) maxLng = lng
+        if (lat > maxLat) maxLat = lat
+      }
+      mapRef.current.fitBounds([[minLng, minLat], [maxLng, maxLat]], {
+        padding: 40,
+        maxZoom: 15,
+      })
+    }, 100)
+
+    return () => clearTimeout(timer)
+  }, [mappableTasks])
+
+  // Recenter/fit bounds when Reset View is clicked
+  useEffect(() => {
+    if (recenterTrigger === 0 || mappableTasks.length === 0) return
+    if (!mapRef.current) return
+
+    if (mappableTasks.length === 1) {
+      mapRef.current.easeTo({
+        center: [mappableTasks[0].longitude as number, mappableTasks[0].latitude as number],
+        zoom: 14,
+        duration: 1000,
+      })
+      return
+    }
+
+    let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity
+    for (const t of mappableTasks) {
+      const lng = t.longitude as number
+      const lat = t.latitude as number
+      if (lng < minLng) minLng = lng
+      if (lat < minLat) minLat = lat
+      if (lng > maxLng) maxLng = lng
+      if (lat > maxLat) maxLat = lat
+    }
+    mapRef.current.fitBounds([[minLng, minLat], [maxLng, maxLat]], {
+      padding: 40,
+      maxZoom: 15,
+    })
+  }, [recenterTrigger, mappableTasks])
+
+  // Pan to highlighted task when it changes
+  useEffect(() => {
+    if (!highlightedPoint || !mapRef.current) return
+    mapRef.current.easeTo({
+      center: [highlightedPoint.lng, highlightedPoint.lat],
+      zoom: 15,
+      duration: 1000,
+    })
+  }, [highlightedPoint])
 
   return (
     <section className="flex h-full min-h-0 flex-col rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4 dark:border-[#2a2a2a] dark:bg-[#1e1e1e]">
@@ -176,56 +147,73 @@ export default function WorkerTaskMapPanel({
       {loading ? <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">Loading map...</p> : null}
 
       <div className="relative min-h-[380px] flex-1 overflow-hidden rounded-lg border border-gray-100 dark:border-[#2a2a2a]" style={{ height: "clamp(380px, 60vh, 620px)" }}>
-        <style>{`
-          .leaflet-container { height: 100% !important; }
-        `}</style>
-        {isClientReady ? (
-          <MapContainer key={mapSessionKey} center={[28.6139, 77.209]} zoom={12} scrollWheelZoom={true} style={{ height: "100%", width: "100%" }}>
-            <TileLayer
-              attribution={tileConfig.attribution}
-              url={tileConfig.url}
-              detectRetina={tileConfig.detectRetina}
-              maxNativeZoom={tileConfig.maxNativeZoom}
-              subdomains={tileConfig.subdomains}
-            />
+        <Map
+          ref={mapRef}
+          initialViewState={{
+            longitude: 77.209,
+            latitude: 28.6139,
+            zoom: 12,
+          }}
+          style={{ height: "100%", width: "100%" }}
+          mapStyle={mapStyle}
+          scrollZoom={true}
+        >
+          {mappableTasks.map((task) => {
+            const isHighlighted = task.id === highlightedTaskId
+            const size = isHighlighted ? 22 : 18
+            const border = isHighlighted ? 4 : 3
+            const color = markerColor(task.severity)
+            const shadow = isHighlighted
+              ? "0 0 0 3px rgba(180,114,90,0.25), 0 0 8px rgba(0,0,0,0.3)"
+              : "0 0 6px rgba(0,0,0,0.25)"
 
-            {mappableTasks.map((task) => (
+            return (
               <Marker
                 key={task.id}
-                position={[task.latitude as number, task.longitude as number]}
-                icon={markerIcons.get(task.id) ?? createMarkerIcon(markerColor(task.severity))}
-                eventHandlers={
-                  onSelectTask
-                    ? {
-                        click: () => onSelectTask(task.id),
-                      }
-                    : undefined
-                }
+                longitude={task.longitude as number}
+                latitude={task.latitude as number}
+                onClick={(e) => {
+                  e.originalEvent.stopPropagation()
+                  setActivePopupTask(task)
+                  if (onSelectTask) {
+                    onSelectTask(task.id)
+                  }
+                }}
               >
-                <Popup>
-                  <div className="space-y-2 text-sm">
-                    <p className="font-semibold">{task.ticketId}</p>
-                    <p>{task.description.length > 80 ? `${task.description.slice(0, 77)}...` : task.description}</p>
-                    <span className={`inline-block rounded-full border px-2 py-1 text-xs ${severityClass(task.severity)}`}>
-                      {task.severity}
-                    </span>
-                  </div>
-                </Popup>
+                <div
+                  style={{
+                    width: `${size}px`,
+                    height: `${size}px`,
+                    borderRadius: "50%",
+                    backgroundColor: color,
+                    border: `${border}px solid #fff`,
+                    boxShadow: shadow,
+                    cursor: "pointer",
+                  }}
+                />
               </Marker>
-            ))}
+            )
+          })}
 
-            <FitMapToMarkers
-              points={mapPoints}
-            />
-            <KeepMapSized resizeTrigger={recenterTrigger} />
-            <ResetToTaskBounds points={mapPoints} recenterTrigger={recenterTrigger} />
-            <ZoomToHighlightedTask task={highlightedPoint} />
-          </MapContainer>
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-sm text-gray-500 dark:text-gray-400">
-            Initializing map...
-          </div>
-        )}
+          {activePopupTask && activePopupTask.longitude != null && activePopupTask.latitude != null && (
+            <Popup
+              longitude={activePopupTask.longitude}
+              latitude={activePopupTask.latitude}
+              anchor="bottom"
+              onClose={() => setActivePopupTask(null)}
+              closeOnClick={false}
+              offset={15}
+            >
+              <div className="space-y-2 text-sm text-gray-900 dark:text-gray-100">
+                <p className="font-semibold">{activePopupTask.ticketId}</p>
+                <p>{activePopupTask.description.length > 80 ? `${activePopupTask.description.slice(0, 77)}...` : activePopupTask.description}</p>
+                <span className={`inline-block rounded-full border px-2 py-1 text-xs ${severityClass(activePopupTask.severity)}`}>
+                  {activePopupTask.severity}
+                </span>
+              </div>
+            </Popup>
+          )}
+        </Map>
 
         {highlightedTaskId ? (
           <div className="pointer-events-none absolute left-3 top-3 z-[500] rounded-md bg-black/70 px-2 py-1 text-xs text-white">

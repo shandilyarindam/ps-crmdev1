@@ -1,160 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Circle, CircleMarker, MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import Map, { Marker, Source, Layer } from "react-map-gl/maplibre";
+import type { MapRef } from "react-map-gl/maplibre";
 import { ChevronDown, ChevronUp, Flame, LocateFixed } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
-import { getMapTileLayerConfig } from "@/lib/map-tiles";
+import { getMapStyle } from "@/lib/map-tiles";
 
 import type { MappedComplaint } from "./useNearbyTickets";
 import { getSeverityConfig } from "./useNearbyTickets";
 import { calculateDistanceMeters, formatDistance, type GeoPoint } from "./distance";
-
-function FlyToTarget({ target }: { target: { lat: number; lng: number } | null }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (target) {
-      map.flyTo([target.lat, target.lng], 18, { duration: 0.8 });
-    }
-  }, [map, target]);
-
-  return null;
-}
-
-function LiveFollow({
-  userLocation,
-  recenterSignal,
-}: {
-  userLocation: GeoPoint | null;
-  recenterSignal: number;
-}) {
-  const map = useMap();
-  const prevLocationRef = useRef<GeoPoint | null>(null);
-  const prevRecenterRef = useRef<number>(0);
-
-  useEffect(() => {
-    if (!userLocation) return;
-
-    const forceRecenter = recenterSignal !== prevRecenterRef.current;
-    const prev = prevLocationRef.current;
-    const movedMeters = prev ? calculateDistanceMeters(prev, userLocation) : Number.POSITIVE_INFINITY;
-
-    if (!forceRecenter && movedMeters < 10) {
-      return;
-    }
-
-    if (forceRecenter || !prev) {
-      map.flyTo([userLocation.lat, userLocation.lng], 18, { duration: 0.8 });
-    } else {
-      map.panTo([userLocation.lat, userLocation.lng], { animate: true, duration: 0.8 });
-    }
-
-    prevLocationRef.current = userLocation;
-    prevRecenterRef.current = recenterSignal;
-  }, [map, recenterSignal, userLocation]);
-
-  return null;
-}
-
-function HeatmapLayer({ complaints }: { complaints: MappedComplaint[] }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (complaints.length === 0) return;
-
-    const L = require("leaflet");
-    if (typeof window !== "undefined" && !(window as any).L) {
-      (window as any).L = L;
-    }
-    require("leaflet.heat");
-
-    function getIntensity(sev: string) {
-      switch (sev) {
-        case "L4":
-          return 1.0;
-        case "L3":
-          return 0.75;
-        case "L2":
-          return 0.5;
-        case "L1":
-          return 0.25;
-        default:
-          return 0.3;
-      }
-    }
-
-    const heatLayer = (L as any).heatLayer(
-      complaints.map((c) => [c.lat, c.lng, getIntensity(c.effective_severity || c.severity)]),
-      {
-        radius: 25,
-        blur: 20,
-        minOpacity: 0.35,
-        gradient: {
-          0.2: "#22c55e",
-          0.45: "#eab308",
-          0.7: "#f97316",
-          1.0: "#ef4444",
-        },
-      }
-    );
-
-    heatLayer.addTo(map);
-    return () => {
-      map.removeLayer(heatLayer);
-    };
-  }, [complaints, map]);
-
-  return null;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function makeMarkerIcon(complaint: MappedComplaint, L: any, isSelected: boolean, distanceLabel: string) {
-  const sev = getSeverityConfig(complaint.effective_severity || complaint.severity);
-  const photo = complaint.photo_urls?.[0];
-  const size = isSelected ? 52 : 42;
-
-  const photoHtml = photo
-    ? `<img src="${photo}"
-         style="width:100%;height:100%;object-fit:cover;border-radius:50%;"
-         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
-       <div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;
-         font-size:${size * 0.38}px;background:${sev.color}22;border-radius:50%;">📍</div>`
-    : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;
-         font-size:${size * 0.38}px;background:${sev.color}22;border-radius:50%;">📍</div>`;
-
-  return new L.DivIcon({
-    html: `
-      <div class="complaint-pin-wrapper" style="position:relative;display:inline-block;">
-        <div style="
-          width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;
-          transition:all 0.2s;cursor:pointer;
-        ">${photoHtml}</div>
-        <div class="pin-tooltip" style="
-          position:absolute;
-          left:${size + 6}px;
-          top:50%;
-          transform:translateY(-50%);
-          background:rgba(0,0,0,0.82);
-          color:#fff;
-          font-size:11px;
-          font-weight:700;
-          line-height:1;
-          padding:6px 8px;
-          border-radius:6px;
-          white-space:nowrap;
-          pointer-events:none;
-          opacity:0;
-          transition:opacity 0.15s;
-          z-index:9999;
-          border-left:3px solid ${sev.color};
-        ">${distanceLabel}</div>
-      </div>`,
-    className: "",
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-  });
-}
 
 interface NearbyTicketsMapProps {
   complaints: MappedComplaint[];
@@ -169,7 +24,6 @@ interface NearbyTicketsMapProps {
   customHeight?: string;
   hideCollapse?: boolean;
   onRecenterClick?: () => void;
-  highQuality?: boolean;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -181,6 +35,30 @@ function computeExpandedMapHeight(viewportHeight: number): number {
     return clamp(Math.round(viewportHeight * 0.36), 240, 360);
   }
   return clamp(Math.round(viewportHeight * 0.42), 280, 460);
+}
+
+function createGeoJSONCircle(center: [number, number], radiusMeters: number, points = 64) {
+  const coords = [];
+  const radiusKm = radiusMeters / 1000;
+  const distanceX = radiusKm / (111.32 * Math.cos((center[1] * Math.PI) / 180));
+  const distanceY = radiusKm / 110.574;
+
+  for (let i = 0; i < points; i++) {
+    const theta = (i / points) * (2 * Math.PI);
+    const x = distanceX * Math.cos(theta);
+    const y = distanceY * Math.sin(theta);
+    coords.push([center[0] + x, center[1] + y]);
+  }
+  coords.push(coords[0]); // Close polygon
+
+  return {
+    type: "Feature" as const,
+    geometry: {
+      type: "Polygon" as const,
+      coordinates: [coords],
+    },
+    properties: {},
+  };
 }
 
 export default function NearbyTicketsMap({
@@ -196,35 +74,19 @@ export default function NearbyTicketsMap({
   customHeight,
   hideCollapse,
   onRecenterClick,
-  highQuality = true,
 }: NearbyTicketsMapProps) {
   const { theme } = useTheme();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [L, setL] = useState<any>(null);
+  const mapRef = useRef<MapRef>(null);
+  const [isClientReady, setIsClientReady] = useState(false);
   const [expandedMapHeight, setExpandedMapHeight] = useState(360);
   const [collapsed, setCollapsed] = useState(false);
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [recenterSignal, setRecenterSignal] = useState(0);
-  const [mapSessionKey, setMapSessionKey] = useState(0);
-  const tileConfig = useMemo(
-    () => getMapTileLayerConfig({ theme, highQuality }),
-    [highQuality, theme]
-  );
+
+  const mapStyle = getMapStyle(theme);
 
   useEffect(() => {
-    import("leaflet").then((leaflet) => {
-      delete (leaflet.Icon.Default.prototype as any)._getIconUrl;
-      leaflet.Icon.Default.mergeOptions({
-        iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-      });
-      setL(leaflet);
-    });
-
-    const style = document.createElement("style");
-    style.innerHTML = ".complaint-pin-wrapper:hover .pin-tooltip { opacity: 1 !important; }";
-    document.head.appendChild(style);
+    setIsClientReady(true);
 
     const applyExpandedHeight = () => {
       setExpandedMapHeight(computeExpandedMapHeight(window.innerHeight));
@@ -234,10 +96,49 @@ export default function NearbyTicketsMap({
     window.addEventListener("resize", applyExpandedHeight);
 
     return () => {
-      document.head.removeChild(style);
       window.removeEventListener("resize", applyExpandedHeight);
     };
   }, []);
+
+  const prevLocationRef = useRef<GeoPoint | null>(null);
+  const prevRecenterRef = useRef<number>(0);
+
+  // Live follow user location
+  useEffect(() => {
+    if (!userLocation || !mapRef.current) return;
+
+    const forceRecenter = recenterSignal !== prevRecenterRef.current;
+    const prev = prevLocationRef.current;
+    const movedMeters = prev ? calculateDistanceMeters(prev, userLocation) : Number.POSITIVE_INFINITY;
+
+    if (!forceRecenter && movedMeters < 10) {
+      return;
+    }
+
+    if (forceRecenter || !prev) {
+      mapRef.current.flyTo({
+        center: [userLocation.lng, userLocation.lat],
+        zoom: 18,
+        duration: 800,
+      });
+    } else {
+      mapRef.current.panTo([userLocation.lng, userLocation.lat], { duration: 800 });
+    }
+
+    prevLocationRef.current = userLocation;
+    prevRecenterRef.current = recenterSignal;
+  }, [userLocation, recenterSignal]);
+
+  // Fly to target
+  useEffect(() => {
+    if (flyTarget && mapRef.current) {
+      mapRef.current.flyTo({
+        center: [flyTarget.lng, flyTarget.lat],
+        zoom: 18,
+        duration: 800,
+      });
+    }
+  }, [flyTarget]);
 
   function handleRecenter() {
     if (onRecenterClick) {
@@ -248,100 +149,203 @@ export default function NearbyTicketsMap({
   }
 
   function toggleCollapsed() {
-    setCollapsed((prev) => {
-      const next = !prev;
-      // Force a fresh Leaflet instance after re-opening to avoid container reuse issues.
-      if (!next) {
-        setMapSessionKey((k) => k + 1);
-      }
-      return next;
-    });
+    setCollapsed((prev) => !prev);
+  }
+
+  // Radius circle GeoJSON
+  const radiusCircleGeoJSON = useMemo(() => {
+    if (!userLocation) return null;
+    return createGeoJSONCircle([userLocation.lng, userLocation.lat], radiusMeters);
+  }, [userLocation, radiusMeters]);
+
+  // Heatmap source & paint configuration
+  const heatmapGeoJSON = useMemo(() => {
+    return {
+      type: "FeatureCollection" as const,
+      features: complaints.map((c) => ({
+        type: "Feature" as const,
+        geometry: {
+          type: "Point" as const,
+          coordinates: [c.lng, c.lat],
+        },
+        properties: {
+          intensity: c.effective_severity === "L4" || c.severity === "L4" ? 1.0 :
+                     c.effective_severity === "L3" || c.severity === "L3" ? 0.75 :
+                     c.effective_severity === "L2" || c.severity === "L2" ? 0.5 : 0.25,
+        },
+      })),
+    };
+  }, [complaints]);
+
+  if (!isClientReady) {
+    return (
+      <div className="flex w-full items-center justify-center bg-gray-50 text-sm text-gray-500 dark:bg-[#1e1e1e] dark:text-gray-400" style={{ height: customHeight || expandedMapHeight }}>
+        Initializing map...
+      </div>
+    );
   }
 
   return (
     <>
       <div className="relative overflow-hidden transition-all duration-300" style={{ height: collapsed ? 0 : customHeight || expandedMapHeight }}>
-        {!collapsed && L && (
-          <MapContainer
-            key={`map-${mapSessionKey}-${userLocation?.lat}-${userLocation?.lng}`}
-            center={[28.6139, 77.209]}
-            zoom={12}
+        {!collapsed && (
+          <Map
+            ref={mapRef}
+            initialViewState={{
+              longitude: userLocation?.lng ?? 77.209,
+              latitude: userLocation?.lat ?? 28.6139,
+              zoom: 14,
+            }}
             style={{ height: "100%", width: "100%" }}
-            zoomControl={false}
+            mapStyle={mapStyle}
+            scrollZoom={true}
           >
-            <TileLayer
-              attribution={tileConfig.attribution}
-              url={tileConfig.url}
-              detectRetina={tileConfig.detectRetina}
-              maxNativeZoom={tileConfig.maxNativeZoom}
-              subdomains={tileConfig.subdomains}
-            />
-            <FlyToTarget target={flyTarget} />
-            <LiveFollow userLocation={userLocation} recenterSignal={recenterSignal} />
-
-            {/* If used in report form, show the draggable pin */}
+            {/* Draggable pin if in report form */}
             {reportLocation && (
               <Marker
-                position={[reportLocation.lat, reportLocation.lng]}
+                longitude={reportLocation.lng}
+                latitude={reportLocation.lat}
                 draggable
-                eventHandlers={{
-                  dragend: (event) => {
-                    const marker = event.target as any;
-                    const pos = marker.getLatLng();
-                    onReportLocationMove?.(pos.lat, pos.lng);
-                  },
+                onDragEnd={(e) => {
+                  onReportLocationMove?.(e.lngLat.lat, e.lngLat.lng);
                 }}
               />
             )}
 
+            {/* User Location Radius Circle & Custom Markers */}
             {userLocation && (
               <>
-                <Circle
-                  center={[userLocation.lat, userLocation.lng]}
-                  radius={radiusMeters}
-                  pathOptions={{ color: "#7c3aed", fillColor: "#7c3aed", fillOpacity: 0.12, weight: 2 }}
-                />
-                {/* User location marker - blue target with white center, distinct from complaint markers */}
-                <CircleMarker
-                  center={[userLocation.lat, userLocation.lng]}
-                  radius={12}
-                  pathOptions={{
-                    color: "#3b82f6",
-                    fillColor: "#3b82f6",
-                    fillOpacity: 0.25,
-                    weight: 3,
-                  }}
-                />
-                <CircleMarker
-                  center={[userLocation.lat, userLocation.lng]}
-                  radius={5}
-                  pathOptions={{
-                    color: "#ffffff",
-                    fillColor: "#3b82f6",
-                    fillOpacity: 1,
-                    weight: 2,
-                  }}
-                />
+                {radiusCircleGeoJSON && (
+                  <Source id="radius-source" type="geojson" data={radiusCircleGeoJSON}>
+                    <Layer
+                      id="radius-fill"
+                      type="fill"
+                      paint={{
+                        "fill-color": "#7c3aed",
+                        "fill-opacity": 0.12,
+                      }}
+                    />
+                    <Layer
+                      id="radius-outline"
+                      type="line"
+                      paint={{
+                        "line-color": "#7c3aed",
+                        "line-width": 2,
+                      }}
+                    />
+                  </Source>
+                )}
+
+                {/* User pulsing double-ring marker */}
+                <Marker longitude={userLocation.lng} latitude={userLocation.lat}>
+                  <div className="relative flex h-8 w-8 items-center justify-center">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75"></span>
+                    <span className="relative inline-flex h-6 w-6 rounded-full border-2 border-white bg-blue-500 shadow-md"></span>
+                  </div>
+                </Marker>
               </>
             )}
 
-            {showHeatmap && <HeatmapLayer complaints={complaints} />}
+            {/* Heatmap Layer */}
+            {showHeatmap && (
+              <Source id="heatmap-source" type="geojson" data={heatmapGeoJSON}>
+                <Layer
+                  id="heatmap-layer"
+                  type="heatmap"
+                  paint={{
+                    "heatmap-weight": ["get", "intensity"],
+                    "heatmap-intensity": 0.7,
+                    "heatmap-radius": 25,
+                    "heatmap-opacity": 0.85,
+                    "heatmap-color": [
+                      "interpolate",
+                      ["linear"],
+                      ["heatmap-density"],
+                      0,
+                      "rgba(0,0,0,0)",
+                      0.2,
+                      "#22c55e",
+                      0.45,
+                      "#eab308",
+                      0.7,
+                      "#f97316",
+                      1.0,
+                      "#ef4444",
+                    ],
+                  }}
+                />
+              </Source>
+            )}
 
+            {/* Mapped Complaints Markers */}
             {complaints.map((complaint) => {
               const distanceLabel = userLocation
                 ? formatDistance(calculateDistanceMeters(userLocation, { lat: complaint.lat, lng: complaint.lng }))
                 : "-";
 
+              const isSelected = selectedId === complaint.id;
+              const sev = getSeverityConfig(complaint.effective_severity || complaint.severity);
+              const photo = complaint.photo_urls?.[0];
+              const size = isSelected ? 52 : 42;
+
               return (
                 <Marker
                   key={complaint.id}
-                  position={[complaint.lat, complaint.lng]}
-                  icon={makeMarkerIcon(complaint, L, selectedId === complaint.id, distanceLabel)}
-                  eventHandlers={{ click: () => onMarkerClick(complaint) }}
-                />
+                  longitude={complaint.lng}
+                  latitude={complaint.lat}
+                  onClick={(e) => {
+                    e.originalEvent.stopPropagation();
+                    onMarkerClick(complaint);
+                  }}
+                >
+                  <div className="group relative inline-block cursor-pointer">
+                    <div
+                      className={`overflow-hidden rounded-full border-2 bg-white shadow-md transition-all duration-200 hover:scale-105`}
+                      style={{
+                        width: `${size}px`,
+                        height: `${size}px`,
+                        borderColor: isSelected ? "#3b82f6" : sev.color,
+                      }}
+                    >
+                      {photo ? (
+                        <img
+                          src={photo}
+                          alt="Ticket"
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            // Fallback if image fails to load
+                            e.currentTarget.style.display = "none";
+                            const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = "flex";
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        className="h-full w-full items-center justify-center"
+                        style={{
+                          display: photo ? "none" : "flex",
+                          backgroundColor: `${sev.color}15`,
+                        }}
+                      >
+                        <span style={{ fontSize: `${size * 0.38}px` }}>📍</span>
+                      </div>
+                    </div>
+                    {/* Hover tooltip for distance */}
+                    <div
+                      className="pointer-events-none absolute top-1/2 z-[9999] whitespace-nowrap rounded-lg border-l-[3px] bg-black/85 px-2 py-1.5 text-[11px] font-bold text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 dark:bg-zinc-950/90"
+                      style={{
+                        left: `${size + 6}px`,
+                        transform: "translateY(-50%)",
+                        borderLeftColor: sev.color,
+                      }}
+                    >
+                      {distanceLabel}
+                    </div>
+                  </div>
+                </Marker>
               );
             })}
-          </MapContainer>
+          </Map>
         )}
 
         {!collapsed && (
@@ -390,8 +394,6 @@ export default function NearbyTicketsMap({
           </>
         )}
       </div>
-
-
 
       {!hideCollapse && (
         <div className="group relative flex h-7 shrink-0 select-none items-center justify-center border-y border-gray-200 bg-gray-100 dark:border-[#2a2a2a] dark:bg-[#1e1e1e]">

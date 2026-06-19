@@ -1,22 +1,14 @@
 "use client";
 
-import React from "react";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-  GeoJSON,
-  useMap,
-} from "react-leaflet";
+import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import Map, { Marker, Popup, Source, Layer } from "react-map-gl/maplibre";
+import type { MapRef } from "react-map-gl/maplibre";
 import type { Feature, MultiPolygon, Polygon } from "geojson";
-import type { Layer, PathOptions } from "leaflet";
 
-import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/src/lib/supabase";
 import type { Tables } from "@/src/types/database.types";
 import { useTheme } from "@/components/ThemeProvider";
-import { getMapTileLayerConfig } from "@/lib/map-tiles";
+import { getMapStyle } from "@/lib/map-tiles";
 import { parseLocationToLatLng } from "@/lib/parse-location";
 
 type ComplaintRow = Tables<"complaints">;
@@ -32,11 +24,8 @@ type MapComplaint = {
   assigned_department?: string | null;
 };
 
-const DEFAULT_CENTER: [number, number] = [28.6139, 77.209];
+const DEFAULT_CENTER: [number, number] = [77.209, 28.6139]; // [longitude, latitude] for MapLibre
 const DEFAULT_ZOOM = 12;
-
-// Module-level Leaflet import promise to trigger parallel fetching before component mounts
-const leafletPromise = typeof window !== "undefined" ? import("leaflet") : null;
 
 const SEVERITY_COLOR: Record<string, string> = {
   L1: "#38bdf8",
@@ -53,13 +42,11 @@ function normalizeSeverityLevel(severity: string): "L1" | "L2" | "L3" | "L4" {
   return "L1";
 }
 
-
 type RegionFeature = Feature<Polygon | MultiPolygon>;
 
 export default function MapComponent({
   selectedComplaintId,
   recenterTrigger,
-  highQuality,
   regions,
   regionCounts,
   onRegionClick,
@@ -72,7 +59,6 @@ export default function MapComponent({
 }: {
   selectedComplaintId?: string | null;
   recenterTrigger?: number;
-  highQuality?: boolean;
   /** Polygon features to draw (zones at Delhi level, wards at zone/ward level). */
   regions?: RegionFeature[];
   /** regionId -> complaint count, drives choropleth fill. */
@@ -83,7 +69,7 @@ export default function MapComponent({
   fitToRegionId?: string;
   /** Color regions by density (Delhi/Zone). Default false. */
   choropleth?: boolean;
-  /** Render the complaint marker/heatmap layer + toggle. Default true (unchanged for existing pages). */
+  /** Render the complaint marker/heatmap layer + toggle. Default true. */
   showComplaints?: boolean;
   activeLayer?: string;
   intensity?: number;
@@ -91,13 +77,16 @@ export default function MapComponent({
   showRecenterButton?: boolean;
 }) {
   const [complaints, setComplaints] = useState<MapComplaint[]>([]);
-  const [mounted, setMounted] = useState(false);
-  const [leaflet, setLeaflet] = useState<any>(null);
+  const [isClientReady, setIsClientReady] = useState(false);
   const [showHeatmap, setShowHeatmap] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [rawCount, setRawCount] = useState(0);
+  const [selectedPopupComplaint, setSelectedPopupComplaint] = useState<MapComplaint | null>(null);
+  const [hoveredFeature, setHoveredFeature] = useState<{ id: string; name: string; count?: number; x: number; y: number } | null>(null);
   const { theme } = useTheme();
-  const tileConfig = getMapTileLayerConfig({ theme, highQuality });
+  const mapRef = useRef<MapRef>(null);
+
+  const mapStyle = getMapStyle(theme);
 
   const filteredComplaints = useMemo(() => {
     if (!activeLayer || activeLayer === "density") return complaints;
@@ -182,24 +171,7 @@ export default function MapComponent({
   }
 
   useEffect(() => {
-    setMounted(true);
-    if (leafletPromise) {
-      leafletPromise.then((L) => {
-        delete (L.Icon.Default.prototype as any)._getIconUrl;
-
-        L.Icon.Default.mergeOptions({
-          iconRetinaUrl:
-            "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-          iconUrl:
-            "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-          shadowUrl:
-            "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-        });
-
-        setLeaflet(L);
-      });
-    }
-
+    setIsClientReady(true);
     fetchComplaints();
 
     // PERFORMANCE OPTIMIZATION: Realtime subscription instead of 5s polling
@@ -224,26 +196,238 @@ export default function MapComponent({
     };
   }, []);
 
-  if (!mounted || !leaflet || typeof window === 'undefined') return null;
+  // Recenter/fly-to on external selectedComplaintId changes
+  useEffect(() => {
+    if (!selectedComplaintId || complaints.length === 0) return;
+    const complaint = complaints.find((c) => c.id === selectedComplaintId);
+    if (complaint) {
+      setSelectedPopupComplaint(complaint);
+      mapRef.current?.flyTo({
+        center: [complaint.lng, complaint.lat],
+        zoom: 15,
+        duration: 1500,
+      });
+    }
+  }, [selectedComplaintId, complaints]);
 
-  const getSeverityIcon = (severity: string, L: any) => {
-    const level = normalizeSeverityLevel(severity);
-    const color = SEVERITY_COLOR[level];
+  // Recenter/fly-to on external recenterTrigger changes
+  useEffect(() => {
+    if (!recenterTrigger) return;
+    mapRef.current?.flyTo({
+      center: DEFAULT_CENTER,
+      zoom: DEFAULT_ZOOM,
+      duration: 1500,
+    });
+  }, [recenterTrigger]);
 
-    return new L.DivIcon({
-      html: `
-        <div style="
-          background-color: ${color};
-          width: 16px;
-          height: 16px;
-          border-radius: 50%;
-          border: 2px solid white;
-          box-shadow: 0 0 6px rgba(0,0,0,0.4);
-        "></div>
-      `,
-      className: "",
+  // Bounding box calculation for regions and fitting bounds
+  const getBBoxForFeatures = useCallback((features: RegionFeature[]) => {
+    let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+    let hasCoords = false;
+
+    const traverseCoords = (coords: any) => {
+      if (Array.isArray(coords[0])) {
+        coords.forEach(traverseCoords);
+      } else if (typeof coords[0] === "number" && typeof coords[1] === "number") {
+        const lng = coords[0];
+        const lat = coords[1];
+        if (lng < minLng) minLng = lng;
+        if (lat < minLat) minLat = lat;
+        if (lng > maxLng) maxLng = lng;
+        if (lat > maxLat) maxLat = lat;
+        hasCoords = true;
+      }
+    };
+
+    features.forEach((f) => {
+      if (f.geometry && f.geometry.coordinates) {
+        traverseCoords(f.geometry.coordinates);
+      }
+    });
+
+    return hasCoords ? [[minLng, minLat], [maxLng, maxLat]] as [[number, number], [number, number]] : null;
+  }, []);
+
+  // Fit map bounds to regions
+  useEffect(() => {
+    if (!regions || regions.length === 0) return;
+    const target = fitToRegionId
+      ? regions.find((r) => String(r.id) === String(fitToRegionId))
+      : null;
+    const features = target ? [target] : regions;
+    const bounds = getBBoxForFeatures(features);
+    if (bounds) {
+      const timer = setTimeout(() => {
+        mapRef.current?.fitBounds(bounds, { padding: 20, duration: 1500 });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [regions, fitToRegionId, getBBoxForFeatures]);
+
+  const handleRecenter = () => {
+    if (regions && regions.length > 0) {
+      const target = fitToRegionId
+        ? regions.find((r) => String(r.id) === String(fitToRegionId))
+        : null;
+      const features = target ? [target] : regions;
+      const bounds = getBBoxForFeatures(features);
+      if (bounds) {
+        mapRef.current?.fitBounds(bounds, { padding: 20, duration: 1500 });
+        return;
+      }
+    }
+    mapRef.current?.flyTo({
+      center: DEFAULT_CENTER,
+      zoom: DEFAULT_ZOOM,
+      duration: 1500,
     });
   };
+
+  // Choropleth color calculation for layers
+  const max = useMemo(() => Math.max(1, ...Object.values(regionCounts ?? {})), [regionCounts]);
+
+  const safeRegions = useMemo(() => {
+    if (!regions) return [];
+    return regions.filter((r) => {
+      const g = r.geometry as { type?: string; coordinates?: unknown };
+      return (
+        (g?.type === "Polygon" || g?.type === "MultiPolygon") &&
+        Array.isArray(g.coordinates) &&
+        g.coordinates.length > 0
+      );
+    });
+  }, [regions]);
+
+  const regionGeoJSON = useMemo(() => {
+    return {
+      type: "FeatureCollection" as const,
+      features: safeRegions.map((f) => {
+        const id = String(f.id);
+        const count = regionCounts?.[id] ?? 0;
+        const name = (f.properties?.name as string) ?? (f.properties?.wardname as string) ?? id;
+        return {
+          ...f,
+          properties: {
+            ...f.properties,
+            id,
+            count,
+            name,
+          },
+        };
+      }),
+    };
+  }, [safeRegions, regionCounts]);
+
+  const fillColorExpression = useMemo(() => {
+    if (!choropleth) {
+      return theme === "dark" ? "#27272a" : "#e2e8f0";
+    }
+    const step1 = max * 0.25;
+    const step2 = max * 0.5;
+    const step3 = max * 0.75;
+    return [
+      "case",
+      ["<=", ["get", "count"], 0], theme === "dark" ? "#27272a" : "#e2e8f0",
+      ["<=", ["get", "count"], step1], "#22c55e",
+      ["<=", ["get", "count"], step2], "#eab308",
+      ["<=", ["get", "count"], step3], "#f97316",
+      "#ef4444",
+    ];
+  }, [choropleth, theme, max]);
+
+  const onMouseMove = useCallback((event: any) => {
+    const feature = event.features?.[0];
+    if (feature && feature.layer.id === "regions-fill") {
+      const id = feature.properties.id;
+      const name = feature.properties.name;
+      const count = feature.properties.count;
+      setHoveredFeature({
+        id,
+        name,
+        count,
+        x: event.point.x,
+        y: event.point.y,
+      });
+    } else {
+      setHoveredFeature(null);
+    }
+  }, []);
+
+  const onMouseLeave = useCallback(() => {
+    setHoveredFeature(null);
+  }, []);
+
+  const onMapClick = useCallback((event: any) => {
+    const feature = event.features?.[0];
+    if (feature && feature.layer.id === "regions-fill") {
+      const id = feature.properties.id;
+      if (id && id !== "unzoned" && onRegionClick) {
+        onRegionClick(id);
+      }
+    }
+  }, [onRegionClick]);
+
+  // Heatmap source & paint configuration
+  const complaintGeoJSON = useMemo(() => {
+    return {
+      type: "FeatureCollection" as const,
+      features: filteredComplaints.map((c) => ({
+        type: "Feature" as const,
+        geometry: {
+          type: "Point" as const,
+          coordinates: [c.lng, c.lat],
+        },
+        properties: {
+          id: c.id,
+          severity: c.severity,
+          intensity: getIntensity(c.severity),
+        },
+      })),
+    };
+  }, [filteredComplaints]);
+
+  const heatmapPaint = useMemo(() => {
+    const radius = Math.round(10 + (intensity / 100) * 25);
+    const val = intensity / 100;
+    return {
+      "heatmap-weight": ["get", "intensity"],
+      "heatmap-intensity": val,
+      "heatmap-radius": radius,
+      "heatmap-opacity": 0.85,
+      "heatmap-color": [
+        "interpolate",
+        ["linear"],
+        ["heatmap-density"],
+        0,
+        "rgba(0,0,0,0)",
+        0.2,
+        "#22c55e",
+        0.45,
+        "#eab308",
+        0.7,
+        "#f97316",
+        1.0,
+        "#ef4444",
+      ],
+    };
+  }, [intensity]);
+
+  function getIntensity(severity: string) {
+    switch (normalizeSeverityLevel(severity)) {
+      case "L4":
+        return 1.0;
+      case "L3":
+        return 0.75;
+      case "L2":
+        return 0.5;
+      case "L1":
+        return 0.25;
+      default:
+        return 0.3;
+    }
+  }
+
+  if (!isClientReady) return null;
 
   return (
     <div style={{ position: "relative", height: "100%", width: "100%" }}>
@@ -258,65 +442,140 @@ export default function MapComponent({
         </div>
       )}
 
-      <MapContainer
-        center={DEFAULT_CENTER}
-        zoom={DEFAULT_ZOOM}
-        maxZoom={highQuality ? 20 : 19}
-        zoomSnap={highQuality ? 0.25 : 1}
-        zoomDelta={highQuality ? 0.25 : 1}
-        zoomControl={false}
+      <Map
+        ref={mapRef}
+        initialViewState={{
+          longitude: DEFAULT_CENTER[0],
+          latitude: DEFAULT_CENTER[1],
+          zoom: DEFAULT_ZOOM,
+        }}
         style={{ height: "100%", width: "100%" }}
+        mapStyle={mapStyle}
+        scrollZoom={true}
+        interactiveLayerIds={regions && regions.length > 0 ? ["regions-fill"] : []}
+        onMouseMove={onMouseMove}
+        onMouseLeave={onMouseLeave}
+        onClick={onMapClick}
       >
-        <TileLayer
-          attribution={tileConfig.attribution}
-          url={tileConfig.url}
-          detectRetina={tileConfig.detectRetina}
-          maxNativeZoom={tileConfig.maxNativeZoom}
-          subdomains={tileConfig.subdomains}
-        />
-        <ZoomToComplaint
-          complaints={filteredComplaints}
-          selectedComplaintId={selectedComplaintId}
-        />
-        <ResetToDefaultView recenterTrigger={recenterTrigger} />
-        <RecenterButton show={showRecenterButton} regions={regions} fitToRegionId={fitToRegionId} />
-
         {regions && regions.length > 0 && (
-          <>
-            <RegionsLayer
-              regions={regions}
-              regionCounts={regionCounts}
-              onRegionClick={onRegionClick}
-              choropleth={choropleth}
-              isDark={theme === "dark"}
+          <Source id="regions-source" type="geojson" data={regionGeoJSON}>
+            {/* Base Fill Layer */}
+            <Layer
+              id="regions-fill"
+              type="fill"
+              paint={{
+                "fill-color": fillColorExpression as any,
+                "fill-opacity": choropleth ? 0.55 : 0.15,
+              }}
             />
-            <FitBounds regions={regions} fitToRegionId={fitToRegionId} />
-          </>
+            {/* Outline Borders */}
+            <Layer
+              id="regions-line"
+              type="line"
+              paint={{
+                "line-color": theme === "dark" ? "#52525b" : "#94a3b8",
+                "line-width": 1,
+              }}
+            />
+            {/* Hover Outline */}
+            <Layer
+              id="regions-hover-line"
+              type="line"
+              filter={["==", ["get", "id"], hoveredFeature?.id ?? ""]}
+              paint={{
+                "line-color": theme === "dark" ? "#f43f5e" : "#e11d48",
+                "line-width": 2.5,
+              }}
+            />
+          </Source>
         )}
 
         {showComplaints && !showHeatmap &&
           filteredComplaints.map((c) => (
             <Marker
               key={c.id}
-              position={[c.lat, c.lng]}
-              icon={
-                leaflet
-                  ? getSeverityIcon(c.severity, leaflet)
-                  : undefined
-              }
+              longitude={c.lng}
+              latitude={c.lat}
+              onClick={(e) => {
+                e.originalEvent.stopPropagation();
+                setSelectedPopupComplaint(c);
+              }}
             >
-              <Popup>
-                <strong>{c.title}</strong>
-                <br />
-                {c.description}
-                <br />
-                <b>Severity:</b> {c.severity}
-              </Popup>
+              <div
+                style={{
+                  backgroundColor: SEVERITY_COLOR[normalizeSeverityLevel(c.severity)],
+                  width: "16px",
+                  height: "16px",
+                  borderRadius: "50%",
+                  border: "2px solid white",
+                  boxShadow: "0 0 6px rgba(0,0,0,0.4)",
+                  cursor: "pointer",
+                }}
+              />
             </Marker>
           ))}
 
-        {showComplaints && showHeatmap && <HeatmapLayer complaints={filteredComplaints} intensity={intensity} />}
-      </MapContainer>
+        {selectedPopupComplaint && (
+          <Popup
+            longitude={selectedPopupComplaint.lng}
+            latitude={selectedPopupComplaint.lat}
+            anchor="bottom"
+            onClose={() => setSelectedPopupComplaint(null)}
+            closeOnClick={false}
+            offset={10}
+          >
+            <div className="text-sm text-gray-900 dark:text-gray-100">
+              <strong>{selectedPopupComplaint.title}</strong>
+              <br />
+              {selectedPopupComplaint.description}
+              <br />
+              <b>Severity:</b> {selectedPopupComplaint.severity}
+            </div>
+          </Popup>
+        )}
+
+        {showComplaints && showHeatmap && (
+          <Source id="heatmap-source" type="geojson" data={complaintGeoJSON}>
+            <Layer
+              id="heatmap-layer"
+              type="heatmap"
+              paint={heatmapPaint as any}
+            />
+          </Source>
+        )}
+      </Map>
+
+      {hoveredFeature && (
+        <div
+          className="pointer-events-none absolute z-[2000] rounded bg-gray-900/90 px-2 py-1 text-xs text-white shadow-md backdrop-blur-sm dark:bg-zinc-900/90"
+          style={{
+            left: hoveredFeature.x + 15,
+            top: hoveredFeature.y + 15,
+          }}
+        >
+          {hoveredFeature.count !== undefined
+            ? `${hoveredFeature.name} · ${hoveredFeature.count}`
+            : hoveredFeature.name}
+        </div>
+      )}
+
+      {showRecenterButton && (
+        <div className="absolute right-4 bottom-20 z-[1000] pointer-events-auto">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleRecenter();
+            }}
+            title="Recenter Map"
+            className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/90 shadow-md hover:bg-white border border-slate-200 text-slate-700 transition-all active:scale-95 backdrop-blur-sm dark:bg-zinc-900/90 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      )}
 
       {fetchError && (
         <div
@@ -355,289 +614,6 @@ export default function MapComponent({
           Loaded {rawCount} complaints, but none had valid map coordinates.
         </div>
       )}
-    </div>
-  );
-}
-
-function ResetToDefaultView({ recenterTrigger }: { recenterTrigger?: number }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!recenterTrigger) return;
-    map.setView(DEFAULT_CENTER, DEFAULT_ZOOM, { animate: true });
-  }, [recenterTrigger, map]);
-
-  return null;
-}
-
-function HeatmapLayer({ complaints, intensity = 70 }: { complaints: any[]; intensity?: number }) {
-  const map = useMap();
-
-  useEffect(() => {
-    const L = require("leaflet");
-    if (typeof window !== "undefined" && !(window as any).L) {
-      (window as any).L = L;
-    }
-    require("leaflet.heat");
-
-    // Scale intensity (10-100) to adjust heatmap radius and blur
-    const radius = Math.round(10 + (intensity / 100) * 25);
-    const blur = Math.round(10 + (intensity / 100) * 15);
-
-    const heatLayer = (L as any).heatLayer(
-      complaints.map((c: any) => [
-        c.lat,
-        c.lng,
-        getIntensity(c.severity),
-      ]),
-      {
-        radius: radius,
-        blur: blur,
-        minOpacity: 0.35,
-        gradient: {
-          0.2: "#22c55e",
-          0.45: "#eab308",
-          0.7: "#f97316",
-          1.0: "#ef4444",
-        },
-      }
-    );
-
-    heatLayer.addTo(map);
-
-    return () => {
-      map.removeLayer(heatLayer);
-    };
-  }, [complaints, map, intensity]);
-
-  return null;
-}
-
-function getIntensity(severity: string) {
-  switch (normalizeSeverityLevel(severity)) {
-    case "L4":
-      return 1.0;
-    case "L3":
-      return 0.75;
-    case "L2":
-      return 0.5;
-    case "L1":
-      return 0.25;
-    default:
-      return 0.3;
-  }
-}
-function RegionsLayer({
-  regions,
-  regionCounts,
-  onRegionClick,
-  choropleth,
-  isDark,
-}: {
-  regions: RegionFeature[];
-  regionCounts?: Record<string, number>;
-  onRegionClick?: (regionId: string) => void;
-  choropleth: boolean;
-  isDark: boolean;
-}) {
-  const max = useMemo(
-    () => Math.max(1, ...Object.values(regionCounts ?? {})),
-    [regionCounts]
-  );
-
-  // Defensive: only render features with a usable Polygon/MultiPolygon geometry
-  // so one malformed feature can never crash the GeoJSON layer.
-  const safeRegions = useMemo(
-    () =>
-      regions.filter((r) => {
-        const g = r.geometry as { type?: string; coordinates?: unknown };
-        return (
-          (g?.type === "Polygon" || g?.type === "MultiPolygon") &&
-          Array.isArray(g.coordinates) &&
-          g.coordinates.length > 0
-        );
-      }),
-    [regions]
-  );
-
-  // GeoJSON caches its `data`; bump the key so fills/handlers refresh on change.
-  const layerKey = useMemo(
-    () => safeRegions.map((r) => String(r.id)).join(",") + "|" + JSON.stringify(regionCounts ?? {}) + "|" + String(choropleth) + "|" + String(isDark),
-    [safeRegions, regionCounts, choropleth, isDark]
-  );
-
-  const data = useMemo(
-    () => ({ type: "FeatureCollection" as const, features: safeRegions }),
-    [safeRegions]
-  );
-
-  const fillFor = (id: string): string => {
-    const c = regionCounts?.[id] ?? 0;
-    if (!choropleth || c <= 0) return isDark ? "#27272a" : "#e2e8f0";
-    const t = c / max;
-    if (t > 0.75) return "#ef4444";
-    if (t > 0.5) return "#f97316";
-    if (t > 0.25) return "#eab308";
-    return "#22c55e";
-  };
-
-  const styleFor = (feature?: RegionFeature): PathOptions => {
-    const id = String(feature?.id ?? "");
-    return {
-      color: isDark ? "#52525b" : "#94a3b8",
-      weight: 1,
-      fillColor: fillFor(id),
-      fillOpacity: choropleth ? 0.55 : 0.15,
-    };
-  };
-
-  const onEachFeature = (feature: RegionFeature, layer: Layer) => {
-    const id = String(feature?.id ?? "");
-    const name =
-      (feature?.properties?.name as string) ??
-      (feature?.properties?.wardname as string) ??
-      id;
-    const count = regionCounts?.[id];
-    layer.bindTooltip(count != null ? `${name} · ${count}` : String(name), {
-      sticky: true,
-    });
-
-    if (!id || id === "unzoned" || !onRegionClick) return;
-    layer.on({
-      click: () => onRegionClick(id),
-      mouseover: (e) =>
-        (e.target as { setStyle: (s: PathOptions) => void }).setStyle({
-          weight: 2.5,
-          fillOpacity: choropleth ? 0.75 : 0.3,
-        }),
-      mouseout: (e) =>
-        (e.target as { setStyle: (s: PathOptions) => void }).setStyle(styleFor(feature)),
-    });
-  };
-
-  if (safeRegions.length === 0) return null;
-
-  return (
-    <GeoJSON
-      key={layerKey}
-      data={data as never}
-      style={styleFor as never}
-      onEachFeature={onEachFeature as never}
-    />
-  );
-}
-
-function FitBounds({
-  regions,
-  fitToRegionId,
-}: {
-  regions: RegionFeature[];
-  fitToRegionId?: string;
-}) {
-  const map = useMap();
-
-  useEffect(() => {
-    const L = require("leaflet");
-    const target = fitToRegionId
-      ? regions.find((r) => String(r.id) === String(fitToRegionId))
-      : null;
-    const features = target ? [target] : regions;
-    if (!features.length) return;
-    try {
-      const bounds = L.geoJSON({ type: "FeatureCollection", features }).getBounds();
-      if (bounds.isValid()) map.fitBounds(bounds, { padding: [20, 20] });
-    } catch {
-      /* ignore fit errors */
-    }
-  }, [regions, fitToRegionId, map]);
-
-  return null;
-}
-
-function ZoomToComplaint({
-  complaints,
-  selectedComplaintId,
-}: {
-  complaints: MapComplaint[];
-  selectedComplaintId?: string | null;
-}) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!selectedComplaintId) return;
-
-    const complaint = complaints.find(
-      (c) => c.id === selectedComplaintId
-    );
-
-    if (complaint) {
-      map.setView([complaint.lat, complaint.lng], 15, {
-        animate: true,
-      });
-    }
-  }, [selectedComplaintId, complaints, map]);
-
-  return null;
-}
-
-function RecenterButton({ show, regions, fitToRegionId }: { show: boolean, regions?: RegionFeature[], fitToRegionId?: string }) {
-  const map = useMap();
-  const [isVisible, setIsVisible] = useState(false);
-  const [initialBounds, setInitialBounds] = useState<any>(null);
-
-  useEffect(() => {
-    if (!regions || regions.length === 0) return;
-    const L = require("leaflet");
-    const target = fitToRegionId
-      ? regions.find((r) => String(r.id) === String(fitToRegionId))
-      : null;
-    const features = target ? [target] : regions;
-    if (!features.length) return;
-    try {
-      const bounds = L.geoJSON({ type: "FeatureCollection", features }).getBounds();
-      if (bounds.isValid()) {
-        setInitialBounds(bounds);
-      }
-    } catch {
-      /* ignore */
-    }
-  }, [regions, fitToRegionId]);
-
-  useEffect(() => {
-    if (!show) return;
-
-    const checkZoom = () => {
-      // Show the button if the user has changed the view significantly
-      // Since we fitBounds initially, we can just check if center/zoom changed from current
-      setIsVisible(true);
-    };
-    
-    // We can just always show it, or check distance. For simplicity, just show it when show=true
-    setIsVisible(true);
-  }, [show]);
-
-  if (!show || !isVisible) return null;
-
-  return (
-    <div className="absolute right-4 bottom-20 z-[1000] pointer-events-auto">
-      <button
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (initialBounds) {
-            map.fitBounds(initialBounds, { padding: [20, 20], animate: true });
-          } else {
-            // Fallback for overview if no regions
-            map.setView(DEFAULT_CENTER, 10.5, { animate: true });
-          }
-        }}
-        title="Recenter Map"
-        className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/90 shadow-md hover:bg-white border border-slate-200 text-slate-700 transition-all active:scale-95 backdrop-blur-sm dark:bg-zinc-900/90 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
-        </svg>
-      </button>
     </div>
   );
 }
